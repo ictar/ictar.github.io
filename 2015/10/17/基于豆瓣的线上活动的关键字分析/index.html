@@ -35,8 +35,8 @@
 <meta property="article:author" content="Ele">
 <meta property="article:tag" content="Python">
 <meta property="article:tag" content="自动化">
-<meta property="article:tag" content="scrapy">
 <meta property="article:tag" content="数据可视化">
+<meta property="article:tag" content="scrapy">
 <meta name="twitter:card" content="summary">
 
 <link rel="canonical" href="http://ictar.github.io/2015/10/17/%E5%9F%BA%E4%BA%8E%E8%B1%86%E7%93%A3%E7%9A%84%E7%BA%BF%E4%B8%8A%E6%B4%BB%E5%8A%A8%E7%9A%84%E5%85%B3%E9%94%AE%E5%AD%97%E5%88%86%E6%9E%90/">
@@ -51,7 +51,20 @@
     lang   : 'zh-Hans'
   };
 </script>
-
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
   <title>基于豆瓣的线上活动的关键字分析 | ∞</title>
   
 
@@ -279,7 +292,13 @@
 
     
     
-    
+    <div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
         <div class="reward-container">
   <div>请言小午吃个甜筒~~</div>
   <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
@@ -305,8 +324,8 @@
           <div class="post-tags">
               <a href="/tags/Python/" rel="tag"># Python</a>
               <a href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/" rel="tag"># 自动化</a>
-              <a href="/tags/scrapy/" rel="tag"># scrapy</a>
               <a href="/tags/%E6%95%B0%E6%8D%AE%E5%8F%AF%E8%A7%86%E5%8C%96/" rel="tag"># 数据可视化</a>
+              <a href="/tags/scrapy/" rel="tag"># scrapy</a>
           </div>
 
         
@@ -538,6 +557,15 @@
 
   
 
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "default";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "middleCenter";
+        pbOptions.networks = "Weibo,Wechat,Douban,QQZone,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script>
 <script>
   function loadCount() {
     var d = document, s = d.createElement('script');
@@ -569,5 +597,5 @@
   });
 </script>
 
-<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-koharu"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
 </html>
