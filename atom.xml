@@ -6,7 +6,7 @@
   <link href="http://ictar.github.io/atom.xml" rel="self"/>
   
   <link href="http://ictar.github.io/"/>
-  <updated>2021-01-26T03:54:56.052Z</updated>
+  <updated>2021-01-26T12:43:51.527Z</updated>
   <id>http://ictar.github.io/</id>
   
   <author>
@@ -17,23 +17,30 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
-    <title>GDA|有关最小二乘法的一些事</title>
-    <link href="http://ictar.github.io/2021/01/26/GDA-%E6%9C%89%E5%85%B3%E6%9C%80%E5%B0%8F%E4%BA%8C%E4%B9%98%E6%B3%95%E7%9A%84%E4%B8%80%E4%BA%9B%E4%BA%8B/"/>
-    <id>http://ictar.github.io/2021/01/26/GDA-%E6%9C%89%E5%85%B3%E6%9C%80%E5%B0%8F%E4%BA%8C%E4%B9%98%E6%B3%95%E7%9A%84%E4%B8%80%E4%BA%9B%E4%BA%8B/</id>
+    <title>GDA | 有关最小二乘估计的一些事</title>
+    <link href="http://ictar.github.io/2021/01/26/gda-least-squares-adjustment/"/>
+    <id>http://ictar.github.io/2021/01/26/gda-least-squares-adjustment/</id>
     <published>2021-01-26T03:54:56.000Z</published>
-    <updated>2021-01-26T03:54:56.052Z</updated>
+    <updated>2021-01-26T12:43:51.527Z</updated>
     
-    <content type="html"><![CDATA[]]></content>
-    
-    
-      
-      
-    <summary type="html">
-</summary>
-      
+    <content type="html"><![CDATA[<h1 id="问题描述">问题描述</h1><p>假设我们有一组观测值： <span class="math display">\[\underline{y_0} = \begin{bmatrix}y_{01}\\...\\y_{0i}\\...\\y_{0m}\end{bmatrix}  \in  \mathbb{R}^m\]</span> 观测值之间相互独立。</p><p>我们想从中估算出一组未知参数： <span class="math display">\[\underline{x} = \begin{bmatrix}x_1\\...\\x_i\\...\\x_n\end{bmatrix}  \in  \mathbb{R}^n \quad (n \le m \text{ for redundancy})\]</span></p><h1 id="最小二乘估计least-squares-estimation">最小二乘估计（Least Squares Estimation）</h1><blockquote class="blockquote-center">            <i class="fa fa-quote-left"></i>            <p>最小二乘法，又称最小平方法，是一种数学优化建模方法。它通过最小化误差的平方和寻找数据的最佳函数匹配。 利用最小二乘法可以简便的求得未知的数据，并使得求得的数据与实际数据之间误差的平方和为最小。 “最小二乘法”是对线性方程组，即方程个数比未知数更多的方程组，以回归分析求得近似解的标准方法。</p><p>—— 维基百科</p>            <i class="fa fa-quote-right"></i>          </blockquote><h2 id="数据模型">数据模型</h2><p>假设 <span class="math inline">\(\underline{y_0}\)</span> 是 <span class="math inline">\(\underline{y}\)</span> 的一组观测值，而 <span class="math inline">\(\underline{y}\)</span> 和 <span class="math inline">\(\underline{x}\)</span> 之间为线性关系： <span class="math display">\[\begin{aligned}\underline{y} = A\underline{x}+\underline{b} \\\text{其中, } A: \text{ design matrix} \quad \underline{b}: \text{ known term}\end{aligned}\]</span></p><p>假设 <span class="math inline">\(\underline{y_0}\)</span> 和 <span class="math inline">\(\underline{y}\)</span> 之间存在误差 <span class="math inline">\(\underline{\varepsilon}\)</span>，即： <span class="math display">\[\begin{aligned}\underline{y_0} = \underline{y} + \underline{\varepsilon} = A\underline{x}+\underline{b} + \underline{\varepsilon}\\\text{其中, }\underline{\varepsilon}: \text{ unknown error} \\\end{aligned}\]</span></p><p>根据<a href="https://zh.wikipedia.org/zh-hans/%E4%B8%AD%E5%BF%83%E6%9E%81%E9%99%90%E5%AE%9A%E7%90%86">中心极限定理</a>以及<a href="https://zh.wikipedia.org/wiki/%E5%A4%A7%E6%95%B0%E5%AE%9A%E5%BE%8B">大数定理</a>，假设： <span class="math display">\[\begin{aligned}\underline{\varepsilon}   \backsim N(0, \sigma_0^2Q) \\\text{其中, } \sigma_0^2: \text{a prior variance} \quad Q: \text{ cofactor matrix} \end{aligned}\]</span></p><p>因此，问题转换为，求得 <span class="math inline">\(\hat{\underline{x}}\)</span> 和 <span class="math inline">\(\hat{\underline{y}}\)</span>，使其满足：</p><p><span class="math display">\[\begin{aligned}\left\{\begin{matrix}\hat{\underline{y}}=A\hat{\underline{x}}+\underline{b}\\ \hat{\underline{y}} \textbf{ at minimal distance from } \underline{y_0} \Rightarrow (\hat{\underline{y}}-\underline{y_0})^TQ^{-1}(\hat{\underline{y}}-\underline{y_0}): minimum \quad (\text{stochastic distance})\end{matrix}\right.\end{aligned}\]</span></p><h3 id="非线性场景">非线性场景</h3><p>如果 <span class="math inline">\(\underline{y}\)</span> 和 <span class="math inline">\(\underline{x}\)</span> 之间为非线性关系，即 <span class="math inline">\(y = g(x)\)</span>，则首先，我们要将其线性化：</p><ol type="1"><li>通过求解观测值等式来获取未知参数的近似值 <span class="math inline">\(\underline{\widetilde{x}}\)</span></li><li>计算雅可比矩阵(Jacobian Matrix)： <span class="math display">\[J(\widetilde{x}) = \begin{bmatrix}\frac{\partial g_1}{\partial x_1} &amp; \frac{\partial g_1}{\partial x_2} &amp; ... &amp; \frac{\partial g_1}{\partial x_n}\\ \frac{\partial g_2}{\partial x_1} &amp; \frac{\partial g_2}{\partial x_2} &amp; ... &amp; \frac{\partial g_2}{\partial x_n}\\ ... &amp; ... &amp; ... &amp; ...\\ \frac{\partial g_m}{\partial x_1} &amp; \frac{\partial g_m}{\partial x_2} &amp; ... &amp; \frac{\partial g_m}{\partial x_n}\end{bmatrix}_{\underline{\widetilde{x}}} \\\]</span></li><li>模型转换成： <span class="math display">\[\begin{aligned}y_0 = f(\widetilde{x}) + J(\widetilde{x})(x-\widetilde{x}) \\\text{其中， } A = J, b = f(\widetilde{x})\end{aligned}\]</span></li></ol><h2 id="求解">求解</h2><blockquote><p>说明：求最小值问题可以转换为求一阶导数为 0 的问题。这里省略推导过程，直接给出计算步骤.</p></blockquote><ol type="1"><li>计算正规矩阵（Normal Matrix）：<span class="math inline">\(N = A^TQ^{-1}A\)</span></li><li>计算正规已知项（Normal Known Term）：<span class="math inline">\(\underline{t} = A^TQ^{-1}(\underline{y}_0 - \underline{b})\)</span></li><li>计算未知参数的估算解： <span class="math display">\[N\hat{\underline{x}} = A^TQ^{-1}A\hat{\underline{x}} = A^TQ^{-1}(\underline{y}_0 - \underline{b}) = \underline{t} \quad \Rightarrow \quad \underline{\hat{x}} = N^{-1}\underline{t} = N^{-1}A^TQ^{-1}(\underline{y}_0 - \underline{b}) \qquad (\text{the normal system})\]</span></li><li>计算观测值的估算值：<span class="math inline">\(\underline{\hat{y}} = A\underline{\hat{x}} + \underline{b}\)</span></li><li>计算误差的估算值：<span class="math inline">\(\underline{\hat{\varepsilon}} = \underline{y}_0 - \underline{\hat{y}}\)</span></li></ol><blockquote><p>注意： 1. <span class="math inline">\(N\)</span> 必须是可逆的，这就要求 <span class="math inline">\(A\)</span> 满秩 ## 精确度估算 ### 方差 上一步中，我们得到了误差的估算值，因此可以计算后验方差（posterior variance）： <span class="math display">\[\hat{\sigma}^2 = \frac{\underline{\hat{\varepsilon}}^TQ^{-1}\underline{\hat{\varepsilon}}}{m-n}\]</span></p></blockquote><h3 id="协方差">协方差</h3><p>根据 <a href="https://en.wikipedia.org/wiki/Propagation_of_uncertainty">协方差传播（covariance propagation）</a>：</p><p><span class="math display">\[\begin{aligned}\textbf{在线性的场景下：} y = Ax+b \\\text{则 }\left\{\begin{matrix}\text{均值 } \mu_y = A\mu_x + b  \\\text{协方差 } C_{yy} = AC_{xx}A^T\end{matrix}\right.\\\quad \\\textbf{在非线性的场景下：} y = g(x) \\\text{则 }\left\{\begin{matrix}\text{均值 } \mu_y \cong g(\mu_x) \\\text{协方差 } C_{yy} = JC_{xx}J^T\end{matrix}\right.\\\end{aligned}\]</span></p><p>因此观测值的协方差为： <span class="math display">\[\begin{aligned}C_{y0y0} = IC_{\varepsilon\varepsilon}I^T = C_{\varepsilon\varepsilon} = \sigma_0^2Q\end{aligned}\]</span></p><p>由于前面已经得出一个后验方差，因此，上面又可以写成： <span class="math display">\[\begin{aligned}C_{y0y0} = \hat{\sigma}^2Q\end{aligned}\]</span></p><h4 id="未知参数的估算解的协方差">未知参数的估算解的协方差</h4><p><span class="math display">\[\begin{aligned}\because \underline{\hat{x}} = N^{-1}A^TQ^{-1}(\underline{y}_0 - \underline{b}) \\\therefore C_{\hat{x}\hat{x}} = N^{-1}A^TQ^{-1}C_{y_0y_0}(N^{-1}A^TQ^{-1})^T \\= N^{-1}A^TQ^{-1}\hat{\sigma}^2Q(N^{-1}A^TQ^{-1})^T \\= \hat{\sigma}^2N^{-1}\end{aligned}\]</span></p><h4 id="观测值的估算值的协方差">观测值的估算值的协方差</h4><p><span class="math display">\[\begin{aligned}\because \underline{\hat{y}} = A\underline{\hat{x}} + \underline{b} \\\therefore C_{\hat{y}\hat{y}} = AC_{\hat{x}\hat{x}}A^T  \\= A\hat{\sigma}^2N^{-1}A^T\end{aligned}\]</span></p><h4 id="误差的估算值的协方差">误差的估算值的协方差</h4><p><span class="math display">\[\begin{aligned}\because \underline{\hat{\varepsilon}} = \underline{y}_0 - \underline{\hat{y}} \\\therefore C_{\hat{\varepsilon}\hat{\varepsilon}} = C_{y0y0} -  C_{\hat{y}\hat{y}} \\= \hat{\sigma}^2Q - A\hat{\sigma}^2N^{-1}A^T \\= \hat{\sigma}^2(Q-AN^{-1}A^T)\end{aligned}\]</span></p><h2 id="置信度评估">置信度评估</h2><h3 id="全局测试">全局测试</h3><ol type="1"><li>做出假设 <span class="math display">\[H_0: \hat{\sigma}^2=\sigma^2\]</span></li><li>计算：<span class="math inline">\(\frac{\hat{\sigma}^2}{\sigma^2}(m-n)\backsim\chi^2_{exp}\)</span></li><li>查询卡方分布表：<span class="math inline">\(\chi^2_{lim}=\chi^2_{(m-n)}(\alpha)\)</span></li><li>如果 <span class="math inline">\(\chi^2_{exp}\le\chi^2_{lim}\)</span>，则接受假设；如果 <span class="math inline">\(\chi^2_{exp}\gt\chi^2_{lim}\)</span>，则拒绝假设。</li></ol><h3 id="局部测试">局部测试</h3><p>用以识别异常值（outliers）。</p><ol type="1"><li>做出假设 <span class="math display">\[\frac{\hat{\varepsilon_i}}{\sigma_{\varepsilon_i}} = \tau_{exp} \sim \tau_{(m-n)}\]</span></li><li>计算 <span class="math inline">\(\tau_{exp}\)</span>，其中 <span class="math inline">\(\sigma_{\varepsilon_i}=\hat{\sigma}\sqrt{C_{\hat{\varepsilon}\hat{\varepsilon}}(i,i)}\)</span></li><li>查询 T 分布表：<span class="math inline">\(\tau_{lim}=\tau_{(m-n)}(\frac{\alpha}{2})\)</span></li><li>如果 <span class="math inline">\(|\tau_{exp}|\le\tau^2_{lim}\)</span>，则接受假设；如果 <span class="math inline">\(|\tau_{exp}|\gt\tau^2_{lim}\)</span>，则拒绝假设。</li><li>不满足假设的观测值即为异常者。将其移除后，重复整个过程。</li></ol>]]></content>
     
     
+    <summary type="html">问题描述
+假设我们有一组观测值： \[ \underline{y_0} = \begin{bmatrix}y_{01}\\...\\y_{0i}\\...\\y_{0m}\end{bmatrix} \in \mathbb{R}^m \] 观测值之间相互独立。
+
+我们想从中估算出一组未知参数： \[ \underline{x} = \begin{bmatrix}x_1\\...\\x_i\\...\\x_n\end{bmatrix} \in \mathbb{R}^n \quad (n \le m \text{ for redundancy}) \]
+
+最小二乘估计（Least Squares E</summary>
     
+    
+    
+    <category term="GIS" scheme="http://ictar.github.io/categories/GIS/"/>
+    
+    
+    <category term="GDA" scheme="http://ictar.github.io/tags/GDA/"/>
+    
+    <category term="GIS" scheme="http://ictar.github.io/tags/GIS/"/>
     
   </entry>
   

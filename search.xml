@@ -1,60 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Celery从入门到放弃：celery是什么？</title>
-    <url>/2017/04/15/Celery%E4%BB%8E%E5%85%A5%E9%97%A8%E5%88%B0%E6%94%BE%E5%BC%83%EF%BC%9Acelery%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F/</url>
-    <content><![CDATA[<p><img src="https://i.ytimg.com/vi/YSBAq-npCt4/maxresdefault.jpg" /></p>
-<p>第一次知道celery是因为想给django加入异步。</p>
-<p>众所周知，django对单个请求是同步的，这里同步的意思是，客户端发起一个request，django完全处理完毕之后才返回response。这种情况下，如果django处理的时间很长很长，客户端就会出现等待不到响应超时的情况。而当时我刚好需要通过django调用ansible进行一些长时间的任务。这些任务耗时之长，可以达到1h。而让客户端一直等待响应1h显然是非常不可取的。</p>
-<figure>
-<img src="/img/328607BAB02D46F3A7EF40E15DAE0D00.jpg" alt="示意图1" /><figcaption aria-hidden="true">示意图1</figcaption>
-</figure>
-<p>此时，一个解决方案就是，django把长耗时的任务交由某种机制进行处理，然后立即返回response。之后，客户端通过另外的接口，查询任务处理情况。</p>
-<figure>
-<img src="/img/E6D7AF2A44AB464591EE59D45EDA76F7.jpg" alt="示意图2" /><figcaption aria-hidden="true">示意图2</figcaption>
-</figure>
-<p>于是，celery就闪亮登场了。</p>
-<p>摘抄官方文档中对celery的定义： &gt; celery是一个简单、灵活且可靠的分布式系统，用来处理大量的消息，同时提供维护这样一个系统所需的操作工具。</p>
-<blockquote>
-<p>它是一个专注于实时处理的任务队列，同时也支持任务调度。</p>
-</blockquote>
-<h3 id="celery初体验">celery初体验</h3>
-<blockquote>
-<p>详情见<a href="http://docs.celeryproject.org/en/latest/getting-started/first-steps-with-celery.html">First Steps with Celery</a></p>
-</blockquote>
-<h4 id="选择并安装消息传输方式broker">选择并安装消息传输方式(broker)</h4>
-<p>celery自身并不保存数据，而是借助broker来发送和接收消息。celery支持多种broker： * RabbitMQ * Redis * 其他（详见<a href="http://docs.celeryproject.org/en/latest/getting-started/brokers/index.html#broker-overview">Broker Overview</a>）</p>
-<p>因此，我们需要根据所需选择并安装合适的broker。 &gt; 注：具体broker的安装方式详见所选broker的官网。这里只聚焦celery哈。</p>
-<h4 id="安装celery">安装celery</h4>
-<p>通过pip，即可安装celery： <figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line">pip <span class="keyword">install</span> celery</span><br></pre></td></tr></table></figure> #### 创建任务 首先，我们需要创建一个Celery实例<code>app</code>，通过这个实例来访问celery的所有功能，例如创建人物或者管理worker等等。</p>
-<p>让我们新建一个文件，起名为<code>tasks.py</code>： <figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">from</span> celery <span class="keyword">import</span> Celery</span><br><span class="line"></span><br><span class="line"><span class="comment"># 第一个参数是当前模块的名字</span></span><br><span class="line"><span class="comment"># 第二个参数是所选broker的URL。这里，我们使用RabbitMQ</span></span><br><span class="line">app = Celery(<span class="string">&#x27;eletest&#x27;</span>, broker=<span class="string">&#x27;amqp://ele@localhost//&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 我们定义一个简单的任务，休眠100秒后，打印一句&quot;hello, &#123;&#123;name&#125;&#125;&quot;</span></span><br><span class="line"><span class="meta">@app.task</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">sayHello</span>(<span class="params">name</span>):</span></span><br><span class="line">    time.sleep(<span class="number">100</span>)</span><br><span class="line">    <span class="built_in">print</span> <span class="string">&quot;hello,&quot;</span>, name</span><br></pre></td></tr></table></figure> #### 运行worker 运行以下命令即可： <figure class="highlight routeros"><table><tr><td class="code"><pre><span class="line">$ celery -A eletest worker <span class="attribute">--loglevel</span>=info</span><br></pre></td></tr></table></figure> &gt; 注：如果想通过守护模式启动celery的话，可以考虑借助supervisord</p>
-<p><code>celery worker</code>提供了多种选项，可以通过<code>celery worker -h</code>进行了解使用</p>
-<p>celery还提供了很多种命令。这里就不一一说明了。</p>
-<h4 id="调用任务">调用任务</h4>
-<p>通过上面的步骤，我们已经把接收消息进行处理这一步完成了。现在，我们需要看看怎么发送消息。</p>
-<p>在没有使用celery之前，我们是这样调用我们的任务的： <figure class="highlight py"><table><tr><td class="code"><pre><span class="line">sayHello(<span class="string">&quot;ele&quot;</span>) <span class="comment"># hello, ele</span></span><br></pre></td></tr></table></figure> 使用celery，则只需要将上面替换成下面的代码： <figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> tasks <span class="keyword">import</span> sayHello</span><br><span class="line"></span><br><span class="line">sayHello.delay(<span class="string">&quot;ele&quot;</span>)</span><br><span class="line"><span class="comment"># 执行上面这一句代码的时候，celery会把相关参数整理成某种格式，然后扔到你指定的broker。然后，前面启动的worker就会从broker里面读取相关参数，调用任务sayHello。</span></span><br><span class="line"><span class="comment"># 可以通过worker的控制台输出来看到执行过程</span></span><br></pre></td></tr></table></figure> 这里有几点要说明一下： * 调用<code>sayHello.delay</code>会立即返回一个<code>AsyncResult</code>实例。通过这个实例，我们就可以检查任务执行的状态，获取任务执行完后的返回值等等。这样，我们在django中，就可以返回给客户端一个taskid（通过该实例获得），然后客户端就可以使用这个taskid来了解任务真正的处理状态了。 * <a href="http://docs.celeryproject.org/en/latest/reference/celery.app.task.html#celery.app.task.Task.delay">delay方法</a>：<a href="http://docs.celeryproject.org/en/latest/reference/celery.app.task.html#celery.app.task.Task.apply_async">apply_async方法</a>的简略版，只接受两个参数，一个是任务的位置参数，另一个是任务的关键字参数。使用这个方法，只需要把<code>task(...)</code>直接改成<code>task.delay(...)</code>即可。懒人方法，后面的事情celery都帮你做好了。如果需要进一步的定制，则可以使用后者。后者提供了详尽的参数，你可以自己指定taskid、broker的相关信息、连接等等。</p>
-<h4 id="保存任务执行结果">保存任务执行结果</h4>
-<p>默认情况下，调用任务是不会保存结果的。因此，可以指定<code>backend</code>来实现任务结果的存储。对于backend，可以选择SQLAlchemy/Django ORM, Memcached, Redis, RPC (RabbitMQ/AMQP)，或者也可以自定义。</p>
-<p>使用也很简单，只需要在初始化celery实例的时候给参数<code>backend</code>赋值即可： <figure class="highlight py"><table><tr><td class="code"><pre><span class="line">app = Celery(<span class="string">&#x27;eletest&#x27;</span>, backend=<span class="string">&#x27;redis://localhost&#x27;</span>, broker=<span class="string">&#x27;amqp://ele@localhost//&#x27;</span>)</span><br></pre></td></tr></table></figure> ### celery + django = django异步化 有了celery的助攻，我们终于可以把同步的django异步掉了！！！</p>
-<figure>
-<img src="/img/9EE1168C9AEB4DF6925CAE3F53F143C1.jpg" alt="示意图3" /><figcaption aria-hidden="true">示意图3</figcaption>
-</figure>
-<p>具体如何在django中加入celery，详见<a href="http://docs.celeryproject.org/en/latest/django/first-steps-with-django.html">first steps with django</a></p>
-<h2 id="参考">参考</h2>
-<ul>
-<li><a href="http://www.celeryproject.org/">celery</a></li>
-<li><a href="http://docs.celeryproject.org/en/latest/index.html">celery documentation</a></li>
-</ul>
-]]></content>
-      <categories>
-        <category>Python</category>
-      </categories>
-      <tags>
-        <tag>Python</tag>
-        <tag>Celery</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>2016年点亮技能树的某个枝桠</title>
     <url>/2016/03/01/2016%E5%B9%B4%E7%82%B9%E4%BA%AE%E6%8A%80%E8%83%BD%E6%A0%91%E7%9A%84%E6%9F%90%E4%B8%AA%E6%9E%9D%E6%A1%A0/</url>
     <content><![CDATA[<p>这是一篇散文。 首页就挂着一篇文，感觉丑不拉几的。所以决定写点什么来缓冲下。</p>
@@ -113,6 +59,60 @@
       </tags>
   </entry>
   <entry>
+    <title>Celery从入门到放弃：celery是什么？</title>
+    <url>/2017/04/15/Celery%E4%BB%8E%E5%85%A5%E9%97%A8%E5%88%B0%E6%94%BE%E5%BC%83%EF%BC%9Acelery%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F/</url>
+    <content><![CDATA[<p><img src="https://i.ytimg.com/vi/YSBAq-npCt4/maxresdefault.jpg" /></p>
+<p>第一次知道celery是因为想给django加入异步。</p>
+<p>众所周知，django对单个请求是同步的，这里同步的意思是，客户端发起一个request，django完全处理完毕之后才返回response。这种情况下，如果django处理的时间很长很长，客户端就会出现等待不到响应超时的情况。而当时我刚好需要通过django调用ansible进行一些长时间的任务。这些任务耗时之长，可以达到1h。而让客户端一直等待响应1h显然是非常不可取的。</p>
+<figure>
+<img src="/img/328607BAB02D46F3A7EF40E15DAE0D00.jpg" alt="示意图1" /><figcaption aria-hidden="true">示意图1</figcaption>
+</figure>
+<p>此时，一个解决方案就是，django把长耗时的任务交由某种机制进行处理，然后立即返回response。之后，客户端通过另外的接口，查询任务处理情况。</p>
+<figure>
+<img src="/img/E6D7AF2A44AB464591EE59D45EDA76F7.jpg" alt="示意图2" /><figcaption aria-hidden="true">示意图2</figcaption>
+</figure>
+<p>于是，celery就闪亮登场了。</p>
+<p>摘抄官方文档中对celery的定义： &gt; celery是一个简单、灵活且可靠的分布式系统，用来处理大量的消息，同时提供维护这样一个系统所需的操作工具。</p>
+<blockquote>
+<p>它是一个专注于实时处理的任务队列，同时也支持任务调度。</p>
+</blockquote>
+<h3 id="celery初体验">celery初体验</h3>
+<blockquote>
+<p>详情见<a href="http://docs.celeryproject.org/en/latest/getting-started/first-steps-with-celery.html">First Steps with Celery</a></p>
+</blockquote>
+<h4 id="选择并安装消息传输方式broker">选择并安装消息传输方式(broker)</h4>
+<p>celery自身并不保存数据，而是借助broker来发送和接收消息。celery支持多种broker： * RabbitMQ * Redis * 其他（详见<a href="http://docs.celeryproject.org/en/latest/getting-started/brokers/index.html#broker-overview">Broker Overview</a>）</p>
+<p>因此，我们需要根据所需选择并安装合适的broker。 &gt; 注：具体broker的安装方式详见所选broker的官网。这里只聚焦celery哈。</p>
+<h4 id="安装celery">安装celery</h4>
+<p>通过pip，即可安装celery： <figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line">pip <span class="keyword">install</span> celery</span><br></pre></td></tr></table></figure> #### 创建任务 首先，我们需要创建一个Celery实例<code>app</code>，通过这个实例来访问celery的所有功能，例如创建人物或者管理worker等等。</p>
+<p>让我们新建一个文件，起名为<code>tasks.py</code>： <figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">from</span> celery <span class="keyword">import</span> Celery</span><br><span class="line"></span><br><span class="line"><span class="comment"># 第一个参数是当前模块的名字</span></span><br><span class="line"><span class="comment"># 第二个参数是所选broker的URL。这里，我们使用RabbitMQ</span></span><br><span class="line">app = Celery(<span class="string">&#x27;eletest&#x27;</span>, broker=<span class="string">&#x27;amqp://ele@localhost//&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 我们定义一个简单的任务，休眠100秒后，打印一句&quot;hello, &#123;&#123;name&#125;&#125;&quot;</span></span><br><span class="line"><span class="meta">@app.task</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">sayHello</span>(<span class="params">name</span>):</span></span><br><span class="line">    time.sleep(<span class="number">100</span>)</span><br><span class="line">    <span class="built_in">print</span> <span class="string">&quot;hello,&quot;</span>, name</span><br></pre></td></tr></table></figure> #### 运行worker 运行以下命令即可： <figure class="highlight routeros"><table><tr><td class="code"><pre><span class="line">$ celery -A eletest worker <span class="attribute">--loglevel</span>=info</span><br></pre></td></tr></table></figure> &gt; 注：如果想通过守护模式启动celery的话，可以考虑借助supervisord</p>
+<p><code>celery worker</code>提供了多种选项，可以通过<code>celery worker -h</code>进行了解使用</p>
+<p>celery还提供了很多种命令。这里就不一一说明了。</p>
+<h4 id="调用任务">调用任务</h4>
+<p>通过上面的步骤，我们已经把接收消息进行处理这一步完成了。现在，我们需要看看怎么发送消息。</p>
+<p>在没有使用celery之前，我们是这样调用我们的任务的： <figure class="highlight py"><table><tr><td class="code"><pre><span class="line">sayHello(<span class="string">&quot;ele&quot;</span>) <span class="comment"># hello, ele</span></span><br></pre></td></tr></table></figure> 使用celery，则只需要将上面替换成下面的代码： <figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> tasks <span class="keyword">import</span> sayHello</span><br><span class="line"></span><br><span class="line">sayHello.delay(<span class="string">&quot;ele&quot;</span>)</span><br><span class="line"><span class="comment"># 执行上面这一句代码的时候，celery会把相关参数整理成某种格式，然后扔到你指定的broker。然后，前面启动的worker就会从broker里面读取相关参数，调用任务sayHello。</span></span><br><span class="line"><span class="comment"># 可以通过worker的控制台输出来看到执行过程</span></span><br></pre></td></tr></table></figure> 这里有几点要说明一下： * 调用<code>sayHello.delay</code>会立即返回一个<code>AsyncResult</code>实例。通过这个实例，我们就可以检查任务执行的状态，获取任务执行完后的返回值等等。这样，我们在django中，就可以返回给客户端一个taskid（通过该实例获得），然后客户端就可以使用这个taskid来了解任务真正的处理状态了。 * <a href="http://docs.celeryproject.org/en/latest/reference/celery.app.task.html#celery.app.task.Task.delay">delay方法</a>：<a href="http://docs.celeryproject.org/en/latest/reference/celery.app.task.html#celery.app.task.Task.apply_async">apply_async方法</a>的简略版，只接受两个参数，一个是任务的位置参数，另一个是任务的关键字参数。使用这个方法，只需要把<code>task(...)</code>直接改成<code>task.delay(...)</code>即可。懒人方法，后面的事情celery都帮你做好了。如果需要进一步的定制，则可以使用后者。后者提供了详尽的参数，你可以自己指定taskid、broker的相关信息、连接等等。</p>
+<h4 id="保存任务执行结果">保存任务执行结果</h4>
+<p>默认情况下，调用任务是不会保存结果的。因此，可以指定<code>backend</code>来实现任务结果的存储。对于backend，可以选择SQLAlchemy/Django ORM, Memcached, Redis, RPC (RabbitMQ/AMQP)，或者也可以自定义。</p>
+<p>使用也很简单，只需要在初始化celery实例的时候给参数<code>backend</code>赋值即可： <figure class="highlight py"><table><tr><td class="code"><pre><span class="line">app = Celery(<span class="string">&#x27;eletest&#x27;</span>, backend=<span class="string">&#x27;redis://localhost&#x27;</span>, broker=<span class="string">&#x27;amqp://ele@localhost//&#x27;</span>)</span><br></pre></td></tr></table></figure> ### celery + django = django异步化 有了celery的助攻，我们终于可以把同步的django异步掉了！！！</p>
+<figure>
+<img src="/img/9EE1168C9AEB4DF6925CAE3F53F143C1.jpg" alt="示意图3" /><figcaption aria-hidden="true">示意图3</figcaption>
+</figure>
+<p>具体如何在django中加入celery，详见<a href="http://docs.celeryproject.org/en/latest/django/first-steps-with-django.html">first steps with django</a></p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="http://www.celeryproject.org/">celery</a></li>
+<li><a href="http://docs.celeryproject.org/en/latest/index.html">celery documentation</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>Python</category>
+      </categories>
+      <tags>
+        <tag>Python</tag>
+        <tag>Celery</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Go, go|小白的go小抄：并发和错误</title>
     <url>/2017/08/10/Go-go-%E5%B0%8F%E7%99%BD%E7%9A%84go%E5%B0%8F%E6%8A%84%EF%BC%9A%E5%B9%B6%E5%8F%91%E5%92%8C%E9%94%99%E8%AF%AF/</url>
     <content><![CDATA[<h3 id="并发">并发</h3>
@@ -151,12 +151,6 @@
         <tag>HelloWorld</tag>
         <tag>Golang</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>GDA|有关最小二乘法的一些事</title>
-    <url>/2021/01/26/GDA-%E6%9C%89%E5%85%B3%E6%9C%80%E5%B0%8F%E4%BA%8C%E4%B9%98%E6%B3%95%E7%9A%84%E4%B8%80%E4%BA%9B%E4%BA%8B/</url>
-    <content><![CDATA[
-]]></content>
   </entry>
   <entry>
     <title>Go, go|小白的go小抄：控制结构和函数</title>
@@ -501,31 +495,6 @@
       </tags>
   </entry>
   <entry>
-    <title>pythonchallenge.com | Python Challenge 第0关 题解</title>
-    <url>/2014/04/06/%5Bpythonchallenge.com%5DPython%20Challenge%20%E7%AC%AC0%E5%85%B3%20%E9%A2%98%E8%A7%A3/</url>
-    <content><![CDATA[<p>从某博客上看到的，<a href="http://www.pythonchallenge.com/">pythonchallenge</a> 权当拿来练练手~ （也不知道能走到几关。。。）</p>
-<h1 id="内容">内容</h1>
-<p><img src="/img/1396795367982.png" /></p>
-<h1 id="题解">题解</h1>
-<p>根据hint, 于是我笨笨的将URL改成：http://www.pythonchallenge.com/pc/def/238.html</p>
-<p>结果，网站君给了我一句：No... the 38 is a little bit above the 2...</p>
-<p>好吧，被委婉的鄙视了~</p>
-<p>再接再厉。。。</p>
-<p>已经显而易见了，http://www.pythonchallenge.com/pc/def/？.html</p>
-<p>这个？由下面的计算结果给出：</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">pow</span>(<span class="dv">2</span>,<span class="dv">38</span>)</span></code></pre></div>
-<p>Bingo, 让我们进入下一关。。。</p>
-]]></content>
-      <categories>
-        <category>题解</category>
-      </categories>
-      <tags>
-        <tag>Python</tag>
-        <tag>pythonchallenge</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Checkio.org | Mono Captcha题解</title>
     <url>/2015/10/08/%5BCheckio.org%5DMono%20Captcha%E9%A2%98%E8%A7%A3/</url>
     <content><![CDATA[<p>昨天在<a href="http://www.checkio.org">checkio</a>上做了一道挺有意思的题。这道题中同时用上了列表推导、filter、int、join、map、bin和数字异或的特性。将解题思路记下来，也算是对自己近期学习Python的一个总结吧~~</p>
@@ -604,6 +573,31 @@ _:1443238132704</code></pre>
         <tag>Python</tag>
         <tag>香蕉派</tag>
         <tag>自动化</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>pythonchallenge.com | Python Challenge 第0关 题解</title>
+    <url>/2014/04/06/%5Bpythonchallenge.com%5DPython%20Challenge%20%E7%AC%AC0%E5%85%B3%20%E9%A2%98%E8%A7%A3/</url>
+    <content><![CDATA[<p>从某博客上看到的，<a href="http://www.pythonchallenge.com/">pythonchallenge</a> 权当拿来练练手~ （也不知道能走到几关。。。）</p>
+<h1 id="内容">内容</h1>
+<p><img src="/img/1396795367982.png" /></p>
+<h1 id="题解">题解</h1>
+<p>根据hint, 于是我笨笨的将URL改成：http://www.pythonchallenge.com/pc/def/238.html</p>
+<p>结果，网站君给了我一句：No... the 38 is a little bit above the 2...</p>
+<p>好吧，被委婉的鄙视了~</p>
+<p>再接再厉。。。</p>
+<p>已经显而易见了，http://www.pythonchallenge.com/pc/def/？.html</p>
+<p>这个？由下面的计算结果给出：</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">pow</span>(<span class="dv">2</span>,<span class="dv">38</span>)</span></code></pre></div>
+<p>Bingo, 让我们进入下一关。。。</p>
+]]></content>
+      <categories>
+        <category>题解</category>
+      </categories>
+      <tags>
+        <tag>Python</tag>
+        <tag>pythonchallenge</tag>
       </tags>
   </entry>
   <entry>
@@ -687,6 +681,24 @@ _:1443238132704</code></pre>
       </tags>
   </entry>
   <entry>
+    <title>译|TED：神奇的斐波那契数列</title>
+    <url>/2014/01/25/%5B%E8%AF%91%5DTED%EF%BC%9A%E7%A5%9E%E5%A5%87%E7%9A%84%E6%96%90%E6%B3%A2%E9%82%A3%E5%A5%91%E6%95%B0%E5%88%97/</url>
+    <content><![CDATA[<p>看了介个TED，才发现自己从来没认真认识过斐波那契数列~~~~(&gt;_&lt;)~~~~</p>
+<p>Mathematics is not just solving for X, it's also figuring out WHY.</p>
+<p>Always keep it in mind!</p>
+<embed src="http://player.youku.com/player.php/sid/XNjY2MDQ0OTIw/v.swf" allowFullScreen="true" quality="high" width="480" height="400" align="middle" allowScriptAccess="always" type="application/x-shockwave-flash">
+</embed>
+<p>(个人翻译作品，如有错误，欢迎指正O(∩_∩)O~)</p>
+]]></content>
+      <categories>
+        <category>数学</category>
+      </categories>
+      <tags>
+        <tag>math</tag>
+        <tag>没事翻着玩</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>译|Python的隐藏特性(下)</title>
     <url>/2015/09/28/%5B%E8%AF%91%5DPython%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8B)/</url>
     <content><![CDATA[<p>知乎上有人问了一个问题：Python有哪些新手不会了解的深入细节。 其中的一个答案引用了stackoverflow上的一个问题解答。 鉴于一直在努力摆脱Python小白，决定好好研究下这几个特性，顺手翻译一下下，扩展一下下~~</p>
@@ -749,20 +761,27 @@ _:1443238132704</code></pre>
       </tags>
   </entry>
   <entry>
-    <title>译|TED：神奇的斐波那契数列</title>
-    <url>/2014/01/25/%5B%E8%AF%91%5DTED%EF%BC%9A%E7%A5%9E%E5%A5%87%E7%9A%84%E6%96%90%E6%B3%A2%E9%82%A3%E5%A5%91%E6%95%B0%E5%88%97/</url>
-    <content><![CDATA[<p>看了介个TED，才发现自己从来没认真认识过斐波那契数列~~~~(&gt;_&lt;)~~~~</p>
-<p>Mathematics is not just solving for X, it's also figuring out WHY.</p>
-<p>Always keep it in mind!</p>
-<embed src="http://player.youku.com/player.php/sid/XNjY2MDQ0OTIw/v.swf" allowFullScreen="true" quality="high" width="480" height="400" align="middle" allowScriptAccess="always" type="application/x-shockwave-flash">
-</embed>
-<p>(个人翻译作品，如有错误，欢迎指正O(∩_∩)O~)</p>
+    <title>译|拷贝-浅拷贝与深拷贝</title>
+    <url>/2015/12/01/%5B%E8%AF%91%5D%E6%8B%B7%E8%B4%9D-%E6%B5%85%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B7%B1%E6%8B%B7%E8%B4%9D/</url>
+    <content><![CDATA[<p>原文：<a href="https://docs.python.org/2/library/copy.html">8.17. copy — Shallow and deep copy operations</a> Python中的赋值语句并不拷贝对象，而是创建目标和对象之间的绑定关系。对于那些可变的或包含可变对象的集合来说，有时候需要进行拷贝，以使得一个对象的改变并不会改变另一个对象。这个模块提供常规的浅拷贝操作和深拷贝操作（解释如下）。</p>
+<p>接口概述：</p>
+<p><code>copy.copy(x)</code> 返回x的一个浅拷贝 <code>copy.deepcopy(x)</code> 返回x的一个深拷贝 <code>exception copy.error</code> 模块的特定错误</p>
+<p>浅拷贝和深拷贝之间的不同仅在于复合对象（即包含其他对象的对象，例如列表或者类实例）： * 一个浅拷贝创建一个新的复合对象，然后（尽可能地）插入原始对象中的对象的 <em>引用</em>。 * 一个深拷贝创建一个新的复合对象，然后迭代地插入原始对象中的对象的 <em>拷贝</em>。</p>
+<p>两个在深拷贝操作中常见的问题（浅拷贝不存在这两个问题）： * 递归对象（直接或间接包含自身的一个引用的复合对象）可能导致递归循环 * 由于深拷贝拷贝 <em>一切</em>，因此它可能会过多拷贝。例如，即使在副本之间，管理数据结构也应该被共享。</p>
+<p><code>deepcopy()</code>函数通过以下方式来避免这些问题： * 维护一个当前已拷贝对象的"备忘录"字典 * 允许用户定义的类重写拷贝操作或一组组件拷贝。</p>
+<p>这个模块不会拷贝下述类型：模块，方法，堆栈跟踪，堆栈帧，文件，socket，窗口，数组或任何类似类型。 它通过返回不变的原始对象来“拷贝”函数和类（浅拷贝，深拷贝）。这与<a href="https://docs.python.org/2/library/pickle.html#module-pickle">pickle</a>模块的处理方式兼容。</p>
+<p>字典的浅拷贝可以使用<code>dict.copy()</code>，而列表的浅拷贝可以通过将整个列表的切片赋值给它，例如：<code>copied_list = original_list[:]</code></p>
+<p>2.5版本修改：新增拷贝函数。</p>
+<p>类可以使用与控制pickling相同的接口来控制拷贝。查看模块<a href="https://docs.python.org/2/library/pickle.html#module-pickle">pickle</a>的描述以获得关于这些方法的信息。<a href="https://docs.python.org/2/library/copy.html#module-copy">copy</a>模块并不使用<a href="https://docs.python.org/2/library/copy_reg.html#module-copy_reg">copy_reg</a>注册模块。</p>
+<p>若想为一个类定义它自己的拷贝实现方式，可以定义特殊的方法 <strong><strong>copy()</strong></strong> 和 <strong><strong>deepcopy</strong>()</strong>。前者被调用来实现浅拷贝操作；不需要传递额外的参数。后者被调用来实现深拷贝操作；需要传递一个参数，“备忘录”字典。如果 <strong><strong>deepcopy</strong>()</strong>实现需要创建一个组件的深拷贝，它应该调用<a href="https://docs.python.org/2/library/copy.html#copy.deepcopy">deepcopy</a>函数，并把这个组件作为第一个参数，“备忘录”字典作为第二个参数传递。</p>
+<h2 id="碎碎念">碎碎念</h2>
+<p>先举个例子： <figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>a = <span class="built_in">range</span>(<span class="number">0</span>,<span class="number">5</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a.append(<span class="built_in">range</span>(<span class="number">7</span>,<span class="number">9</span>))</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>b = a</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">import</span> copy</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>c = copy.copy(a)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>d = copy.deepcopy(a)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>]]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>b</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>]]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>c</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>]]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>d</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>]]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a.append(<span class="number">777</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a[<span class="number">5</span>].append(<span class="string">&#x27;c&#x27;</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>, <span class="string">&#x27;c&#x27;</span>], <span class="number">777</span>]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>b</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>, <span class="string">&#x27;c&#x27;</span>], <span class="number">777</span>]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>c</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>, <span class="string">&#x27;c&#x27;</span>]]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>d</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>]]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(a)</span><br><span class="line"><span class="number">3066904664L</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(b)</span><br><span class="line"><span class="number">3066904664L</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(c)</span><br><span class="line"><span class="number">3066908544L</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(d)</span><br><span class="line"><span class="number">3066904624L</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(a[<span class="number">5</span>])</span><br><span class="line"><span class="number">3066821928L</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(b[<span class="number">5</span>])</span><br><span class="line"><span class="number">3066821928L</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(c[<span class="number">5</span>])</span><br><span class="line"><span class="number">3066821928L</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(d[<span class="number">5</span>])</span><br><span class="line"><span class="number">3066905824L</span></span><br></pre></td></tr></table></figure> 总结一下： 1. python普通的拷贝只是创建原始对象的一个引用。因此，当对a做了任何改动都会直接影响到b。从id也可以看到，a和b指向的是完全一样的对象。 2. python的浅拷贝会创建一个新的与原始对象类型一样的一个对象，然后对对象中每一个元素创建一个引用。因此，对a中不可变对象做的改动，并不会影响到c；而对a中可变对象做的改动，则会影响到c。从id也可以看到，a和c的指向的是不一样的对象，但是a和c中的元素指向的是完全一样的对象。 3. python的深拷贝是完全复制。它不仅会创建一个新的与原始对象类型一样的一个对象，还会对对象中的每一个元素迭代的创建与之类型一致的元素。因此，对a中的任何元素（可变或不可变）做的改动，都不会影响到d。从id也可以看出，a和d指向的是完全不一样的对象。</p>
 ]]></content>
       <categories>
-        <category>数学</category>
+        <category>Python</category>
       </categories>
       <tags>
-        <tag>math</tag>
+        <tag>Python</tag>
         <tag>没事翻着玩</tag>
       </tags>
   </entry>
@@ -854,31 +873,6 @@ _:1443238132704</code></pre>
       </tags>
   </entry>
   <entry>
-    <title>译|拷贝-浅拷贝与深拷贝</title>
-    <url>/2015/12/01/%5B%E8%AF%91%5D%E6%8B%B7%E8%B4%9D-%E6%B5%85%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B7%B1%E6%8B%B7%E8%B4%9D/</url>
-    <content><![CDATA[<p>原文：<a href="https://docs.python.org/2/library/copy.html">8.17. copy — Shallow and deep copy operations</a> Python中的赋值语句并不拷贝对象，而是创建目标和对象之间的绑定关系。对于那些可变的或包含可变对象的集合来说，有时候需要进行拷贝，以使得一个对象的改变并不会改变另一个对象。这个模块提供常规的浅拷贝操作和深拷贝操作（解释如下）。</p>
-<p>接口概述：</p>
-<p><code>copy.copy(x)</code> 返回x的一个浅拷贝 <code>copy.deepcopy(x)</code> 返回x的一个深拷贝 <code>exception copy.error</code> 模块的特定错误</p>
-<p>浅拷贝和深拷贝之间的不同仅在于复合对象（即包含其他对象的对象，例如列表或者类实例）： * 一个浅拷贝创建一个新的复合对象，然后（尽可能地）插入原始对象中的对象的 <em>引用</em>。 * 一个深拷贝创建一个新的复合对象，然后迭代地插入原始对象中的对象的 <em>拷贝</em>。</p>
-<p>两个在深拷贝操作中常见的问题（浅拷贝不存在这两个问题）： * 递归对象（直接或间接包含自身的一个引用的复合对象）可能导致递归循环 * 由于深拷贝拷贝 <em>一切</em>，因此它可能会过多拷贝。例如，即使在副本之间，管理数据结构也应该被共享。</p>
-<p><code>deepcopy()</code>函数通过以下方式来避免这些问题： * 维护一个当前已拷贝对象的"备忘录"字典 * 允许用户定义的类重写拷贝操作或一组组件拷贝。</p>
-<p>这个模块不会拷贝下述类型：模块，方法，堆栈跟踪，堆栈帧，文件，socket，窗口，数组或任何类似类型。 它通过返回不变的原始对象来“拷贝”函数和类（浅拷贝，深拷贝）。这与<a href="https://docs.python.org/2/library/pickle.html#module-pickle">pickle</a>模块的处理方式兼容。</p>
-<p>字典的浅拷贝可以使用<code>dict.copy()</code>，而列表的浅拷贝可以通过将整个列表的切片赋值给它，例如：<code>copied_list = original_list[:]</code></p>
-<p>2.5版本修改：新增拷贝函数。</p>
-<p>类可以使用与控制pickling相同的接口来控制拷贝。查看模块<a href="https://docs.python.org/2/library/pickle.html#module-pickle">pickle</a>的描述以获得关于这些方法的信息。<a href="https://docs.python.org/2/library/copy.html#module-copy">copy</a>模块并不使用<a href="https://docs.python.org/2/library/copy_reg.html#module-copy_reg">copy_reg</a>注册模块。</p>
-<p>若想为一个类定义它自己的拷贝实现方式，可以定义特殊的方法 <strong><strong>copy()</strong></strong> 和 <strong><strong>deepcopy</strong>()</strong>。前者被调用来实现浅拷贝操作；不需要传递额外的参数。后者被调用来实现深拷贝操作；需要传递一个参数，“备忘录”字典。如果 <strong><strong>deepcopy</strong>()</strong>实现需要创建一个组件的深拷贝，它应该调用<a href="https://docs.python.org/2/library/copy.html#copy.deepcopy">deepcopy</a>函数，并把这个组件作为第一个参数，“备忘录”字典作为第二个参数传递。</p>
-<h2 id="碎碎念">碎碎念</h2>
-<p>先举个例子： <figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>a = <span class="built_in">range</span>(<span class="number">0</span>,<span class="number">5</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a.append(<span class="built_in">range</span>(<span class="number">7</span>,<span class="number">9</span>))</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>b = a</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">import</span> copy</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>c = copy.copy(a)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>d = copy.deepcopy(a)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>]]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>b</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>]]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>c</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>]]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>d</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>]]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a.append(<span class="number">777</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a[<span class="number">5</span>].append(<span class="string">&#x27;c&#x27;</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>, <span class="string">&#x27;c&#x27;</span>], <span class="number">777</span>]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>b</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>, <span class="string">&#x27;c&#x27;</span>], <span class="number">777</span>]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>c</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>, <span class="string">&#x27;c&#x27;</span>]]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>d</span><br><span class="line">[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, [<span class="number">7</span>, <span class="number">8</span>]]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(a)</span><br><span class="line"><span class="number">3066904664L</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(b)</span><br><span class="line"><span class="number">3066904664L</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(c)</span><br><span class="line"><span class="number">3066908544L</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(d)</span><br><span class="line"><span class="number">3066904624L</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(a[<span class="number">5</span>])</span><br><span class="line"><span class="number">3066821928L</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(b[<span class="number">5</span>])</span><br><span class="line"><span class="number">3066821928L</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(c[<span class="number">5</span>])</span><br><span class="line"><span class="number">3066821928L</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">id</span>(d[<span class="number">5</span>])</span><br><span class="line"><span class="number">3066905824L</span></span><br></pre></td></tr></table></figure> 总结一下： 1. python普通的拷贝只是创建原始对象的一个引用。因此，当对a做了任何改动都会直接影响到b。从id也可以看到，a和b指向的是完全一样的对象。 2. python的浅拷贝会创建一个新的与原始对象类型一样的一个对象，然后对对象中每一个元素创建一个引用。因此，对a中不可变对象做的改动，并不会影响到c；而对a中可变对象做的改动，则会影响到c。从id也可以看到，a和c的指向的是不一样的对象，但是a和c中的元素指向的是完全一样的对象。 3. python的深拷贝是完全复制。它不仅会创建一个新的与原始对象类型一样的一个对象，还会对对象中的每一个元素迭代的创建与之类型一致的元素。因此，对a中的任何元素（可变或不可变）做的改动，都不会影响到d。从id也可以看出，a和d指向的是完全不一样的对象。</p>
-]]></content>
-      <categories>
-        <category>Python</category>
-      </categories>
-      <tags>
-        <tag>Python</tag>
-        <tag>没事翻着玩</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>apk之笨笨去广告</title>
     <url>/2013/11/02/apk%E4%B9%8B%E7%AC%A8%E7%AC%A8%E5%8E%BB%E5%B9%BF%E5%91%8A/</url>
     <content><![CDATA[<p>最近在用懒人听书，听听小说神马的。</p>
@@ -924,21 +918,6 @@ _:1443238132704</code></pre>
 <p><img src="/img/divego_chanrecv.svg" /></p>
 <h3 id="关闭-channel">关闭 channel</h3>
 <p><img src="/img/divego_closechan.svg" /></p>
-]]></content>
-      <tags>
-        <tag>Golang</tag>
-        <tag>源码解析</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>深入理解 Go | for ... range</title>
-    <url>/2020/04/01/dive-into-go-for-range/</url>
-    <content><![CDATA[<p>golang 语法糖 <code>for ... = range</code> 是如何实现的呢？话不多说，直接上图：</p>
-<p><img src="/img/divego_for_range.svg" /></p>
-<blockquote>
-<p>基于 Go 1.14</p>
-</blockquote>
-<p>参考： * <a href="https://draveness.me/golang/docs/part2-foundation/ch05-keyword/golang-for-range/">draveness: for 和 range</a></p>
 ]]></content>
       <tags>
         <tag>Golang</tag>
@@ -999,6 +978,21 @@ _:1443238132704</code></pre>
 <li><a href="https://github.com/golang/proposal/blob/master/design/34481-opencoded-defers.md">Proposal: Low-cost defers through inline code, and extra funcdata to manage the panic case</a></li>
 <li><a href="https://draveness.me/golang/docs/part2-foundation/ch05-keyword/golang-defer/#532-">draveness: defer</a></li>
 </ul>
+]]></content>
+      <tags>
+        <tag>Golang</tag>
+        <tag>源码解析</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>深入理解 Go | for ... range</title>
+    <url>/2020/04/01/dive-into-go-for-range/</url>
+    <content><![CDATA[<p>golang 语法糖 <code>for ... = range</code> 是如何实现的呢？话不多说，直接上图：</p>
+<p><img src="/img/divego_for_range.svg" /></p>
+<blockquote>
+<p>基于 Go 1.14</p>
+</blockquote>
+<p>参考： * <a href="https://draveness.me/golang/docs/part2-foundation/ch05-keyword/golang-for-range/">draveness: for 和 range</a></p>
 ]]></content>
       <tags>
         <tag>Golang</tag>
@@ -1116,28 +1110,6 @@ _:1443238132704</code></pre>
       </tags>
   </entry>
   <entry>
-    <title>深入理解 Go | 内存管理：栈</title>
-    <url>/2020/04/26/dive-into-go-memory-stack/</url>
-    <content><![CDATA[<blockquote>
-<p>基于 Go 1.14</p>
-</blockquote>
-<p>应用程序的内存分为： * 堆区。程序在运行期间可以主动向堆区申请内存，这些内存由内存分配器分配并由垃圾收集器负责回收。 * 栈区。由编译器自动进行分配和释放，存储函数的入参以及局部变量。这些参数会随着函数的创建而创建，函数的返回而消亡。</p>
-<p>Go 语言使用 goroutine 作为执行上下文，而 goroutine 的初始栈内存时 2KB，比线程小很多。</p>
-<h2 id="分段栈">分段栈</h2>
-<p><img src="/img/divego_memory_stack_1.svg" /></p>
-<h2 id="连续栈">连续栈</h2>
-<p>Go 1.3 开始使用的栈策略，不再将栈分段。 <img src="/img/divego_memory_stack_2.svg" /></p>
-<h2 id="参考">参考</h2>
-<ul>
-<li><a href="https://draveness.me/golang/docs/part3-runtime/ch07-memory/golang-stack-management/#%E6%A0%88%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4">栈内存管理 by draveness</a></li>
-</ul>
-]]></content>
-      <tags>
-        <tag>Golang</tag>
-        <tag>源码解析</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>深入理解 Go | 内存管理：垃圾收集（GC）</title>
     <url>/2020/04/25/dive-into-go-memory-gc/</url>
     <content><![CDATA[<blockquote>
@@ -1172,6 +1144,28 @@ _:1443238132704</code></pre>
 <h2 id="参考">参考</h2>
 <ul>
 <li><a href="https://draveness.me/golang/docs/part3-runtime/ch07-memory/golang-garbage-collector/#722-%E6%BC%94%E8%BF%9B%E8%BF%87%E7%A8%8B">垃圾收集器 by draveness</a></li>
+</ul>
+]]></content>
+      <tags>
+        <tag>Golang</tag>
+        <tag>源码解析</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>深入理解 Go | 内存管理：栈</title>
+    <url>/2020/04/26/dive-into-go-memory-stack/</url>
+    <content><![CDATA[<blockquote>
+<p>基于 Go 1.14</p>
+</blockquote>
+<p>应用程序的内存分为： * 堆区。程序在运行期间可以主动向堆区申请内存，这些内存由内存分配器分配并由垃圾收集器负责回收。 * 栈区。由编译器自动进行分配和释放，存储函数的入参以及局部变量。这些参数会随着函数的创建而创建，函数的返回而消亡。</p>
+<p>Go 语言使用 goroutine 作为执行上下文，而 goroutine 的初始栈内存时 2KB，比线程小很多。</p>
+<h2 id="分段栈">分段栈</h2>
+<p><img src="/img/divego_memory_stack_1.svg" /></p>
+<h2 id="连续栈">连续栈</h2>
+<p>Go 1.3 开始使用的栈策略，不再将栈分段。 <img src="/img/divego_memory_stack_2.svg" /></p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a href="https://draveness.me/golang/docs/part3-runtime/ch07-memory/golang-stack-management/#%E6%A0%88%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4">栈内存管理 by draveness</a></li>
 </ul>
 ]]></content>
       <tags>
@@ -1240,22 +1234,6 @@ _:1443238132704</code></pre>
       </tags>
   </entry>
   <entry>
-    <title>深入理解 Go | select ... case ... default</title>
-    <url>/2020/04/02/dive-into-go-select-case/</url>
-    <content><![CDATA[<blockquote>
-<p>以下基于 Go 1.14</p>
-</blockquote>
-<h2 id="编译时">编译时</h2>
-<p><img src="/img/divego_select_case_compile.svg" /></p>
-<h2 id="runtime.selectgo-的行为"><code>runtime.selectgo()</code> 的行为</h2>
-<p><img src="/img/divego_select_case_selectgo.svg" /></p>
-]]></content>
-      <tags>
-        <tag>Golang</tag>
-        <tag>源码解析</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>深入理解 Go | 调度：GMP 模型（第三部分）</title>
     <url>/2020/04/14/dive-into-go-schedule-gpm-part3/</url>
     <content><![CDATA[<p><img src="/img/divego_schedule_gmp_schedtrig.svg" /></p>
@@ -1277,6 +1255,22 @@ _:1443238132704</code></pre>
 <p>Go 语言的抢占式调度是在分段栈的机制上实现的。编译器会在分段栈上插入函数，这样，所有的 goroutine 在进行函数调用的时候都有机会进入运行时检查是否需要抢占。</p>
 <p>但是，这种机制对于诸如轮询计算这种没有函数调用的 goroutine 来说，是无法抢占成功的。因此，Go 1.14 版本引入了基于信号的抢占式调度。</p>
 <p><img src="/img/divego_schedule_gmp_gopreempt.svg" /></p>
+]]></content>
+      <tags>
+        <tag>Golang</tag>
+        <tag>源码解析</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>深入理解 Go | select ... case ... default</title>
+    <url>/2020/04/02/dive-into-go-select-case/</url>
+    <content><![CDATA[<blockquote>
+<p>以下基于 Go 1.14</p>
+</blockquote>
+<h2 id="编译时">编译时</h2>
+<p><img src="/img/divego_select_case_compile.svg" /></p>
+<h2 id="runtime.selectgo-的行为"><code>runtime.selectgo()</code> 的行为</h2>
+<p><img src="/img/divego_select_case_selectgo.svg" /></p>
 ]]></content>
       <tags>
         <tag>Golang</tag>
@@ -1308,6 +1302,142 @@ _:1443238132704</code></pre>
       </categories>
       <tags>
         <tag>经历</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>GDA | 有关最小二乘估计的一些事</title>
+    <url>/2021/01/26/gda-least-squares-adjustment/</url>
+    <content><![CDATA[<h1 id="问题描述">问题描述</h1>
+<p>假设我们有一组观测值： <span class="math display">\[
+\underline{y_0} = \begin{bmatrix}y_{01}\\...\\y_{0i}\\...\\y_{0m}\end{bmatrix}  \in  \mathbb{R}^m
+\]</span> 观测值之间相互独立。</p>
+<p>我们想从中估算出一组未知参数： <span class="math display">\[
+\underline{x} = \begin{bmatrix}x_1\\...\\x_i\\...\\x_n\end{bmatrix}  \in  \mathbb{R}^n \quad (n \le m \text{ for redundancy})
+\]</span></p>
+<h1 id="最小二乘估计least-squares-estimation">最小二乘估计（Least Squares Estimation）</h1>
+<blockquote class="blockquote-center">
+            <i class="fa fa-quote-left"></i>
+            <p>最小二乘法，又称最小平方法，是一种数学优化建模方法。它通过最小化误差的平方和寻找数据的最佳函数匹配。 利用最小二乘法可以简便的求得未知的数据，并使得求得的数据与实际数据之间误差的平方和为最小。 “最小二乘法”是对线性方程组，即方程个数比未知数更多的方程组，以回归分析求得近似解的标准方法。</p>
+<p>—— 维基百科</p>
+
+            <i class="fa fa-quote-right"></i>
+          </blockquote>
+<h2 id="数据模型">数据模型</h2>
+<p>假设 <span class="math inline">\(\underline{y_0}\)</span> 是 <span class="math inline">\(\underline{y}\)</span> 的一组观测值，而 <span class="math inline">\(\underline{y}\)</span> 和 <span class="math inline">\(\underline{x}\)</span> 之间为线性关系： <span class="math display">\[\begin{aligned}
+\underline{y} = A\underline{x}+\underline{b} \\
+\text{其中, } A: \text{ design matrix} \quad \underline{b}: \text{ known term}
+\end{aligned}\]</span></p>
+<p>假设 <span class="math inline">\(\underline{y_0}\)</span> 和 <span class="math inline">\(\underline{y}\)</span> 之间存在误差 <span class="math inline">\(\underline{\varepsilon}\)</span>，即： <span class="math display">\[\begin{aligned}
+\underline{y_0} = \underline{y} + \underline{\varepsilon} = A\underline{x}+\underline{b} + \underline{\varepsilon}\\
+\text{其中, }\underline{\varepsilon}: \text{ unknown error} \\
+\end{aligned}\]</span></p>
+<p>根据<a href="https://zh.wikipedia.org/zh-hans/%E4%B8%AD%E5%BF%83%E6%9E%81%E9%99%90%E5%AE%9A%E7%90%86">中心极限定理</a>以及<a href="https://zh.wikipedia.org/wiki/%E5%A4%A7%E6%95%B0%E5%AE%9A%E5%BE%8B">大数定理</a>，假设： <span class="math display">\[\begin{aligned}
+\underline{\varepsilon}   \backsim N(0, \sigma_0^2Q) \\
+\text{其中, } \sigma_0^2: \text{a prior variance} \quad Q: \text{ cofactor matrix} 
+\end{aligned}\]</span></p>
+<p>因此，问题转换为，求得 <span class="math inline">\(\hat{\underline{x}}\)</span> 和 <span class="math inline">\(\hat{\underline{y}}\)</span>，使其满足：</p>
+<p><span class="math display">\[\begin{aligned}
+\left\{\begin{matrix}
+\hat{\underline{y}}=A\hat{\underline{x}}+\underline{b}\\ 
+\hat{\underline{y}} \textbf{ at minimal distance from } \underline{y_0} \Rightarrow (\hat{\underline{y}}-\underline{y_0})^TQ^{-1}(\hat{\underline{y}}-\underline{y_0}): minimum \quad (\text{stochastic distance})
+\end{matrix}\right.
+\end{aligned}\]</span></p>
+<h3 id="非线性场景">非线性场景</h3>
+<p>如果 <span class="math inline">\(\underline{y}\)</span> 和 <span class="math inline">\(\underline{x}\)</span> 之间为非线性关系，即 <span class="math inline">\(y = g(x)\)</span>，则首先，我们要将其线性化：</p>
+<ol type="1">
+<li>通过求解观测值等式来获取未知参数的近似值 <span class="math inline">\(\underline{\widetilde{x}}\)</span></li>
+<li>计算雅可比矩阵(Jacobian Matrix)： <span class="math display">\[
+J(\widetilde{x}) = \begin{bmatrix}
+\frac{\partial g_1}{\partial x_1} &amp; \frac{\partial g_1}{\partial x_2} &amp; ... &amp; \frac{\partial g_1}{\partial x_n}\\ 
+\frac{\partial g_2}{\partial x_1} &amp; \frac{\partial g_2}{\partial x_2} &amp; ... &amp; \frac{\partial g_2}{\partial x_n}\\ 
+... &amp; ... &amp; ... &amp; ...\\ 
+\frac{\partial g_m}{\partial x_1} &amp; \frac{\partial g_m}{\partial x_2} &amp; ... &amp; \frac{\partial g_m}{\partial x_n}
+\end{bmatrix}_{\underline{\widetilde{x}}} \\
+\]</span></li>
+<li>模型转换成： <span class="math display">\[\begin{aligned}
+y_0 = f(\widetilde{x}) + J(\widetilde{x})(x-\widetilde{x}) \\
+\text{其中， } A = J, b = f(\widetilde{x})
+\end{aligned}\]</span></li>
+</ol>
+<h2 id="求解">求解</h2>
+<blockquote>
+<p>说明：求最小值问题可以转换为求一阶导数为 0 的问题。这里省略推导过程，直接给出计算步骤.</p>
+</blockquote>
+<ol type="1">
+<li>计算正规矩阵（Normal Matrix）：<span class="math inline">\(N = A^TQ^{-1}A\)</span></li>
+<li>计算正规已知项（Normal Known Term）：<span class="math inline">\(\underline{t} = A^TQ^{-1}(\underline{y}_0 - \underline{b})\)</span></li>
+<li>计算未知参数的估算解： <span class="math display">\[N\hat{\underline{x}} = A^TQ^{-1}A\hat{\underline{x}} = A^TQ^{-1}(\underline{y}_0 - \underline{b}) = \underline{t} \quad \Rightarrow \quad \underline{\hat{x}} = N^{-1}\underline{t} = N^{-1}A^TQ^{-1}(\underline{y}_0 - \underline{b}) \qquad (\text{the normal system})\]</span></li>
+<li>计算观测值的估算值：<span class="math inline">\(\underline{\hat{y}} = A\underline{\hat{x}} + \underline{b}\)</span></li>
+<li>计算误差的估算值：<span class="math inline">\(\underline{\hat{\varepsilon}} = \underline{y}_0 - \underline{\hat{y}}\)</span></li>
+</ol>
+<blockquote>
+<p>注意： 1. <span class="math inline">\(N\)</span> 必须是可逆的，这就要求 <span class="math inline">\(A\)</span> 满秩 ## 精确度估算 ### 方差 上一步中，我们得到了误差的估算值，因此可以计算后验方差（posterior variance）： <span class="math display">\[
+\hat{\sigma}^2 = \frac{\underline{\hat{\varepsilon}}^TQ^{-1}\underline{\hat{\varepsilon}}}{m-n}
+\]</span></p>
+</blockquote>
+<h3 id="协方差">协方差</h3>
+<p>根据 <a href="https://en.wikipedia.org/wiki/Propagation_of_uncertainty">协方差传播（covariance propagation）</a>：</p>
+<p><span class="math display">\[\begin{aligned}
+\textbf{在线性的场景下：} y = Ax+b \\
+\text{则 }\left\{\begin{matrix}\text{均值 } \mu_y = A\mu_x + b  \\
+\text{协方差 } C_{yy} = AC_{xx}A^T
+\end{matrix}\right.\\
+\quad \\
+\textbf{在非线性的场景下：} y = g(x) \\
+\text{则 }\left\{\begin{matrix}\text{均值 } \mu_y \cong g(\mu_x) \\
+\text{协方差 } C_{yy} = JC_{xx}J^T
+\end{matrix}\right.\\
+\end{aligned}\]</span></p>
+<p>因此观测值的协方差为： <span class="math display">\[\begin{aligned}
+C_{y0y0} = IC_{\varepsilon\varepsilon}I^T = C_{\varepsilon\varepsilon} = \sigma_0^2Q
+\end{aligned}\]</span></p>
+<p>由于前面已经得出一个后验方差，因此，上面又可以写成： <span class="math display">\[\begin{aligned}
+C_{y0y0} = \hat{\sigma}^2Q
+\end{aligned}\]</span></p>
+<h4 id="未知参数的估算解的协方差">未知参数的估算解的协方差</h4>
+<p><span class="math display">\[\begin{aligned}
+\because \underline{\hat{x}} = N^{-1}A^TQ^{-1}(\underline{y}_0 - \underline{b}) \\
+\therefore C_{\hat{x}\hat{x}} = N^{-1}A^TQ^{-1}C_{y_0y_0}(N^{-1}A^TQ^{-1})^T \\
+= N^{-1}A^TQ^{-1}\hat{\sigma}^2Q(N^{-1}A^TQ^{-1})^T \\
+= \hat{\sigma}^2N^{-1}
+\end{aligned}\]</span></p>
+<h4 id="观测值的估算值的协方差">观测值的估算值的协方差</h4>
+<p><span class="math display">\[\begin{aligned}
+\because \underline{\hat{y}} = A\underline{\hat{x}} + \underline{b} \\
+\therefore C_{\hat{y}\hat{y}} = AC_{\hat{x}\hat{x}}A^T  \\
+= A\hat{\sigma}^2N^{-1}A^T
+\end{aligned}\]</span></p>
+<h4 id="误差的估算值的协方差">误差的估算值的协方差</h4>
+<p><span class="math display">\[\begin{aligned}
+\because \underline{\hat{\varepsilon}} = \underline{y}_0 - \underline{\hat{y}} \\
+\therefore C_{\hat{\varepsilon}\hat{\varepsilon}} = C_{y0y0} -  C_{\hat{y}\hat{y}} \\
+= \hat{\sigma}^2Q - A\hat{\sigma}^2N^{-1}A^T \\
+= \hat{\sigma}^2(Q-AN^{-1}A^T)
+\end{aligned}\]</span></p>
+<h2 id="置信度评估">置信度评估</h2>
+<h3 id="全局测试">全局测试</h3>
+<ol type="1">
+<li>做出假设 <span class="math display">\[H_0: \hat{\sigma}^2=\sigma^2\]</span></li>
+<li>计算：<span class="math inline">\(\frac{\hat{\sigma}^2}{\sigma^2}(m-n)\backsim\chi^2_{exp}\)</span></li>
+<li>查询卡方分布表：<span class="math inline">\(\chi^2_{lim}=\chi^2_{(m-n)}(\alpha)\)</span></li>
+<li>如果 <span class="math inline">\(\chi^2_{exp}\le\chi^2_{lim}\)</span>，则接受假设；如果 <span class="math inline">\(\chi^2_{exp}\gt\chi^2_{lim}\)</span>，则拒绝假设。</li>
+</ol>
+<h3 id="局部测试">局部测试</h3>
+<p>用以识别异常值（outliers）。</p>
+<ol type="1">
+<li>做出假设 <span class="math display">\[\frac{\hat{\varepsilon_i}}{\sigma_{\varepsilon_i}} = \tau_{exp} \sim \tau_{(m-n)}\]</span></li>
+<li>计算 <span class="math inline">\(\tau_{exp}\)</span>，其中 <span class="math inline">\(\sigma_{\varepsilon_i}=\hat{\sigma}\sqrt{C_{\hat{\varepsilon}\hat{\varepsilon}}(i,i)}\)</span></li>
+<li>查询 T 分布表：<span class="math inline">\(\tau_{lim}=\tau_{(m-n)}(\frac{\alpha}{2})\)</span></li>
+<li>如果 <span class="math inline">\(|\tau_{exp}|\le\tau^2_{lim}\)</span>，则接受假设；如果 <span class="math inline">\(|\tau_{exp}|\gt\tau^2_{lim}\)</span>，则拒绝假设。</li>
+<li>不满足假设的观测值即为异常者。将其移除后，重复整个过程。</li>
+</ol>
+]]></content>
+      <categories>
+        <category>GIS</category>
+      </categories>
+      <tags>
+        <tag>GDA</tag>
+        <tag>GIS</tag>
       </tags>
   </entry>
   <entry>
@@ -1547,6 +1677,24 @@ ln{\frac{1}{2}} &amp;= -\widetilde{\alpha}(|\bar{\tau }|) \\
       </tags>
   </entry>
   <entry>
+    <title>Go|踩坑不完全记录之panic</title>
+    <url>/2018/05/09/golang%E7%9A%84%E8%B8%A9%E5%9D%91%E4%B8%8D%E5%AE%8C%E5%85%A8%E8%AE%B0%E5%BD%95%E4%B9%8Bpanic/</url>
+    <content><![CDATA[<p>根据 <a href="https://golang.org/ref/spec#Handling_panics">go spec</a> 中对于处理 panic 的描述： &gt; 当执行一个函数 <code>F</code> 时，显式调用 <code>panic</code> 或者运行时的 panic 都会终止函数 <code>F</code> 的执行。此时，函数 <code>F</code> 中 defer 的函数会照常执行。接下来，执行函数 <code>F</code> 的调用者中 defer 的函数，依此执行至<strong>当前 goroutine</strong> 顶层 defer 的函数。执行完后，退出程序，并报告异常（包括 <code>panic</code> 函数的值）</p>
+<p>换句话说，当 panic 出现时，会沿调用堆栈向上执行 defer 函数。这里要特别特别特别注意的是，只会执行<strong>当前 goroutine</strong> 的调用堆栈。也就是说，生成该 goroutine 的那个 goroutine 的 defer 函数是不会执行的！！！！</p>
+<p>有点绕口，我们看个例子：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;time&quot;</span></span><br><span class="line">	<span class="string">&quot;errors&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">exception</span><span class="params">()</span></span>&#123;</span><br><span class="line">	<span class="keyword">defer</span> fmt.Println(<span class="string">&quot;exception exits&quot;</span>)</span><br><span class="line">	time.Sleep(time.Second/<span class="number">10</span>)</span><br><span class="line">	<span class="built_in">panic</span>(errors.New(<span class="string">&quot;throw something&quot;</span>))</span><br><span class="line">	fmt.Println(<span class="string">&quot;never executed&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;test begins&quot;</span>)</span><br><span class="line">	<span class="keyword">defer</span> fmt.Println(<span class="string">&quot;test ends&quot;</span>)</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span>&#123;</span><br><span class="line">		<span class="keyword">if</span> err:=<span class="built_in">recover</span>(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">			fmt.Println(<span class="string">&quot;catch a panic:&quot;</span>, err)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">go</span> exception()</span><br><span class="line">	time.Sleep(time.Second)</span><br><span class="line">	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的代码很简单。<code>exception</code> 函数首先 defer 一句退出日志，然后休眠 0.1s 后，抛出一个 panic。在主函数中，我们也 defer 一句退出日志，接着 defer 一个匿名函数，用于捕获 panic。然后，利用 <code>exception</code> 函数创建一个 goroutine，最后休眠 1s 等待 <code>exception</code> 函数执行完成。</p>
+<p>上述代码的目的是，在主 goroutine 中能够处理另一个 goroutine 的 panic。然而，运行结果却与之相悖： <figure class="highlight subunit"><table><tr><td class="code"><pre><span class="line"><span class="keyword">test </span>begins</span><br><span class="line">exception exits</span><br><span class="line">panic: throw something</span><br><span class="line"></span><br><span class="line">goroutine 5 [running]:</span><br><span class="line">main.exception()</span><br><span class="line">	/tmp/sandbox343049822/main.go:12 <span class="string">+0</span>x180</span><br><span class="line">created by main.main</span><br><span class="line">	/tmp/sandbox343049822/main.go:23 <span class="string">+0</span>x100</span><br></pre></td></tr></table></figure> 在上面的输出中，函数 <code>exception</code> 执行到 <code>panic</code> 处时，并没有继续执行下去，而是开始执行 defer 的函数。接着，抵达当前 goroutine （id=5）的顶部后，退出程序，并抛出异常信息。此时，main goroutine 中 defer 的函数并没有执行。</p>
+<p>一句话总结：<strong>只能在当前 goroutine 处理 panic，不能在当前 goroutine 处理其他 goroutine 产生的 panic！</strong></p>
+]]></content>
+      <categories>
+        <category>golang</category>
+      </categories>
+      <tags>
+        <tag>Golang</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Go|踩坑不完全记录之channel</title>
     <url>/2018/09/03/golang%E7%9A%84%E8%B8%A9%E5%9D%91%E4%B8%8D%E5%AE%8C%E5%85%A8%E8%AE%B0%E5%BD%95%E4%B9%8Bchannel/</url>
     <content><![CDATA[<p>channel 是 golang 并发编程的极其重要的组成部分之一。但是关于 channel 的一些特性，如果不熟记于心，那么，可是会陷入莫名其妙的问题中无法自拔。下面，是关于 channel 你可能会踩到的雷……</p>
@@ -1564,24 +1712,6 @@ ln{\frac{1}{2}} &amp;= -\widetilde{\alpha}(|\bar{\tau }|) \\
 <li><a href="https://www.godesignpatterns.com/2014/05/nil-channels-always-block.html">Nil Channels Always Block</a></li>
 <li><a href="https://xiaozhou.net/something-about-range-of-go-2016-04-10.html">聊聊Go中的Range关键字</a></li>
 </ul>
-]]></content>
-      <categories>
-        <category>golang</category>
-      </categories>
-      <tags>
-        <tag>Golang</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Go|踩坑不完全记录之panic</title>
-    <url>/2018/05/09/golang%E7%9A%84%E8%B8%A9%E5%9D%91%E4%B8%8D%E5%AE%8C%E5%85%A8%E8%AE%B0%E5%BD%95%E4%B9%8Bpanic/</url>
-    <content><![CDATA[<p>根据 <a href="https://golang.org/ref/spec#Handling_panics">go spec</a> 中对于处理 panic 的描述： &gt; 当执行一个函数 <code>F</code> 时，显式调用 <code>panic</code> 或者运行时的 panic 都会终止函数 <code>F</code> 的执行。此时，函数 <code>F</code> 中 defer 的函数会照常执行。接下来，执行函数 <code>F</code> 的调用者中 defer 的函数，依此执行至<strong>当前 goroutine</strong> 顶层 defer 的函数。执行完后，退出程序，并报告异常（包括 <code>panic</code> 函数的值）</p>
-<p>换句话说，当 panic 出现时，会沿调用堆栈向上执行 defer 函数。这里要特别特别特别注意的是，只会执行<strong>当前 goroutine</strong> 的调用堆栈。也就是说，生成该 goroutine 的那个 goroutine 的 defer 函数是不会执行的！！！！</p>
-<p>有点绕口，我们看个例子：</p>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;time&quot;</span></span><br><span class="line">	<span class="string">&quot;errors&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">exception</span><span class="params">()</span></span>&#123;</span><br><span class="line">	<span class="keyword">defer</span> fmt.Println(<span class="string">&quot;exception exits&quot;</span>)</span><br><span class="line">	time.Sleep(time.Second/<span class="number">10</span>)</span><br><span class="line">	<span class="built_in">panic</span>(errors.New(<span class="string">&quot;throw something&quot;</span>))</span><br><span class="line">	fmt.Println(<span class="string">&quot;never executed&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">	fmt.Println(<span class="string">&quot;test begins&quot;</span>)</span><br><span class="line">	<span class="keyword">defer</span> fmt.Println(<span class="string">&quot;test ends&quot;</span>)</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span>&#123;</span><br><span class="line">		<span class="keyword">if</span> err:=<span class="built_in">recover</span>(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">			fmt.Println(<span class="string">&quot;catch a panic:&quot;</span>, err)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;()</span><br><span class="line">	<span class="keyword">go</span> exception()</span><br><span class="line">	time.Sleep(time.Second)</span><br><span class="line">	</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上面的代码很简单。<code>exception</code> 函数首先 defer 一句退出日志，然后休眠 0.1s 后，抛出一个 panic。在主函数中，我们也 defer 一句退出日志，接着 defer 一个匿名函数，用于捕获 panic。然后，利用 <code>exception</code> 函数创建一个 goroutine，最后休眠 1s 等待 <code>exception</code> 函数执行完成。</p>
-<p>上述代码的目的是，在主 goroutine 中能够处理另一个 goroutine 的 panic。然而，运行结果却与之相悖： <figure class="highlight subunit"><table><tr><td class="code"><pre><span class="line"><span class="keyword">test </span>begins</span><br><span class="line">exception exits</span><br><span class="line">panic: throw something</span><br><span class="line"></span><br><span class="line">goroutine 5 [running]:</span><br><span class="line">main.exception()</span><br><span class="line">	/tmp/sandbox343049822/main.go:12 <span class="string">+0</span>x180</span><br><span class="line">created by main.main</span><br><span class="line">	/tmp/sandbox343049822/main.go:23 <span class="string">+0</span>x100</span><br></pre></td></tr></table></figure> 在上面的输出中，函数 <code>exception</code> 执行到 <code>panic</code> 处时，并没有继续执行下去，而是开始执行 defer 的函数。接着，抵达当前 goroutine （id=5）的顶部后，退出程序，并抛出异常信息。此时，main goroutine 中 defer 的函数并没有执行。</p>
-<p>一句话总结：<strong>只能在当前 goroutine 处理 panic，不能在当前 goroutine 处理其他 goroutine 产生的 panic！</strong></p>
 ]]></content>
       <categories>
         <category>golang</category>
@@ -1632,52 +1762,6 @@ ln{\frac{1}{2}} &amp;= -\widetilde{\alpha}(|\bar{\tau }|) \\
         <tag>HelloWorld</tag>
         <tag>Chrome</tag>
         <tag>Web</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>我的年度读书报告生成攻略：第二部分</title>
-    <url>/2019/01/14/how_to_generate_annual_read_report_part2/</url>
-    <content><![CDATA[<p>上一个部分解释了如何根据目标获取数据源，接下来，可以对已读图书清单进行分析了。</p>
-<h2 id="获取指定年度的数据">获取指定年度的数据</h2>
-<p>因为我们是对某个年度进行分析，所以需要将特定年度的数据筛选出来。这里，先将数据读进 <code>pandas.DataFrame</code> 中：</p>
-<figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">from</span> pandas <span class="keyword">import</span> DataFrame, Series</span><br><span class="line"></span><br><span class="line">path = <span class="string">&#x27;item.json&#x27;</span></span><br><span class="line"><span class="comment"># read</span></span><br><span class="line">records = [json.loads(line.strip().strip(<span class="string">&quot;,&quot;</span>)) <span class="keyword">for</span> line <span class="keyword">in</span> <span class="built_in">open</span>(path)]</span><br><span class="line">df = DataFrame(records)</span><br><span class="line">print(df.head(<span class="number">1</span>))</span><br></pre></td></tr></table></figure>
-<p>已读日期保存在 <code>readDate</code> 中，而这个数据的类型是 <code>object</code>，值格式诸如 <code>2018-12-06\n      读过</code>。因此我们需要将其转换成 datetime，以便于提取：</p>
-<figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 提取有效已读日期</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">valid_read_date</span>(<span class="params">d</span>):</span></span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(d) &gt; <span class="number">0</span>:</span><br><span class="line">        tmp = d.split(<span class="string">&quot;\n&quot;</span>)</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">len</span>(tmp) &gt; <span class="number">0</span>:</span><br><span class="line">            <span class="keyword">return</span> tmp[<span class="number">0</span>].strip()</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;Missing&quot;</span></span><br><span class="line"></span><br><span class="line">df[<span class="string">&#x27;readDate&#x27;</span>] = df[<span class="string">&#x27;readDate&#x27;</span>].apply(valid_read_date)</span><br><span class="line"><span class="comment">#print(df[&#x27;readDate&#x27;].head())</span></span><br><span class="line">df[<span class="string">&#x27;readDate&#x27;</span>] = pd.to_datetime(df[<span class="string">&#x27;readDate&#x27;</span>])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置已读日期为索引</span></span><br><span class="line">df = df.set_index(<span class="string">&#x27;readDate&#x27;</span>)</span><br></pre></td></tr></table></figure>
-<p>处理后，如果我们想获取的是 2018 的数据，就可以像下面这样直接获得： <figure class="highlight py"><table><tr><td class="code"><pre><span class="line">df_2018 = df[<span class="string">&#x27;2018&#x27;</span>]</span><br></pre></td></tr></table></figure> ## 哪些书籍评分最高，哪些书籍令人大失所望</p>
-<p>拿到了指定年份的数据后，我们就可以着手分析了。</p>
-<p>每本书的评分信息存储在 <code>rating</code> 字段中。其中，<code>rating5-t</code> 表示五星，<code>rating4-t</code> 表示四星，以此类推。为了方便，我们可以定义一个映射表，又来规整下数据： <figure class="highlight py"><table><tr><td class="code"><pre><span class="line">mapping = &#123;</span><br><span class="line">    <span class="string">&quot;rating5-t&quot;</span>: <span class="string">&quot;5.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;rating4-t&quot;</span>: <span class="string">&quot;4.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;rating3-t&quot;</span>: <span class="string">&quot;3.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;rating2-t&quot;</span>: <span class="string">&quot;2.0&quot;</span>,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 然后就可以绘制饼图来看下每个评分占的比例了。 <figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">rating_count</span>(<span class="params">df, path=<span class="string">&quot;&quot;</span></span>):</span></span><br><span class="line">    <span class="comment"># 给缺失或未知对评分填上替代值</span></span><br><span class="line">    clean_rating = df[<span class="string">&#x27;rating&#x27;</span>].fillna(<span class="string">&#x27;Missing&#x27;</span>)</span><br><span class="line">    clean_rating[clean_rating == <span class="string">&#x27;date&#x27;</span>] = <span class="string">&#x27;Missing&#x27;</span></span><br><span class="line">    clean_rating[clean_rating == <span class="string">&#x27;&#x27;</span>] = <span class="string">&#x27;Unknown&#x27;</span></span><br><span class="line">    <span class="keyword">for</span> k, v <span class="keyword">in</span> mapping.items():</span><br><span class="line">        clean_rating[clean_rating == k] = v</span><br><span class="line">    rating_counts = clean_rating.value_counts()</span><br><span class="line">    <span class="comment"># 绘图</span></span><br><span class="line">    rc = rating_counts.plot(kind=<span class="string">&#x27;pie&#x27;</span>, autopct=<span class="string">&#x27;%.2f&#x27;</span>, figsize=(<span class="number">8</span>,<span class="number">8</span>))</span><br><span class="line">    <span class="keyword">if</span> path:</span><br><span class="line">        fig = rc.get_figure()</span><br><span class="line">        fig.savefig(path)</span><br><span class="line"></span><br><span class="line">rating_count(df_2018)</span><br></pre></td></tr></table></figure> 执行后得到：</p>
-<p><img src="/img/rating_count_2018.png" /></p>
-<p>从绘制出来的图可以看出，2018 年评为四星的书最多，五星的书次之，而最低评级为两星。可以查看具体哪些书强推，那些书令人大失所望：</p>
-<figure class="highlight py"><table><tr><td class="code"><pre><span class="line">print(<span class="string">&quot;rating 5:\n&quot;</span>, df_2018[df_2018[<span class="string">&quot;rating&quot;</span>] == <span class="string">&#x27;rating5-t&#x27;</span>][[<span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;catagory&#x27;</span>]])</span><br><span class="line">print()</span><br><span class="line">print(<span class="string">&quot;rating 2:\n&quot;</span>, df_2018[df_2018[<span class="string">&quot;rating&quot;</span>] == <span class="string">&#x27;rating2-t&#x27;</span>][[<span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;catagory&#x27;</span>]])</span><br></pre></td></tr></table></figure>
-<h2 id="一年中都看了什么类型的书">一年中都看了什么类型的书？</h2>
-<p>为了检查下已阅书籍有没有达到计划中的“博览”，需要检查下类别情况。</p>
-<p>从上一篇文章中，我们知道，类别数据可以从 <code>catagory</code> 字段取得。因为该字段的格式有如 <code>文学(1)</code>，因此我们需要对其进行清理，去掉括号，以便统计：</p>
-<figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">clear_catagory</span>(<span class="params">c</span>):</span></span><br><span class="line">    <span class="keyword">if</span> <span class="string">&quot;(&quot;</span> <span class="keyword">in</span> c:</span><br><span class="line">        <span class="keyword">return</span> c[:c.index(<span class="string">&quot;(&quot;</span>)]</span><br><span class="line">    <span class="keyword">return</span> c</span><br><span class="line"></span><br><span class="line">df_2018[<span class="string">&quot;catagory&quot;</span>] = df_2018[<span class="string">&quot;catagory&quot;</span>].apply(clear_catagory)</span><br></pre></td></tr></table></figure>
-<p>然后就可以像评级信息那样绘制饼图了：</p>
-<figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plot</span><br><span class="line"> </span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt <span class="comment"># 引入matplotlib包</span></span><br><span class="line">plt.rcParams[<span class="string">&#x27;font.sans-serif&#x27;</span>]=[<span class="string">&#x27;SimHei&#x27;</span>]<span class="comment"># 设置加载的字体名</span></span><br><span class="line">plt.rcParams[<span class="string">&#x27;axes.unicode_minus&#x27;</span>]=<span class="literal">False</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 对类别进行计数</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">catagory_count</span>(<span class="params">df, path=<span class="string">&quot;&quot;</span></span>):</span></span><br><span class="line">    <span class="comment"># 给缺失或未知对类别填上替代值</span></span><br><span class="line">    clean_catagory = df[<span class="string">&#x27;catagory&#x27;</span>].fillna(<span class="string">&#x27;Missing&#x27;</span>)</span><br><span class="line">    clean_catagory[clean_catagory == <span class="string">&#x27;&#x27;</span>] = <span class="string">&#x27;Unknown&#x27;</span></span><br><span class="line">    clean_catagory[clean_catagory == <span class="string">&#x27;not found&#x27;</span>] = <span class="string">u&#x27;文学&#x27;</span></span><br><span class="line">    catagory_counts = clean_catagory.value_counts()</span><br><span class="line">    <span class="comment"># 绘图</span></span><br><span class="line">    cc = catagory_counts.plot(kind=<span class="string">&#x27;pie&#x27;</span>, autopct=<span class="string">&#x27;%.2f&#x27;</span>, figsize=(<span class="number">8</span>,<span class="number">8</span>))</span><br><span class="line">    <span class="keyword">if</span> path:</span><br><span class="line">        fig = cc.get_figure()</span><br><span class="line">        fig.savefig(path)</span><br><span class="line">    </span><br><span class="line">catagory_count(df_2018)</span><br></pre></td></tr></table></figure>
-<p>执行后得到：</p>
-<p><img src="/img/catagory_count_2018.png" /></p>
-<p>根据上面的图可以得出，2018 涉猎的领域确实有所增加。</p>
-<h2 id="查看标签情况">查看标签情况</h2>
-<p>类别信息有时过于泛泛，例如上面文学类占了一半有余，但是却无法直观的看出所阅书籍的具体情况。此时标签信息就派上用场了。</p>
-<p>照例，因为 <code>tags</code> 字段是像 <code>标签: 绘本 生活 治愈</code> 这样的字符串信息，所以我们需要将无效的<code>“标签: ”</code>部分移除。另外，为了便于统计，我们还需要将其转换为列表：</p>
-<figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">clear_tag</span>(<span class="params">v</span>):</span></span><br><span class="line">    res = []</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> v:</span><br><span class="line">        <span class="keyword">return</span> res</span><br><span class="line"></span><br><span class="line">    items = v.split(<span class="string">&quot; &quot;</span>)</span><br><span class="line">    <span class="keyword">for</span> k <span class="keyword">in</span> items:</span><br><span class="line">        <span class="keyword">if</span> k.startswith(<span class="string">&quot;标签&quot;</span>):</span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line">        res.append(k.strip())</span><br><span class="line">    <span class="keyword">return</span> res</span><br><span class="line">df_2018[<span class="string">&quot;tags&quot;</span>] = df_2018[<span class="string">&quot;tags&quot;</span>].apply(clear_tag)</span><br></pre></td></tr></table></figure>
-<p>这样，我们就可以对标签信息进行统计并生成词云了。这里，词云使用 <code>wordcloud</code> 库来生成：</p>
-<figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> pandas <span class="keyword">import</span> Series</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">list_count</span>(<span class="params">s</span>):</span></span><br><span class="line">    lc = s.apply(<span class="keyword">lambda</span> x: Series(x).value_counts()).<span class="built_in">sum</span>()</span><br><span class="line">    stat = lc.iteritems()</span><br><span class="line">    <span class="keyword">return</span> &#123;x[<span class="number">0</span>]: x[<span class="number">1</span>] <span class="keyword">for</span> x <span class="keyword">in</span> stat&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成词云</span></span><br><span class="line"><span class="keyword">from</span> wordcloud <span class="keyword">import</span> WordCloud</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">word_cloud_gen</span>(<span class="params">d, save_to=<span class="string">&quot;wordcloud.png&quot;</span></span>):</span></span><br><span class="line">    <span class="comment"># Generate a word cloud image</span></span><br><span class="line">    wordcloud = WordCloud(font_path=<span class="string">&quot;/System/Library/Fonts/STHeiti Medium.ttc&quot;</span>, width=<span class="number">800</span>, height=<span class="number">400</span>).fit_words(d)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Display the generated image:</span></span><br><span class="line">    <span class="comment"># the matplotlib way:</span></span><br><span class="line">    <span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line">    plt.imshow(wordcloud, interpolation=<span class="string">&#x27;bilinear&#x27;</span>)</span><br><span class="line">    plt.axis(<span class="string">&quot;off&quot;</span>)</span><br><span class="line">    <span class="comment"># 保存</span></span><br><span class="line">    <span class="comment">#wordcloud.to_file(save_to)</span></span><br><span class="line"></span><br><span class="line">word_cloud_gen(list_count(df_2018[<span class="string">&quot;tags&quot;</span>]), <span class="string">&quot;wordcloud_2018.png&quot;</span>)</span><br></pre></td></tr></table></figure>
-<p>执行后得到：</p>
-<p><img src="/img/wordcloud_2018.png" /></p>
-<p>好了，2018 看的书有点奇怪 (&gt;﹏&lt;)</p>
-<h2 id="总结一下">总结一下</h2>
-<p>初尝数据分析，有献丑之嫌。但是通过这一遭，对数据分析这件事倒是增添了几分兴趣。毕竟，分析不了国家大事，可以对小我进行分析呀！</p>
-<p>希望 2019 年可以读更多好书，年终可以分析出更多东西，就酱～</p>
-]]></content>
-      <categories>
-        <category>数据分析</category>
-      </categories>
-      <tags>
-        <tag>数据分析</tag>
-        <tag>数据可视化</tag>
-        <tag>pandas</tag>
       </tags>
   </entry>
   <entry>
@@ -1862,6 +1946,52 @@ ln{\frac{1}{2}} &amp;= -\widetilde{\alpha}(|\bar{\tau }|) \\
       </tags>
   </entry>
   <entry>
+    <title>我的年度读书报告生成攻略：第二部分</title>
+    <url>/2019/01/14/how_to_generate_annual_read_report_part2/</url>
+    <content><![CDATA[<p>上一个部分解释了如何根据目标获取数据源，接下来，可以对已读图书清单进行分析了。</p>
+<h2 id="获取指定年度的数据">获取指定年度的数据</h2>
+<p>因为我们是对某个年度进行分析，所以需要将特定年度的数据筛选出来。这里，先将数据读进 <code>pandas.DataFrame</code> 中：</p>
+<figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">from</span> pandas <span class="keyword">import</span> DataFrame, Series</span><br><span class="line"></span><br><span class="line">path = <span class="string">&#x27;item.json&#x27;</span></span><br><span class="line"><span class="comment"># read</span></span><br><span class="line">records = [json.loads(line.strip().strip(<span class="string">&quot;,&quot;</span>)) <span class="keyword">for</span> line <span class="keyword">in</span> <span class="built_in">open</span>(path)]</span><br><span class="line">df = DataFrame(records)</span><br><span class="line">print(df.head(<span class="number">1</span>))</span><br></pre></td></tr></table></figure>
+<p>已读日期保存在 <code>readDate</code> 中，而这个数据的类型是 <code>object</code>，值格式诸如 <code>2018-12-06\n      读过</code>。因此我们需要将其转换成 datetime，以便于提取：</p>
+<figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 提取有效已读日期</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">valid_read_date</span>(<span class="params">d</span>):</span></span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(d) &gt; <span class="number">0</span>:</span><br><span class="line">        tmp = d.split(<span class="string">&quot;\n&quot;</span>)</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">len</span>(tmp) &gt; <span class="number">0</span>:</span><br><span class="line">            <span class="keyword">return</span> tmp[<span class="number">0</span>].strip()</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;Missing&quot;</span></span><br><span class="line"></span><br><span class="line">df[<span class="string">&#x27;readDate&#x27;</span>] = df[<span class="string">&#x27;readDate&#x27;</span>].apply(valid_read_date)</span><br><span class="line"><span class="comment">#print(df[&#x27;readDate&#x27;].head())</span></span><br><span class="line">df[<span class="string">&#x27;readDate&#x27;</span>] = pd.to_datetime(df[<span class="string">&#x27;readDate&#x27;</span>])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置已读日期为索引</span></span><br><span class="line">df = df.set_index(<span class="string">&#x27;readDate&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<p>处理后，如果我们想获取的是 2018 的数据，就可以像下面这样直接获得： <figure class="highlight py"><table><tr><td class="code"><pre><span class="line">df_2018 = df[<span class="string">&#x27;2018&#x27;</span>]</span><br></pre></td></tr></table></figure> ## 哪些书籍评分最高，哪些书籍令人大失所望</p>
+<p>拿到了指定年份的数据后，我们就可以着手分析了。</p>
+<p>每本书的评分信息存储在 <code>rating</code> 字段中。其中，<code>rating5-t</code> 表示五星，<code>rating4-t</code> 表示四星，以此类推。为了方便，我们可以定义一个映射表，又来规整下数据： <figure class="highlight py"><table><tr><td class="code"><pre><span class="line">mapping = &#123;</span><br><span class="line">    <span class="string">&quot;rating5-t&quot;</span>: <span class="string">&quot;5.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;rating4-t&quot;</span>: <span class="string">&quot;4.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;rating3-t&quot;</span>: <span class="string">&quot;3.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;rating2-t&quot;</span>: <span class="string">&quot;2.0&quot;</span>,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 然后就可以绘制饼图来看下每个评分占的比例了。 <figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">rating_count</span>(<span class="params">df, path=<span class="string">&quot;&quot;</span></span>):</span></span><br><span class="line">    <span class="comment"># 给缺失或未知对评分填上替代值</span></span><br><span class="line">    clean_rating = df[<span class="string">&#x27;rating&#x27;</span>].fillna(<span class="string">&#x27;Missing&#x27;</span>)</span><br><span class="line">    clean_rating[clean_rating == <span class="string">&#x27;date&#x27;</span>] = <span class="string">&#x27;Missing&#x27;</span></span><br><span class="line">    clean_rating[clean_rating == <span class="string">&#x27;&#x27;</span>] = <span class="string">&#x27;Unknown&#x27;</span></span><br><span class="line">    <span class="keyword">for</span> k, v <span class="keyword">in</span> mapping.items():</span><br><span class="line">        clean_rating[clean_rating == k] = v</span><br><span class="line">    rating_counts = clean_rating.value_counts()</span><br><span class="line">    <span class="comment"># 绘图</span></span><br><span class="line">    rc = rating_counts.plot(kind=<span class="string">&#x27;pie&#x27;</span>, autopct=<span class="string">&#x27;%.2f&#x27;</span>, figsize=(<span class="number">8</span>,<span class="number">8</span>))</span><br><span class="line">    <span class="keyword">if</span> path:</span><br><span class="line">        fig = rc.get_figure()</span><br><span class="line">        fig.savefig(path)</span><br><span class="line"></span><br><span class="line">rating_count(df_2018)</span><br></pre></td></tr></table></figure> 执行后得到：</p>
+<p><img src="/img/rating_count_2018.png" /></p>
+<p>从绘制出来的图可以看出，2018 年评为四星的书最多，五星的书次之，而最低评级为两星。可以查看具体哪些书强推，那些书令人大失所望：</p>
+<figure class="highlight py"><table><tr><td class="code"><pre><span class="line">print(<span class="string">&quot;rating 5:\n&quot;</span>, df_2018[df_2018[<span class="string">&quot;rating&quot;</span>] == <span class="string">&#x27;rating5-t&#x27;</span>][[<span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;catagory&#x27;</span>]])</span><br><span class="line">print()</span><br><span class="line">print(<span class="string">&quot;rating 2:\n&quot;</span>, df_2018[df_2018[<span class="string">&quot;rating&quot;</span>] == <span class="string">&#x27;rating2-t&#x27;</span>][[<span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;catagory&#x27;</span>]])</span><br></pre></td></tr></table></figure>
+<h2 id="一年中都看了什么类型的书">一年中都看了什么类型的书？</h2>
+<p>为了检查下已阅书籍有没有达到计划中的“博览”，需要检查下类别情况。</p>
+<p>从上一篇文章中，我们知道，类别数据可以从 <code>catagory</code> 字段取得。因为该字段的格式有如 <code>文学(1)</code>，因此我们需要对其进行清理，去掉括号，以便统计：</p>
+<figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">clear_catagory</span>(<span class="params">c</span>):</span></span><br><span class="line">    <span class="keyword">if</span> <span class="string">&quot;(&quot;</span> <span class="keyword">in</span> c:</span><br><span class="line">        <span class="keyword">return</span> c[:c.index(<span class="string">&quot;(&quot;</span>)]</span><br><span class="line">    <span class="keyword">return</span> c</span><br><span class="line"></span><br><span class="line">df_2018[<span class="string">&quot;catagory&quot;</span>] = df_2018[<span class="string">&quot;catagory&quot;</span>].apply(clear_catagory)</span><br></pre></td></tr></table></figure>
+<p>然后就可以像评级信息那样绘制饼图了：</p>
+<figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plot</span><br><span class="line"> </span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt <span class="comment"># 引入matplotlib包</span></span><br><span class="line">plt.rcParams[<span class="string">&#x27;font.sans-serif&#x27;</span>]=[<span class="string">&#x27;SimHei&#x27;</span>]<span class="comment"># 设置加载的字体名</span></span><br><span class="line">plt.rcParams[<span class="string">&#x27;axes.unicode_minus&#x27;</span>]=<span class="literal">False</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 对类别进行计数</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">catagory_count</span>(<span class="params">df, path=<span class="string">&quot;&quot;</span></span>):</span></span><br><span class="line">    <span class="comment"># 给缺失或未知对类别填上替代值</span></span><br><span class="line">    clean_catagory = df[<span class="string">&#x27;catagory&#x27;</span>].fillna(<span class="string">&#x27;Missing&#x27;</span>)</span><br><span class="line">    clean_catagory[clean_catagory == <span class="string">&#x27;&#x27;</span>] = <span class="string">&#x27;Unknown&#x27;</span></span><br><span class="line">    clean_catagory[clean_catagory == <span class="string">&#x27;not found&#x27;</span>] = <span class="string">u&#x27;文学&#x27;</span></span><br><span class="line">    catagory_counts = clean_catagory.value_counts()</span><br><span class="line">    <span class="comment"># 绘图</span></span><br><span class="line">    cc = catagory_counts.plot(kind=<span class="string">&#x27;pie&#x27;</span>, autopct=<span class="string">&#x27;%.2f&#x27;</span>, figsize=(<span class="number">8</span>,<span class="number">8</span>))</span><br><span class="line">    <span class="keyword">if</span> path:</span><br><span class="line">        fig = cc.get_figure()</span><br><span class="line">        fig.savefig(path)</span><br><span class="line">    </span><br><span class="line">catagory_count(df_2018)</span><br></pre></td></tr></table></figure>
+<p>执行后得到：</p>
+<p><img src="/img/catagory_count_2018.png" /></p>
+<p>根据上面的图可以得出，2018 涉猎的领域确实有所增加。</p>
+<h2 id="查看标签情况">查看标签情况</h2>
+<p>类别信息有时过于泛泛，例如上面文学类占了一半有余，但是却无法直观的看出所阅书籍的具体情况。此时标签信息就派上用场了。</p>
+<p>照例，因为 <code>tags</code> 字段是像 <code>标签: 绘本 生活 治愈</code> 这样的字符串信息，所以我们需要将无效的<code>“标签: ”</code>部分移除。另外，为了便于统计，我们还需要将其转换为列表：</p>
+<figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">clear_tag</span>(<span class="params">v</span>):</span></span><br><span class="line">    res = []</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> v:</span><br><span class="line">        <span class="keyword">return</span> res</span><br><span class="line"></span><br><span class="line">    items = v.split(<span class="string">&quot; &quot;</span>)</span><br><span class="line">    <span class="keyword">for</span> k <span class="keyword">in</span> items:</span><br><span class="line">        <span class="keyword">if</span> k.startswith(<span class="string">&quot;标签&quot;</span>):</span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line">        res.append(k.strip())</span><br><span class="line">    <span class="keyword">return</span> res</span><br><span class="line">df_2018[<span class="string">&quot;tags&quot;</span>] = df_2018[<span class="string">&quot;tags&quot;</span>].apply(clear_tag)</span><br></pre></td></tr></table></figure>
+<p>这样，我们就可以对标签信息进行统计并生成词云了。这里，词云使用 <code>wordcloud</code> 库来生成：</p>
+<figure class="highlight py"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> pandas <span class="keyword">import</span> Series</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">list_count</span>(<span class="params">s</span>):</span></span><br><span class="line">    lc = s.apply(<span class="keyword">lambda</span> x: Series(x).value_counts()).<span class="built_in">sum</span>()</span><br><span class="line">    stat = lc.iteritems()</span><br><span class="line">    <span class="keyword">return</span> &#123;x[<span class="number">0</span>]: x[<span class="number">1</span>] <span class="keyword">for</span> x <span class="keyword">in</span> stat&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成词云</span></span><br><span class="line"><span class="keyword">from</span> wordcloud <span class="keyword">import</span> WordCloud</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">word_cloud_gen</span>(<span class="params">d, save_to=<span class="string">&quot;wordcloud.png&quot;</span></span>):</span></span><br><span class="line">    <span class="comment"># Generate a word cloud image</span></span><br><span class="line">    wordcloud = WordCloud(font_path=<span class="string">&quot;/System/Library/Fonts/STHeiti Medium.ttc&quot;</span>, width=<span class="number">800</span>, height=<span class="number">400</span>).fit_words(d)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Display the generated image:</span></span><br><span class="line">    <span class="comment"># the matplotlib way:</span></span><br><span class="line">    <span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line">    plt.imshow(wordcloud, interpolation=<span class="string">&#x27;bilinear&#x27;</span>)</span><br><span class="line">    plt.axis(<span class="string">&quot;off&quot;</span>)</span><br><span class="line">    <span class="comment"># 保存</span></span><br><span class="line">    <span class="comment">#wordcloud.to_file(save_to)</span></span><br><span class="line"></span><br><span class="line">word_cloud_gen(list_count(df_2018[<span class="string">&quot;tags&quot;</span>]), <span class="string">&quot;wordcloud_2018.png&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>执行后得到：</p>
+<p><img src="/img/wordcloud_2018.png" /></p>
+<p>好了，2018 看的书有点奇怪 (&gt;﹏&lt;)</p>
+<h2 id="总结一下">总结一下</h2>
+<p>初尝数据分析，有献丑之嫌。但是通过这一遭，对数据分析这件事倒是增添了几分兴趣。毕竟，分析不了国家大事，可以对小我进行分析呀！</p>
+<p>希望 2019 年可以读更多好书，年终可以分析出更多东西，就酱～</p>
+]]></content>
+      <categories>
+        <category>数据分析</category>
+      </categories>
+      <tags>
+        <tag>数据分析</tag>
+        <tag>数据可视化</tag>
+        <tag>pandas</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>uwsgi代码小札|gracefully reload之从停止说起</title>
     <url>/2017/02/27/uwsgi%E4%BB%A3%E7%A0%81%E5%B0%8F%E6%9C%AD-gracefully-reload%E4%B9%8B%E4%BB%8E%E5%81%9C%E6%AD%A2%E8%AF%B4%E8%B5%B7/</url>
     <content><![CDATA[<blockquote>
@@ -1961,6 +2091,123 @@ ln{\frac{1}{2}} &amp;= -\widetilde{\alpha}(|\bar{\tau }|) \\
       <tags>
         <tag>读代码</tag>
         <tag>uWSGI</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>译|interface 和反射的关系</title>
+    <url>/2018/12/22/%E3%80%90%E8%AF%91%E3%80%91interface-%E5%92%8C%E5%8F%8D%E5%B0%84%E7%9A%84%E5%85%B3%E7%B3%BB/</url>
+    <content><![CDATA[<p>原文：<a href="https://blog.gopheracademy.com/advent-2018/interfaces-and-reflect/">The Relationship Between Interfaces and Reflection</a></p>
+<hr />
+<p>interface 是 Go 中抽象的基本工具之一。在给 interface 赋值时，interface 会存储类型信息。反射（reflection）是一种在运行时检查类型和值信息的方法。</p>
+<p>Go 通过 <code>reflect</code> 包实现了反射，该包提供了检查 interface 结构元素甚至是运行时修改值的类型和方法。</p>
+<p>在这篇文章中，我希望说明 interface 结构的各个部分与 reflect API 的关系，并最终让 reflect 包的使用更方便！</p>
+<h1 id="为-interface-赋值">为 interface 赋值</h1>
+<p>interface 编码了三个东西：值、方法集和所存储值的类型。</p>
+<p>interface 的结构如下所示：</p>
+<figure>
+<img src="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/interface.svg" alt="interface-diagram" /><figcaption aria-hidden="true">interface-diagram</figcaption>
+</figure>
+<p>在该图中，我们可以清楚地看到 interface 的三个部分：<code>_type</code> 是类型信息，<code>*data</code> 是一个指向实际值的指针，而 <code>itab</code> 对方法集进行了编码。</p>
+<p>当一个函数有一个 interface 参数时，将值传递给该函数会将值、方法集和类型打包到 interface 中。</p>
+<h1 id="利用-reflect-包在运行时检查-interface-数据">利用 reflect 包，在运行时检查 interface 数据</h1>
+<p>一旦一个值被存储在 interface 中，就可以使用 <code>reflect</code> 包来检查其各个部分。我们无法直接检查 interface 结构；而 reflect 包维护了让我们有权访问的 interface 结构的副本。</p>
+<p>虽然我们可以通过 reflect 对象访问 interface，但是它与底层的 interface 有直接关联。</p>
+<p><code>reflect.Type</code> 和 <code>reflect.Value</code> 类型提供了访问 interface 组成部分的方法。</p>
+<p><code>reflect.Type</code> 侧重于公开与类型相关的数据，因此它仅限于 interface 结构的 <code>_type</code> 部分；而 <code>reflect.Value</code> 必须将类型信息与值相结合，以允许程序员检查和操作值，因此该类型必须查看 <code>_type</code> 以及 <code>data</code>。</p>
+<h2 id="reflect.type---检查类型">reflect.Type - 检查类型</h2>
+<p><code>reflect.TypeOf()</code> 函数用于提取一个值的类型信息。由于它唯一的参数是一个空的 interface，因此传递给该函数的值将被赋给一个 interface，故而可以拿到类型、方法集和值。</p>
+<p><code>reflect.TypeOf()</code> 返回一个 <code>reflect.Type</code>，它提供了让你检查值类型的方法。</p>
+<p>下面是一些可用的 <code>Type</code> 方法，以及和它们的返回相对应的 interface 结构信息。</p>
+<figure>
+<img src="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/reflect-type.svg" alt="reflect-type-diagram" /><figcaption aria-hidden="true">reflect-type-diagram</figcaption>
+</figure>
+<h3 id="reflect.type-使用示例"><code>reflect.Type</code> 使用示例</h3>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line">    </span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	<span class="string">&quot;reflect&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Gift <span class="keyword">struct</span> &#123;</span><br><span class="line">	Sender    <span class="keyword">string</span></span><br><span class="line">	Recipient <span class="keyword">string</span></span><br><span class="line">	Number    <span class="keyword">uint</span></span><br><span class="line">	Contents  <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	g := Gift&#123;</span><br><span class="line">		Sender:    <span class="string">&quot;Hank&quot;</span>,</span><br><span class="line">		Recipient: <span class="string">&quot;Sue&quot;</span>,</span><br><span class="line">		Number:    <span class="number">1</span>,</span><br><span class="line">		Contents:  <span class="string">&quot;Scarf&quot;</span>,</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	t := reflect.TypeOf(g)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> kind := t.Kind(); kind != reflect.Struct &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;This program expects to work on a struct; we got a %v instead.&quot;</span>, kind)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; t.NumField(); i++ &#123;</span><br><span class="line">		f := t.Field(i)</span><br><span class="line">		log.Printf(<span class="string">&quot;Field %03d: %-10.10s %v&quot;</span>, i, f.Name, f.Type.Kind())</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该程序的目的是打印 <code>Gift</code> 结构中的字段。当把 <code>g</code> 值传递给 <code>reflect.TypeOf()</code> 时，<code>g</code> 被赋给一个 interface，此时编译器会使用类型和方法集信息来填充它。这使得我们可以遍历该 interface 结构的类型部分的 <code>[]fields</code> 字段，得到以下输出：</p>
+<figure class="highlight apache"><table><tr><td class="code"><pre><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> Field <span class="number">000</span>: Sender     string</span><br><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> Field <span class="number">001</span>: Recipient  string</span><br><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> Field <span class="number">002</span>: Number     uint</span><br><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> Field <span class="number">003</span>: Contents   string</span><br></pre></td></tr></table></figure>
+<h2 id="reflect.method---检查-itab-方法集">reflect.Method - 检查 itab / 方法集</h2>
+<p><code>reflect.Type</code> 类型还允许你访问 <code>itab</code> 的组成部分，提取 interface 的方法信息。</p>
+<figure>
+<img src="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/reflect-method.svg" alt="reflect-method-diagram" /><figcaption aria-hidden="true">reflect-method-diagram</figcaption>
+</figure>
+<h3 id="使用-reflect-检查方法">使用 reflect 检查方法</h3>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line">    </span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	<span class="string">&quot;reflect&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Reindeer <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r Reindeer)</span> <span class="title">TakeOff</span><span class="params">()</span></span> &#123;</span><br><span class="line">	log.Printf(<span class="string">&quot;%q lifts off.&quot;</span>, r)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r Reindeer)</span> <span class="title">Land</span><span class="params">()</span></span> &#123;</span><br><span class="line">	log.Printf(<span class="string">&quot;%q gently lands.&quot;</span>, r)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r Reindeer)</span> <span class="title">ToggleNose</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> r != <span class="string">&quot;rudolph&quot;</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(<span class="string">&quot;invalid reindeer operation&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	log.Printf(<span class="string">&quot;%q nose changes state.&quot;</span>, r)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	r := Reindeer(<span class="string">&quot;rudolph&quot;</span>)</span><br><span class="line"></span><br><span class="line">	t := reflect.TypeOf(r)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; t.NumMethod(); i++ &#123;</span><br><span class="line">		m := t.Method(i)</span><br><span class="line">		log.Printf(<span class="string">&quot;%s&quot;</span>, m.Name)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该代码遍历了存储在 <code>itab</code> 中的所有函数数据，然后展示每个方法的名字： <figure class="highlight apache"><table><tr><td class="code"><pre><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> Land</span><br><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> TakeOff</span><br><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> ToggleNose</span><br></pre></td></tr></table></figure> ## reflect.Value - 检查值</p>
+<p>目前为止，我们只讨论了类型信息 —— 字段、方法等等。而 <code>reflect.Value</code> 为我们提供了 interface 中所存储的实际值的信息。</p>
+<p>与 <code>reflect.Value</code> 相关联的方法必须结合类型信息和实际值。例如，为了从结构中提取字段，reflect 包必须结合结构布局信息（特别是存储在 <code>_type</code> 中的字段和字段偏移量），以及 interface 的 <code>*data</code> 部分指向的实际值，以实现正确的结构解码。</p>
+<figure>
+<img src="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/reflect-value.svg" alt="reflect-value-diagram" /><figcaption aria-hidden="true">reflect-value-diagram</figcaption>
+</figure>
+<h3 id="示例查看修改值">示例：查看修改值</h3>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	<span class="string">&quot;reflect&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Child <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name  <span class="keyword">string</span></span><br><span class="line">	Grade <span class="keyword">int</span></span><br><span class="line">	Nice  <span class="keyword">bool</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Adult <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name       <span class="keyword">string</span></span><br><span class="line">	Occupation <span class="keyword">string</span></span><br><span class="line">	Nice       <span class="keyword">bool</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// search a slice of structs for Name field that is &quot;Hank&quot; and set its Nice</span></span><br><span class="line"><span class="comment">// field to true.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">nice</span><span class="params">(i <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="comment">// retrieve the underlying value of i.  we know that i is an</span></span><br><span class="line">	<span class="comment">// interface.</span></span><br><span class="line">	v := reflect.ValueOf(i)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// we&#x27;re only interested in slices to let&#x27;s check what kind of value v is. if</span></span><br><span class="line">	<span class="comment">// it isn&#x27;t a slice, return immediately.</span></span><br><span class="line">	<span class="keyword">if</span> v.Kind() != reflect.Slice &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// v is a slice.  now let&#x27;s ensure that it is a slice of structs.  if not,</span></span><br><span class="line">	<span class="comment">// return immediately.</span></span><br><span class="line">	<span class="keyword">if</span> e := v.Type().Elem(); e.Kind() != reflect.Struct &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// determine if our struct has a Name field of type string and a Nice field</span></span><br><span class="line">	<span class="comment">// of type bool</span></span><br><span class="line">	st := v.Type().Elem()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> nameField, found := st.FieldByName(<span class="string">&quot;Name&quot;</span>); found == <span class="literal">false</span> || nameField.Type.Kind() != reflect.String &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> niceField, found := st.FieldByName(<span class="string">&quot;Nice&quot;</span>); found == <span class="literal">false</span> || niceField.Type.Kind() != reflect.Bool &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Set any Nice fields to true where the Name is &quot;Hank&quot;</span></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; v.Len(); i++ &#123;</span><br><span class="line">		e := v.Index(i)</span><br><span class="line">		name := e.FieldByName(<span class="string">&quot;Name&quot;</span>)</span><br><span class="line">		nice := e.FieldByName(<span class="string">&quot;Nice&quot;</span>)</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> name.String() == <span class="string">&quot;Hank&quot;</span> &#123;</span><br><span class="line">			nice.SetBool(<span class="literal">true</span>)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	children := []Child&#123;</span><br><span class="line">		&#123;Name: <span class="string">&quot;Sue&quot;</span>, Grade: <span class="number">1</span>, Nice: <span class="literal">true</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Ava&quot;</span>, Grade: <span class="number">3</span>, Nice: <span class="literal">true</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Hank&quot;</span>, Grade: <span class="number">6</span>, Nice: <span class="literal">false</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Nancy&quot;</span>, Grade: <span class="number">5</span>, Nice: <span class="literal">true</span>&#125;,</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	adults := []Adult&#123;</span><br><span class="line">		&#123;Name: <span class="string">&quot;Bob&quot;</span>, Occupation: <span class="string">&quot;Carpenter&quot;</span>, Nice: <span class="literal">true</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Steve&quot;</span>, Occupation: <span class="string">&quot;Clerk&quot;</span>, Nice: <span class="literal">true</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Nikki&quot;</span>, Occupation: <span class="string">&quot;Rad Tech&quot;</span>, Nice: <span class="literal">false</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Hank&quot;</span>, Occupation: <span class="string">&quot;Go Programmer&quot;</span>, Nice: <span class="literal">false</span>&#125;,</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	log.Printf(<span class="string">&quot;adults before nice: %v&quot;</span>, adults)</span><br><span class="line">	nice(adults)</span><br><span class="line">	log.Printf(<span class="string">&quot;adults after nice: %v&quot;</span>, adults)</span><br><span class="line"></span><br><span class="line">	log.Printf(<span class="string">&quot;children before nice: %v&quot;</span>, children)</span><br><span class="line">	nice(children)</span><br><span class="line">	log.Printf(<span class="string">&quot;children after nice: %v&quot;</span>, children)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">2018/12/16 12:00:00 adults before nice:</span> [&#123;<span class="string">Bob</span> <span class="string">Carpenter</span> <span class="literal">true</span>&#125; &#123;<span class="string">Steve</span> <span class="string">Clerk</span> <span class="literal">true</span>&#125; &#123;<span class="string">Nikki</span> <span class="string">Rad</span> <span class="string">Tech</span> <span class="literal">false</span>&#125; &#123;<span class="string">Hank</span> <span class="string">Go</span> <span class="string">Programmer</span> <span class="literal">false</span>&#125;]</span><br><span class="line"><span class="attr">2018/12/16 12:00:00 adults after nice:</span> [&#123;<span class="string">Bob</span> <span class="string">Carpenter</span> <span class="literal">true</span>&#125; &#123;<span class="string">Steve</span> <span class="string">Clerk</span> <span class="literal">true</span>&#125; &#123;<span class="string">Nikki</span> <span class="string">Rad</span> <span class="string">Tech</span> <span class="literal">false</span>&#125; &#123;<span class="string">Hank</span> <span class="string">Go</span> <span class="string">Programmer</span> <span class="literal">true</span>&#125;]</span><br><span class="line"><span class="attr">2018/12/16 12:00:00 children before nice:</span> [&#123;<span class="string">Sue</span> <span class="number">1</span> <span class="literal">true</span>&#125; &#123;<span class="string">Ava</span> <span class="number">3</span> <span class="literal">true</span>&#125; &#123;<span class="string">Hank</span> <span class="number">6</span> <span class="literal">false</span>&#125; &#123;<span class="string">Nancy</span> <span class="number">5</span> <span class="literal">true</span>&#125;]</span><br><span class="line"><span class="attr">2018/12/16 12:00:00 children after nice:</span> [&#123;<span class="string">Sue</span> <span class="number">1</span> <span class="literal">true</span>&#125; &#123;<span class="string">Ava</span> <span class="number">3</span> <span class="literal">true</span>&#125; &#123;<span class="string">Hank</span> <span class="number">6</span> <span class="literal">true</span>&#125; &#123;<span class="string">Nancy</span> <span class="number">5</span> <span class="literal">true</span>&#125;]</span><br></pre></td></tr></table></figure>
+<p>在这最后一个例子中，我们将前面学到的东西结合起来，通过 <code>reflect.Value</code> 来实际修改一个值。在这个场景下，有人（可能是 Hank）写了一个 <code>nice()</code> 函数，对于切片中的任意结构项，如果名字是“Hank”的话，它会将其从淘气（naughty）切换成友好（nice）。</p>
+<p>注意：<code>nice()</code> 能够修改你传给它的任意切片的值，实际上，该函数接收到的参数类型是无关紧要的 —— 只要它是一个由结构组成的切片，并且该结构拥有 <code>Name</code> 和 <code>Nice</code> 字段。</p>
+<h1 id="总结">总结</h1>
+<p>Go 中的反射是使用 interface 和 <code>reflect</code> 包实现的。它并没有什么神奇之处：当你使用反射时，你可以直接访问一个 interface 中的各个部分以及所存储的值。</p>
+<p>通过这种方式，interface 几乎就像是镜像，允许程序进行自检。</p>
+<p>虽然 Go 是一种静态类型语言，但是反射和 interface 相结合，提供了通常是动态语言独有的非常强大的技术。</p>
+<p>有关 Go 中反射的更多信息，请务必阅读包文档，以及该主题的许多其他精彩的博客文章。</p>
+]]></content>
+      <categories>
+        <category>golang</category>
+      </categories>
+      <tags>
+        <tag>Golang</tag>
+        <tag>没事翻着玩</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>一些SQL优化技巧</title>
+    <url>/2015/11/13/%E4%B8%80%E4%BA%9BSQL%E4%BC%98%E5%8C%96%E6%8A%80%E5%B7%A7/</url>
+    <content><![CDATA[<h1 id="索引">索引</h1>
+<p>合理有效的使用索引可以提高查询效率 ## 选择合适的索引列规则 1. 选择在where子句中常用的查询列 2. 选择常用来关联表的字段 3. 对普通的B-TREE索引，应选择具有选择性高的字段做索引字段。若字段的不同取值很少，则选择性低，适合建位映射索引(效率更高，占用空间更小)。 4. 不要在经常被修改的字段上建索引。索引会降低update, insert, delete等操作的效率</p>
+<h2 id="避免在索引列上使用计算或在非基于函数的索引列上使用函数">避免在索引列上使用计算或在非基于函数的索引列上使用函数</h2>
+<ol type="1">
+<li>where子句中，若索引列是函数的一部分，优化器将不使用索引而使用全表扫描</li>
+<li>使用了<code>!=</code>, <code>|</code>, 类型转换将不使用索引</li>
+<li>要对使用函数的列启用索引，建议建基于函数的索引；也可以将计算右移</li>
+</ol>
+<h2 id="总使用索引的第一个列">总使用索引的第一个列</h2>
+<ol type="1">
+<li>若索引是复合索引，只有在它的第一个列被where子句引用时，优化器才会选择使用该索引。</li>
+</ol>
+<h1 id="顺序选择">顺序选择</h1>
+<h2 id="表名顺序">表名顺序</h2>
+<ol type="1">
+<li>ORACLE解释器按 **从右到左 的顺序处理FROM子句中的表名。</li>
+<li>在FROM子句包含多个表的情况下，应选择记录数最小的表作为基础表。</li>
+<li>若有3个以上的表，则需选择交叉表作为基础表</li>
+</ol>
+<h2 id="where子句中的连接顺序">where子句中的连接顺序</h2>
+<ol type="1">
+<li>ORACLE **自下而上 的解析where子句。表之间的连接应该写在其他where条件之前，那些可以过滤掉最大数量记录的条件应写在where子句的末尾。</li>
+</ol>
+<h1 id="更优的方法">更优的方法</h1>
+<h2 id="使用union-all而不是union">使用union all，而不是union</h2>
+<p>union = union all + 排序剔重 若不需要踢重，使用union all会节省时间，提高效率</p>
+<h2 id="使用truncate而不是delete">使用truncate，而不是delete</h2>
+<p>delete后，数据可以恢复。 而truncate后，数据不可恢复，因此很少资源被调用，执行时间也短。</p>
+<h2 id="使用where子句而不是having子句">使用where子句，而不是having子句</h2>
+<p>having语句是检索出结果后对结果集过滤。一般用于对一些聚合函数的比较</p>
+<h2 id="使用union而不是or">使用union，而不是or</h2>
+<ol type="1">
+<li>对索引列用or会造成全表扫描</li>
+<li>也可以用in替换or，更进一步，用exist替换in</li>
+</ol>
+<h1 id="其他">其他</h1>
+<ol type="1">
+<li>优化group by语句：将不需要的记录在group by之前过滤掉</li>
+<li>慎用is null：null值不在索引中，若用is null操作会使用不了索引</li>
+<li>在OLTP总是用绑定变量。例如：<code>select * from tbl where msisdn=:1</code></li>
+<li>select语句中避免出现*</li>
+</ol>
+]]></content>
+      <categories>
+        <category>DB</category>
+      </categories>
+      <tags>
+        <tag>SQL</tag>
       </tags>
   </entry>
   <entry>
@@ -2064,59 +2311,6 @@ ln{\frac{1}{2}} &amp;= -\widetilde{\alpha}(|\bar{\tau }|) \\
       </tags>
   </entry>
   <entry>
-    <title>一些SQL优化技巧</title>
-    <url>/2015/11/13/%E4%B8%80%E4%BA%9BSQL%E4%BC%98%E5%8C%96%E6%8A%80%E5%B7%A7/</url>
-    <content><![CDATA[<h1 id="索引">索引</h1>
-<p>合理有效的使用索引可以提高查询效率 ## 选择合适的索引列规则 1. 选择在where子句中常用的查询列 2. 选择常用来关联表的字段 3. 对普通的B-TREE索引，应选择具有选择性高的字段做索引字段。若字段的不同取值很少，则选择性低，适合建位映射索引(效率更高，占用空间更小)。 4. 不要在经常被修改的字段上建索引。索引会降低update, insert, delete等操作的效率</p>
-<h2 id="避免在索引列上使用计算或在非基于函数的索引列上使用函数">避免在索引列上使用计算或在非基于函数的索引列上使用函数</h2>
-<ol type="1">
-<li>where子句中，若索引列是函数的一部分，优化器将不使用索引而使用全表扫描</li>
-<li>使用了<code>!=</code>, <code>|</code>, 类型转换将不使用索引</li>
-<li>要对使用函数的列启用索引，建议建基于函数的索引；也可以将计算右移</li>
-</ol>
-<h2 id="总使用索引的第一个列">总使用索引的第一个列</h2>
-<ol type="1">
-<li>若索引是复合索引，只有在它的第一个列被where子句引用时，优化器才会选择使用该索引。</li>
-</ol>
-<h1 id="顺序选择">顺序选择</h1>
-<h2 id="表名顺序">表名顺序</h2>
-<ol type="1">
-<li>ORACLE解释器按 **从右到左 的顺序处理FROM子句中的表名。</li>
-<li>在FROM子句包含多个表的情况下，应选择记录数最小的表作为基础表。</li>
-<li>若有3个以上的表，则需选择交叉表作为基础表</li>
-</ol>
-<h2 id="where子句中的连接顺序">where子句中的连接顺序</h2>
-<ol type="1">
-<li>ORACLE **自下而上 的解析where子句。表之间的连接应该写在其他where条件之前，那些可以过滤掉最大数量记录的条件应写在where子句的末尾。</li>
-</ol>
-<h1 id="更优的方法">更优的方法</h1>
-<h2 id="使用union-all而不是union">使用union all，而不是union</h2>
-<p>union = union all + 排序剔重 若不需要踢重，使用union all会节省时间，提高效率</p>
-<h2 id="使用truncate而不是delete">使用truncate，而不是delete</h2>
-<p>delete后，数据可以恢复。 而truncate后，数据不可恢复，因此很少资源被调用，执行时间也短。</p>
-<h2 id="使用where子句而不是having子句">使用where子句，而不是having子句</h2>
-<p>having语句是检索出结果后对结果集过滤。一般用于对一些聚合函数的比较</p>
-<h2 id="使用union而不是or">使用union，而不是or</h2>
-<ol type="1">
-<li>对索引列用or会造成全表扫描</li>
-<li>也可以用in替换or，更进一步，用exist替换in</li>
-</ol>
-<h1 id="其他">其他</h1>
-<ol type="1">
-<li>优化group by语句：将不需要的记录在group by之前过滤掉</li>
-<li>慎用is null：null值不在索引中，若用is null操作会使用不了索引</li>
-<li>在OLTP总是用绑定变量。例如：<code>select * from tbl where msisdn=:1</code></li>
-<li>select语句中避免出现*</li>
-</ol>
-]]></content>
-      <categories>
-        <category>DB</category>
-      </categories>
-      <tags>
-        <tag>SQL</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>一枚心跳的旅程 — pika心跳机制</title>
     <url>/2016/09/28/%E4%B8%80%E6%9E%9A%E5%BF%83%E8%B7%B3%E7%9A%84%E6%97%85%E7%A8%8B%20%E2%80%94%20pika%E5%BF%83%E8%B7%B3%E6%9C%BA%E5%88%B6/</url>
     <content><![CDATA[<h2 id="简单的背景介绍">简单的背景介绍</h2>
@@ -2195,70 +2389,6 @@ ln{\frac{1}{2}} &amp;= -\widetilde{\alpha}(|\bar{\tau }|) \\
         <tag>读代码</tag>
         <tag>pika</tag>
         <tag>RabbitMQ</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>译|interface 和反射的关系</title>
-    <url>/2018/12/22/%E3%80%90%E8%AF%91%E3%80%91interface-%E5%92%8C%E5%8F%8D%E5%B0%84%E7%9A%84%E5%85%B3%E7%B3%BB/</url>
-    <content><![CDATA[<p>原文：<a href="https://blog.gopheracademy.com/advent-2018/interfaces-and-reflect/">The Relationship Between Interfaces and Reflection</a></p>
-<hr />
-<p>interface 是 Go 中抽象的基本工具之一。在给 interface 赋值时，interface 会存储类型信息。反射（reflection）是一种在运行时检查类型和值信息的方法。</p>
-<p>Go 通过 <code>reflect</code> 包实现了反射，该包提供了检查 interface 结构元素甚至是运行时修改值的类型和方法。</p>
-<p>在这篇文章中，我希望说明 interface 结构的各个部分与 reflect API 的关系，并最终让 reflect 包的使用更方便！</p>
-<h1 id="为-interface-赋值">为 interface 赋值</h1>
-<p>interface 编码了三个东西：值、方法集和所存储值的类型。</p>
-<p>interface 的结构如下所示：</p>
-<figure>
-<img src="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/interface.svg" alt="interface-diagram" /><figcaption aria-hidden="true">interface-diagram</figcaption>
-</figure>
-<p>在该图中，我们可以清楚地看到 interface 的三个部分：<code>_type</code> 是类型信息，<code>*data</code> 是一个指向实际值的指针，而 <code>itab</code> 对方法集进行了编码。</p>
-<p>当一个函数有一个 interface 参数时，将值传递给该函数会将值、方法集和类型打包到 interface 中。</p>
-<h1 id="利用-reflect-包在运行时检查-interface-数据">利用 reflect 包，在运行时检查 interface 数据</h1>
-<p>一旦一个值被存储在 interface 中，就可以使用 <code>reflect</code> 包来检查其各个部分。我们无法直接检查 interface 结构；而 reflect 包维护了让我们有权访问的 interface 结构的副本。</p>
-<p>虽然我们可以通过 reflect 对象访问 interface，但是它与底层的 interface 有直接关联。</p>
-<p><code>reflect.Type</code> 和 <code>reflect.Value</code> 类型提供了访问 interface 组成部分的方法。</p>
-<p><code>reflect.Type</code> 侧重于公开与类型相关的数据，因此它仅限于 interface 结构的 <code>_type</code> 部分；而 <code>reflect.Value</code> 必须将类型信息与值相结合，以允许程序员检查和操作值，因此该类型必须查看 <code>_type</code> 以及 <code>data</code>。</p>
-<h2 id="reflect.type---检查类型">reflect.Type - 检查类型</h2>
-<p><code>reflect.TypeOf()</code> 函数用于提取一个值的类型信息。由于它唯一的参数是一个空的 interface，因此传递给该函数的值将被赋给一个 interface，故而可以拿到类型、方法集和值。</p>
-<p><code>reflect.TypeOf()</code> 返回一个 <code>reflect.Type</code>，它提供了让你检查值类型的方法。</p>
-<p>下面是一些可用的 <code>Type</code> 方法，以及和它们的返回相对应的 interface 结构信息。</p>
-<figure>
-<img src="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/reflect-type.svg" alt="reflect-type-diagram" /><figcaption aria-hidden="true">reflect-type-diagram</figcaption>
-</figure>
-<h3 id="reflect.type-使用示例"><code>reflect.Type</code> 使用示例</h3>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line">    </span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	<span class="string">&quot;reflect&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Gift <span class="keyword">struct</span> &#123;</span><br><span class="line">	Sender    <span class="keyword">string</span></span><br><span class="line">	Recipient <span class="keyword">string</span></span><br><span class="line">	Number    <span class="keyword">uint</span></span><br><span class="line">	Contents  <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	g := Gift&#123;</span><br><span class="line">		Sender:    <span class="string">&quot;Hank&quot;</span>,</span><br><span class="line">		Recipient: <span class="string">&quot;Sue&quot;</span>,</span><br><span class="line">		Number:    <span class="number">1</span>,</span><br><span class="line">		Contents:  <span class="string">&quot;Scarf&quot;</span>,</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	t := reflect.TypeOf(g)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> kind := t.Kind(); kind != reflect.Struct &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;This program expects to work on a struct; we got a %v instead.&quot;</span>, kind)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; t.NumField(); i++ &#123;</span><br><span class="line">		f := t.Field(i)</span><br><span class="line">		log.Printf(<span class="string">&quot;Field %03d: %-10.10s %v&quot;</span>, i, f.Name, f.Type.Kind())</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>该程序的目的是打印 <code>Gift</code> 结构中的字段。当把 <code>g</code> 值传递给 <code>reflect.TypeOf()</code> 时，<code>g</code> 被赋给一个 interface，此时编译器会使用类型和方法集信息来填充它。这使得我们可以遍历该 interface 结构的类型部分的 <code>[]fields</code> 字段，得到以下输出：</p>
-<figure class="highlight apache"><table><tr><td class="code"><pre><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> Field <span class="number">000</span>: Sender     string</span><br><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> Field <span class="number">001</span>: Recipient  string</span><br><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> Field <span class="number">002</span>: Number     uint</span><br><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> Field <span class="number">003</span>: Contents   string</span><br></pre></td></tr></table></figure>
-<h2 id="reflect.method---检查-itab-方法集">reflect.Method - 检查 itab / 方法集</h2>
-<p><code>reflect.Type</code> 类型还允许你访问 <code>itab</code> 的组成部分，提取 interface 的方法信息。</p>
-<figure>
-<img src="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/reflect-method.svg" alt="reflect-method-diagram" /><figcaption aria-hidden="true">reflect-method-diagram</figcaption>
-</figure>
-<h3 id="使用-reflect-检查方法">使用 reflect 检查方法</h3>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line">    </span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	<span class="string">&quot;reflect&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Reindeer <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r Reindeer)</span> <span class="title">TakeOff</span><span class="params">()</span></span> &#123;</span><br><span class="line">	log.Printf(<span class="string">&quot;%q lifts off.&quot;</span>, r)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r Reindeer)</span> <span class="title">Land</span><span class="params">()</span></span> &#123;</span><br><span class="line">	log.Printf(<span class="string">&quot;%q gently lands.&quot;</span>, r)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r Reindeer)</span> <span class="title">ToggleNose</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> r != <span class="string">&quot;rudolph&quot;</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(<span class="string">&quot;invalid reindeer operation&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	log.Printf(<span class="string">&quot;%q nose changes state.&quot;</span>, r)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	r := Reindeer(<span class="string">&quot;rudolph&quot;</span>)</span><br><span class="line"></span><br><span class="line">	t := reflect.TypeOf(r)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; t.NumMethod(); i++ &#123;</span><br><span class="line">		m := t.Method(i)</span><br><span class="line">		log.Printf(<span class="string">&quot;%s&quot;</span>, m.Name)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>该代码遍历了存储在 <code>itab</code> 中的所有函数数据，然后展示每个方法的名字： <figure class="highlight apache"><table><tr><td class="code"><pre><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> Land</span><br><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> TakeOff</span><br><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> ToggleNose</span><br></pre></td></tr></table></figure> ## reflect.Value - 检查值</p>
-<p>目前为止，我们只讨论了类型信息 —— 字段、方法等等。而 <code>reflect.Value</code> 为我们提供了 interface 中所存储的实际值的信息。</p>
-<p>与 <code>reflect.Value</code> 相关联的方法必须结合类型信息和实际值。例如，为了从结构中提取字段，reflect 包必须结合结构布局信息（特别是存储在 <code>_type</code> 中的字段和字段偏移量），以及 interface 的 <code>*data</code> 部分指向的实际值，以实现正确的结构解码。</p>
-<figure>
-<img src="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/reflect-value.svg" alt="reflect-value-diagram" /><figcaption aria-hidden="true">reflect-value-diagram</figcaption>
-</figure>
-<h3 id="示例查看修改值">示例：查看修改值</h3>
-<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	<span class="string">&quot;reflect&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Child <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name  <span class="keyword">string</span></span><br><span class="line">	Grade <span class="keyword">int</span></span><br><span class="line">	Nice  <span class="keyword">bool</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Adult <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name       <span class="keyword">string</span></span><br><span class="line">	Occupation <span class="keyword">string</span></span><br><span class="line">	Nice       <span class="keyword">bool</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// search a slice of structs for Name field that is &quot;Hank&quot; and set its Nice</span></span><br><span class="line"><span class="comment">// field to true.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">nice</span><span class="params">(i <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="comment">// retrieve the underlying value of i.  we know that i is an</span></span><br><span class="line">	<span class="comment">// interface.</span></span><br><span class="line">	v := reflect.ValueOf(i)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// we&#x27;re only interested in slices to let&#x27;s check what kind of value v is. if</span></span><br><span class="line">	<span class="comment">// it isn&#x27;t a slice, return immediately.</span></span><br><span class="line">	<span class="keyword">if</span> v.Kind() != reflect.Slice &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// v is a slice.  now let&#x27;s ensure that it is a slice of structs.  if not,</span></span><br><span class="line">	<span class="comment">// return immediately.</span></span><br><span class="line">	<span class="keyword">if</span> e := v.Type().Elem(); e.Kind() != reflect.Struct &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// determine if our struct has a Name field of type string and a Nice field</span></span><br><span class="line">	<span class="comment">// of type bool</span></span><br><span class="line">	st := v.Type().Elem()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> nameField, found := st.FieldByName(<span class="string">&quot;Name&quot;</span>); found == <span class="literal">false</span> || nameField.Type.Kind() != reflect.String &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> niceField, found := st.FieldByName(<span class="string">&quot;Nice&quot;</span>); found == <span class="literal">false</span> || niceField.Type.Kind() != reflect.Bool &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Set any Nice fields to true where the Name is &quot;Hank&quot;</span></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; v.Len(); i++ &#123;</span><br><span class="line">		e := v.Index(i)</span><br><span class="line">		name := e.FieldByName(<span class="string">&quot;Name&quot;</span>)</span><br><span class="line">		nice := e.FieldByName(<span class="string">&quot;Nice&quot;</span>)</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> name.String() == <span class="string">&quot;Hank&quot;</span> &#123;</span><br><span class="line">			nice.SetBool(<span class="literal">true</span>)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	children := []Child&#123;</span><br><span class="line">		&#123;Name: <span class="string">&quot;Sue&quot;</span>, Grade: <span class="number">1</span>, Nice: <span class="literal">true</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Ava&quot;</span>, Grade: <span class="number">3</span>, Nice: <span class="literal">true</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Hank&quot;</span>, Grade: <span class="number">6</span>, Nice: <span class="literal">false</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Nancy&quot;</span>, Grade: <span class="number">5</span>, Nice: <span class="literal">true</span>&#125;,</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	adults := []Adult&#123;</span><br><span class="line">		&#123;Name: <span class="string">&quot;Bob&quot;</span>, Occupation: <span class="string">&quot;Carpenter&quot;</span>, Nice: <span class="literal">true</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Steve&quot;</span>, Occupation: <span class="string">&quot;Clerk&quot;</span>, Nice: <span class="literal">true</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Nikki&quot;</span>, Occupation: <span class="string">&quot;Rad Tech&quot;</span>, Nice: <span class="literal">false</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Hank&quot;</span>, Occupation: <span class="string">&quot;Go Programmer&quot;</span>, Nice: <span class="literal">false</span>&#125;,</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	log.Printf(<span class="string">&quot;adults before nice: %v&quot;</span>, adults)</span><br><span class="line">	nice(adults)</span><br><span class="line">	log.Printf(<span class="string">&quot;adults after nice: %v&quot;</span>, adults)</span><br><span class="line"></span><br><span class="line">	log.Printf(<span class="string">&quot;children before nice: %v&quot;</span>, children)</span><br><span class="line">	nice(children)</span><br><span class="line">	log.Printf(<span class="string">&quot;children after nice: %v&quot;</span>, children)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">2018/12/16 12:00:00 adults before nice:</span> [&#123;<span class="string">Bob</span> <span class="string">Carpenter</span> <span class="literal">true</span>&#125; &#123;<span class="string">Steve</span> <span class="string">Clerk</span> <span class="literal">true</span>&#125; &#123;<span class="string">Nikki</span> <span class="string">Rad</span> <span class="string">Tech</span> <span class="literal">false</span>&#125; &#123;<span class="string">Hank</span> <span class="string">Go</span> <span class="string">Programmer</span> <span class="literal">false</span>&#125;]</span><br><span class="line"><span class="attr">2018/12/16 12:00:00 adults after nice:</span> [&#123;<span class="string">Bob</span> <span class="string">Carpenter</span> <span class="literal">true</span>&#125; &#123;<span class="string">Steve</span> <span class="string">Clerk</span> <span class="literal">true</span>&#125; &#123;<span class="string">Nikki</span> <span class="string">Rad</span> <span class="string">Tech</span> <span class="literal">false</span>&#125; &#123;<span class="string">Hank</span> <span class="string">Go</span> <span class="string">Programmer</span> <span class="literal">true</span>&#125;]</span><br><span class="line"><span class="attr">2018/12/16 12:00:00 children before nice:</span> [&#123;<span class="string">Sue</span> <span class="number">1</span> <span class="literal">true</span>&#125; &#123;<span class="string">Ava</span> <span class="number">3</span> <span class="literal">true</span>&#125; &#123;<span class="string">Hank</span> <span class="number">6</span> <span class="literal">false</span>&#125; &#123;<span class="string">Nancy</span> <span class="number">5</span> <span class="literal">true</span>&#125;]</span><br><span class="line"><span class="attr">2018/12/16 12:00:00 children after nice:</span> [&#123;<span class="string">Sue</span> <span class="number">1</span> <span class="literal">true</span>&#125; &#123;<span class="string">Ava</span> <span class="number">3</span> <span class="literal">true</span>&#125; &#123;<span class="string">Hank</span> <span class="number">6</span> <span class="literal">true</span>&#125; &#123;<span class="string">Nancy</span> <span class="number">5</span> <span class="literal">true</span>&#125;]</span><br></pre></td></tr></table></figure>
-<p>在这最后一个例子中，我们将前面学到的东西结合起来，通过 <code>reflect.Value</code> 来实际修改一个值。在这个场景下，有人（可能是 Hank）写了一个 <code>nice()</code> 函数，对于切片中的任意结构项，如果名字是“Hank”的话，它会将其从淘气（naughty）切换成友好（nice）。</p>
-<p>注意：<code>nice()</code> 能够修改你传给它的任意切片的值，实际上，该函数接收到的参数类型是无关紧要的 —— 只要它是一个由结构组成的切片，并且该结构拥有 <code>Name</code> 和 <code>Nice</code> 字段。</p>
-<h1 id="总结">总结</h1>
-<p>Go 中的反射是使用 interface 和 <code>reflect</code> 包实现的。它并没有什么神奇之处：当你使用反射时，你可以直接访问一个 interface 中的各个部分以及所存储的值。</p>
-<p>通过这种方式，interface 几乎就像是镜像，允许程序进行自检。</p>
-<p>虽然 Go 是一种静态类型语言，但是反射和 interface 相结合，提供了通常是动态语言独有的非常强大的技术。</p>
-<p>有关 Go 中反射的更多信息，请务必阅读包文档，以及该主题的许多其他精彩的博客文章。</p>
-]]></content>
-      <categories>
-        <category>golang</category>
-      </categories>
-      <tags>
-        <tag>Golang</tag>
-        <tag>没事翻着玩</tag>
       </tags>
   </entry>
   <entry>
@@ -2445,6 +2575,31 @@ ln{\frac{1}{2}} &amp;= -\widetilde{\alpha}(|\bar{\tau }|) \\
       </tags>
   </entry>
   <entry>
+    <title>九月团团圆圆平平淡淡，啃着糕点写代码</title>
+    <url>/2016/09/30/%E4%B9%9D%E6%9C%88%E5%9B%A2%E5%9B%A2%E5%9C%86%E5%9C%86%E5%B9%B3%E5%B9%B3%E6%B7%A1%E6%B7%A1%EF%BC%8C%E5%95%83%E7%9D%80%E7%B3%95%E7%82%B9%E5%86%99%E4%BB%A3%E7%A0%81/</url>
+    <content><![CDATA[<p>因为罗胖子的推荐，加之碰巧能拿到实体书，因此这个月有幸看了吴军老师的<a href="https://book.douban.com/subject/26838557/">智能时代</a>。机器学习和数据科学在python weekly总是占有不少的分量。这在侧面也看出了机器学习和数据科学（也可以说是书中提到的智能）在当下确实不容小觑。好吧，我不知道我会不会是书里的那2%，也许有一天时代的发展使得西乔漫画中的那只cat成为可能，那个时候，除了写代码，我还能做什么呢？或许在这之前，把自己的尾巴拖得尽可能长点，会是另一种自救之道？</p>
+<p>这个月最大的成就，应该是看完了<a href="https://book.douban.com/subject/26581184/">Docker源码分析</a>这本书了。书写得很浅显，作者考虑到了我这种go零基础的受众，算得上手把手的教你看代码了。我没用过docker，嗯，但是，此书之后，我想docker也不会让我太迷惑了。这本书算是我老老实实从头到尾看完的一本技术书（也许是因为它薄？）。我总是很贪心，mark了一堆想看的书，然而常常看到某处，就看不下去。浮躁也好，那时的状态不对也罢。这种问题，是我看书，特别是技术书，需要克服的最大的障碍了。</p>
+<p>最近翻pw总是很任性。有时候一句话，英文的意思我懂，但是转成中文却觉得甚是别扭。有时，我都觉得自己没法好好讲话了。之前求的是尽量保存作者的原字原意，因为好些领域其实我也不懂，故而担心弄错了误人子弟那么多不好。现在任性了。看到一句老长老长的话，用中文逐字逐句打不出来，那么久闭上眼睛，想想怎么意译。意达为主，尽量字达。</p>
+<p>想想自新工作以来，看的东西不少，但都是浅浅而过，会用（copy and paste from StackOverflow），顶多算得上知道，连熟悉都够不上。也就是说，技能树开得不少，但大多是到此一游。这在出问题的时候，就看出其局限性了（不过感觉这是个悖论，如果没有出问题这个机缘，又怎么让你有动力更进一步呢？）。所以要说到这个月我工作的重点之一，就是各种优化~ 抓包、debug之类的个中滋味不提也罢。再算算今年也快完了，因此觉得自己应该收收心。那么，收心从温故而知新开始吧，温故的话，那就看源码好啦O(∩_∩)O~</p>
+<p>于是乎，有了下面的十月计划~</p>
+<ul>
+<li>GO （跟同事要了<a href="https://book.douban.com/subject/11577300/">Go语言编程</a>）</li>
+<li>uwsgi源码阅读</li>
+<li>准备做几个小东西
+<ol type="1">
+<li>今年生日的时候，朋友送了我一个香蕉派的camera module。一直放着不知道该用来做什么。最近短期记忆有点问题，时常出门了会突然想到自己家的门有没有锁（我觉得我一定不是一个人！！），所以，嗯……</li>
+<li>Android教程看不下去了（除了因为手机没法做测试机以及电脑问题，真的不是因为懒癌犯了吗？！！），所以觉得应该开始做个小app来激发下我的热情（不过听说微信上了个小程序……anyway~）</li>
+</ol></li>
+</ul>
+]]></content>
+      <categories>
+        <category>这就是生活</category>
+      </categories>
+      <tags>
+        <tag>Ele在思考</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>九大排序算法及其Python实现之线性排序</title>
     <url>/2015/12/01/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E7%BA%BF%E6%80%A7%E6%97%B6%E9%97%B4%E6%8E%92%E5%BA%8F/</url>
     <content><![CDATA[<p>输入：n个数的一个序列&lt;a1,a2,...,an&gt; (A[1..n]) 输出：输入序列的一个排序&lt;b1,b2,...,bn&gt;，满足b1≤b2≤...≤bn。</p>
@@ -2570,31 +2725,6 @@ ln{\frac{1}{2}} &amp;= -\widetilde{\alpha}(|\bar{\tau }|) \\
         <tag>Python</tag>
         <tag>算法</tag>
         <tag>数据结构</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>九月团团圆圆平平淡淡，啃着糕点写代码</title>
-    <url>/2016/09/30/%E4%B9%9D%E6%9C%88%E5%9B%A2%E5%9B%A2%E5%9C%86%E5%9C%86%E5%B9%B3%E5%B9%B3%E6%B7%A1%E6%B7%A1%EF%BC%8C%E5%95%83%E7%9D%80%E7%B3%95%E7%82%B9%E5%86%99%E4%BB%A3%E7%A0%81/</url>
-    <content><![CDATA[<p>因为罗胖子的推荐，加之碰巧能拿到实体书，因此这个月有幸看了吴军老师的<a href="https://book.douban.com/subject/26838557/">智能时代</a>。机器学习和数据科学在python weekly总是占有不少的分量。这在侧面也看出了机器学习和数据科学（也可以说是书中提到的智能）在当下确实不容小觑。好吧，我不知道我会不会是书里的那2%，也许有一天时代的发展使得西乔漫画中的那只cat成为可能，那个时候，除了写代码，我还能做什么呢？或许在这之前，把自己的尾巴拖得尽可能长点，会是另一种自救之道？</p>
-<p>这个月最大的成就，应该是看完了<a href="https://book.douban.com/subject/26581184/">Docker源码分析</a>这本书了。书写得很浅显，作者考虑到了我这种go零基础的受众，算得上手把手的教你看代码了。我没用过docker，嗯，但是，此书之后，我想docker也不会让我太迷惑了。这本书算是我老老实实从头到尾看完的一本技术书（也许是因为它薄？）。我总是很贪心，mark了一堆想看的书，然而常常看到某处，就看不下去。浮躁也好，那时的状态不对也罢。这种问题，是我看书，特别是技术书，需要克服的最大的障碍了。</p>
-<p>最近翻pw总是很任性。有时候一句话，英文的意思我懂，但是转成中文却觉得甚是别扭。有时，我都觉得自己没法好好讲话了。之前求的是尽量保存作者的原字原意，因为好些领域其实我也不懂，故而担心弄错了误人子弟那么多不好。现在任性了。看到一句老长老长的话，用中文逐字逐句打不出来，那么久闭上眼睛，想想怎么意译。意达为主，尽量字达。</p>
-<p>想想自新工作以来，看的东西不少，但都是浅浅而过，会用（copy and paste from StackOverflow），顶多算得上知道，连熟悉都够不上。也就是说，技能树开得不少，但大多是到此一游。这在出问题的时候，就看出其局限性了（不过感觉这是个悖论，如果没有出问题这个机缘，又怎么让你有动力更进一步呢？）。所以要说到这个月我工作的重点之一，就是各种优化~ 抓包、debug之类的个中滋味不提也罢。再算算今年也快完了，因此觉得自己应该收收心。那么，收心从温故而知新开始吧，温故的话，那就看源码好啦O(∩_∩)O~</p>
-<p>于是乎，有了下面的十月计划~</p>
-<ul>
-<li>GO （跟同事要了<a href="https://book.douban.com/subject/11577300/">Go语言编程</a>）</li>
-<li>uwsgi源码阅读</li>
-<li>准备做几个小东西
-<ol type="1">
-<li>今年生日的时候，朋友送了我一个香蕉派的camera module。一直放着不知道该用来做什么。最近短期记忆有点问题，时常出门了会突然想到自己家的门有没有锁（我觉得我一定不是一个人！！），所以，嗯……</li>
-<li>Android教程看不下去了（除了因为手机没法做测试机以及电脑问题，真的不是因为懒癌犯了吗？！！），所以觉得应该开始做个小app来激发下我的热情（不过听说微信上了个小程序……anyway~）</li>
-</ol></li>
-</ul>
-]]></content>
-      <categories>
-        <category>这就是生活</category>
-      </categories>
-      <tags>
-        <tag>Ele在思考</tag>
       </tags>
   </entry>
   <entry>
@@ -3067,8 +3197,8 @@ ln{\frac{1}{2}} &amp;= -\widetilde{\alpha}(|\bar{\tau }|) \\
       <tags>
         <tag>Python</tag>
         <tag>自动化</tag>
-        <tag>数据可视化</tag>
         <tag>scrapy</tag>
+        <tag>数据可视化</tag>
       </tags>
   </entry>
   <entry>
