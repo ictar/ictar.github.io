@@ -20,7 +20,7 @@
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
   <meta name="description" content="Share life, share idea, share code.">
@@ -87,7 +87,7 @@
     <header class="header" itemscope itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-container">
   <div class="site-nav-toggle">
-    <div class="toggle" aria-label="Toggle navigation bar">
+    <div class="toggle" aria-label="切换导航栏">
       <span class="toggle-line toggle-line-first"></span>
       <span class="toggle-line toggle-line-middle"></span>
       <span class="toggle-line toggle-line-last"></span>
@@ -117,27 +117,27 @@
   <ul id="menu" class="main-menu menu">
         <li class="menu-item menu-item-home">
 
-    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
 
   </li>
         <li class="menu-item menu-item-about">
 
-    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
 
   </li>
         <li class="menu-item menu-item-tags">
 
-    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
 
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
 
   </li>
         <li class="menu-item menu-item-commonweal">
 
-    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+    <a href="/404.html" rel="section"><i class="fa fa-heartbeat fa-fw"></i>公益 404</a>
 
   </li>
   </ul>
@@ -150,10 +150,7 @@
     </header>
 
     
-  <div class="back-to-top">
-    <i class="fa fa-arrow-up"></i>
-    <span>0%</span>
-  </div>
+  <div class="reading-progress-bar"></div>
 
 
     <main class="main">
@@ -163,6 +160,120 @@
 
           <div class="content index posts-expand">
             
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2015/09/27/[%E8%AF%91]Python%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8A)/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2015/09/27/%5B%E8%AF%91%5DPython%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8A)/" class="post-title-link" itemprop="url">译|Python的隐藏特性(上)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2015-09-27 20:07:43" itemprop="dateCreated datePublished" datetime="2015-09-27T20:07:43+08:00">2015-09-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus：</span>
+    
+    <a title="disqus" href="/2015/09/27/%5B%E8%AF%91%5DPython%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8A)/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/09/27/[译]Python的隐藏特性(上)/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          知乎上有人问了一个问题：Python有哪些新手不会了解的深入细节。 其中的一个答案引用了stackoverflow上的一个问题解答。 鉴于一直在努力摆脱Python小白，决定好好研究下这几个特性，顺手翻译一下下，扩展一下下~~
+
+原文：Hidden features of Python
+
+Argument Unpacking
+可以使用*和**分别将一个列表或一个字典解包为函数参数。 例如： 1
+2
+3
+4
+5
+6
+7
+8
+
+
+def draw_point(x, y):
+    # do some magic
+
+point_foo = (3, 4)
+point_bar = {'y': 3, 'x
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2015/09/27/%5B%E8%AF%91%5DPython%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8A)/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
       
   
   
@@ -189,22 +300,22 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-calendar"></i>
               </span>
-              <span class="post-meta-item-text">Posted on</span>
+              <span class="post-meta-item-text">发表于</span>
 
-              <time title="Created: 2015-09-26 14:07:43" itemprop="dateCreated datePublished" datetime="2015-09-26T14:07:43+08:00">2015-09-26</time>
+              <time title="创建时间：2015-09-26 14:07:43" itemprop="dateCreated datePublished" datetime="2015-09-26T14:07:43+08:00">2015-09-26</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
-              <span class="post-meta-item-text">In</span>
+              <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
                 </span>
@@ -217,7 +328,7 @@
       <span class="post-meta-item-icon">
         <i class="far fa-comment"></i>
       </span>
-      <span class="post-meta-item-text">Disqus: </span>
+      <span class="post-meta-item-text">Disqus：</span>
     
     <a title="disqus" href="/2015/09/26/%5BPython%5D%E6%B2%AA%E6%B1%9F%E9%83%A8%E8%90%BD%E8%87%AA%E5%8A%A8%E7%99%BB%E5%BD%95%E6%89%93%E5%8D%A1/#disqus_thread" itemprop="discussionUrl">
       <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/09/26/[Python]沪江部落自动登录打卡/" itemprop="commentCount"></span>
@@ -249,7 +360,7 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2015/09/26/%5BPython%5D%E6%B2%AA%E6%B1%9F%E9%83%A8%E8%90%BD%E8%87%AA%E5%8A%A8%E7%99%BB%E5%BD%95%E6%89%93%E5%8D%A1/#more" rel="contents">
-                Read more &raquo;
+                阅读全文 &raquo;
               </a>
             </div>
           <!--/noindex-->
@@ -294,22 +405,22 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-calendar"></i>
               </span>
-              <span class="post-meta-item-text">Posted on</span>
+              <span class="post-meta-item-text">发表于</span>
 
-              <time title="Created: 2014-04-07 20:10:42" itemprop="dateCreated datePublished" datetime="2014-04-07T20:10:42+08:00">2014-04-07</time>
+              <time title="创建时间：2014-04-07 20:10:42" itemprop="dateCreated datePublished" datetime="2014-04-07T20:10:42+08:00">2014-04-07</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
-              <span class="post-meta-item-text">In</span>
+              <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/%E9%A2%98%E8%A7%A3/" itemprop="url" rel="index"><span itemprop="name">题解</span></a>
                 </span>
@@ -322,7 +433,7 @@
       <span class="post-meta-item-icon">
         <i class="far fa-comment"></i>
       </span>
-      <span class="post-meta-item-text">Disqus: </span>
+      <span class="post-meta-item-text">Disqus：</span>
     
     <a title="disqus" href="/2014/04/07/%5Bpythonchallenge.com%5DPython%20Challenge%20%E7%AC%AC2%E5%85%B3%20%E9%A2%98%E8%A7%A3/#disqus_thread" itemprop="discussionUrl">
       <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2014/04/07/[pythonchallenge.com]Python Challenge 第2关 题解/" itemprop="commentCount"></span>
@@ -344,7 +455,7 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2014/04/07/%5Bpythonchallenge.com%5DPython%20Challenge%20%E7%AC%AC2%E5%85%B3%20%E9%A2%98%E8%A7%A3/">
-                Read more &raquo;
+                阅读全文 &raquo;
               </a>
             </div>
           <!--/noindex-->
@@ -389,22 +500,22 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-calendar"></i>
               </span>
-              <span class="post-meta-item-text">Posted on</span>
+              <span class="post-meta-item-text">发表于</span>
 
-              <time title="Created: 2014-04-06 23:13:22" itemprop="dateCreated datePublished" datetime="2014-04-06T23:13:22+08:00">2014-04-06</time>
+              <time title="创建时间：2014-04-06 23:13:22" itemprop="dateCreated datePublished" datetime="2014-04-06T23:13:22+08:00">2014-04-06</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
-              <span class="post-meta-item-text">In</span>
+              <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/%E9%A2%98%E8%A7%A3/" itemprop="url" rel="index"><span itemprop="name">题解</span></a>
                 </span>
@@ -417,7 +528,7 @@
       <span class="post-meta-item-icon">
         <i class="far fa-comment"></i>
       </span>
-      <span class="post-meta-item-text">Disqus: </span>
+      <span class="post-meta-item-text">Disqus：</span>
     
     <a title="disqus" href="/2014/04/06/%5Bpythonchallenge.com%5DPython%20Challenge%20%E7%AC%AC1%E5%85%B3%20%E9%A2%98%E8%A7%A3/#disqus_thread" itemprop="discussionUrl">
       <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2014/04/06/[pythonchallenge.com]Python Challenge 第1关 题解/" itemprop="commentCount"></span>
@@ -439,7 +550,7 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2014/04/06/%5Bpythonchallenge.com%5DPython%20Challenge%20%E7%AC%AC1%E5%85%B3%20%E9%A2%98%E8%A7%A3/">
-                Read more &raquo;
+                阅读全文 &raquo;
               </a>
             </div>
           <!--/noindex-->
@@ -484,22 +595,22 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-calendar"></i>
               </span>
-              <span class="post-meta-item-text">Posted on</span>
+              <span class="post-meta-item-text">发表于</span>
 
-              <time title="Created: 2014-04-06 22:42:47" itemprop="dateCreated datePublished" datetime="2014-04-06T22:42:47+08:00">2014-04-06</time>
+              <time title="创建时间：2014-04-06 22:42:47" itemprop="dateCreated datePublished" datetime="2014-04-06T22:42:47+08:00">2014-04-06</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
-              <span class="post-meta-item-text">In</span>
+              <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/%E9%A2%98%E8%A7%A3/" itemprop="url" rel="index"><span itemprop="name">题解</span></a>
                 </span>
@@ -512,7 +623,7 @@
       <span class="post-meta-item-icon">
         <i class="far fa-comment"></i>
       </span>
-      <span class="post-meta-item-text">Disqus: </span>
+      <span class="post-meta-item-text">Disqus：</span>
     
     <a title="disqus" href="/2014/04/06/%5Bpythonchallenge.com%5DPython%20Challenge%20%E7%AC%AC0%E5%85%B3%20%E9%A2%98%E8%A7%A3/#disqus_thread" itemprop="discussionUrl">
       <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2014/04/06/[pythonchallenge.com]Python Challenge 第0关 题解/" itemprop="commentCount"></span>
@@ -534,7 +645,7 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2014/04/06/%5Bpythonchallenge.com%5DPython%20Challenge%20%E7%AC%AC0%E5%85%B3%20%E9%A2%98%E8%A7%A3/">
-                Read more &raquo;
+                阅读全文 &raquo;
               </a>
             </div>
           <!--/noindex-->
@@ -579,22 +690,22 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-calendar"></i>
               </span>
-              <span class="post-meta-item-text">Posted on</span>
+              <span class="post-meta-item-text">发表于</span>
 
-              <time title="Created: 2014-01-25 21:00:26" itemprop="dateCreated datePublished" datetime="2014-01-25T21:00:26+08:00">2014-01-25</time>
+              <time title="创建时间：2014-01-25 21:00:26" itemprop="dateCreated datePublished" datetime="2014-01-25T21:00:26+08:00">2014-01-25</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
-              <span class="post-meta-item-text">In</span>
+              <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/%E6%95%B0%E5%AD%A6/" itemprop="url" rel="index"><span itemprop="name">数学</span></a>
                 </span>
@@ -607,7 +718,7 @@
       <span class="post-meta-item-icon">
         <i class="far fa-comment"></i>
       </span>
-      <span class="post-meta-item-text">Disqus: </span>
+      <span class="post-meta-item-text">Disqus：</span>
     
     <a title="disqus" href="/2014/01/25/%5B%E8%AF%91%5DTED%EF%BC%9A%E7%A5%9E%E5%A5%87%E7%9A%84%E6%96%90%E6%B3%A2%E9%82%A3%E5%A5%91%E6%95%B0%E5%88%97/#disqus_thread" itemprop="discussionUrl">
       <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2014/01/25/[译]TED：神奇的斐波那契数列/" itemprop="commentCount"></span>
@@ -629,7 +740,7 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2014/01/25/%5B%E8%AF%91%5DTED%EF%BC%9A%E7%A5%9E%E5%A5%87%E7%9A%84%E6%96%90%E6%B3%A2%E9%82%A3%E5%A5%91%E6%95%B0%E5%88%97/">
-                Read more &raquo;
+                阅读全文 &raquo;
               </a>
             </div>
           <!--/noindex-->
@@ -674,22 +785,22 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-calendar"></i>
               </span>
-              <span class="post-meta-item-text">Posted on</span>
+              <span class="post-meta-item-text">发表于</span>
 
-              <time title="Created: 2013-11-02 23:37:45" itemprop="dateCreated datePublished" datetime="2013-11-02T23:37:45+08:00">2013-11-02</time>
+              <time title="创建时间：2013-11-02 23:37:45" itemprop="dateCreated datePublished" datetime="2013-11-02T23:37:45+08:00">2013-11-02</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
-              <span class="post-meta-item-text">In</span>
+              <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/hack/" itemprop="url" rel="index"><span itemprop="name">hack</span></a>
                 </span>
@@ -702,7 +813,7 @@
       <span class="post-meta-item-icon">
         <i class="far fa-comment"></i>
       </span>
-      <span class="post-meta-item-text">Disqus: </span>
+      <span class="post-meta-item-text">Disqus：</span>
     
     <a title="disqus" href="/2013/11/02/apk%E4%B9%8B%E7%AC%A8%E7%AC%A8%E5%8E%BB%E5%B9%BF%E5%91%8A/#disqus_thread" itemprop="discussionUrl">
       <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/11/02/apk之笨笨去广告/" itemprop="commentCount"></span>
@@ -742,7 +853,7 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2013/11/02/apk%E4%B9%8B%E7%AC%A8%E7%AC%A8%E5%8E%BB%E5%B9%BF%E5%91%8A/#more" rel="contents">
-                Read more &raquo;
+                阅读全文 &raquo;
               </a>
             </div>
           <!--/noindex-->
@@ -787,22 +898,22 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-calendar"></i>
               </span>
-              <span class="post-meta-item-text">Posted on</span>
+              <span class="post-meta-item-text">发表于</span>
 
-              <time title="Created: 2013-10-14 22:25:22" itemprop="dateCreated datePublished" datetime="2013-10-14T22:25:22+08:00">2013-10-14</time>
+              <time title="创建时间：2013-10-14 22:25:22" itemprop="dateCreated datePublished" datetime="2013-10-14T22:25:22+08:00">2013-10-14</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2020-12-25 16:20:41" itemprop="dateModified" datetime="2020-12-25T16:20:41+08:00">2020-12-25</time>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-12-25 16:20:41" itemprop="dateModified" datetime="2020-12-25T16:20:41+08:00">2020-12-25</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
-              <span class="post-meta-item-text">In</span>
+              <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
                   <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
                 </span>
@@ -815,7 +926,7 @@
       <span class="post-meta-item-icon">
         <i class="far fa-comment"></i>
       </span>
-      <span class="post-meta-item-text">Disqus: </span>
+      <span class="post-meta-item-text">Disqus：</span>
     
     <a title="disqus" href="/2013/10/14/%E5%B0%8F%E7%88%AC%E8%99%AB%E4%B9%8B%E4%B8%8B%E8%BD%BD%E8%B1%86%E7%93%A3%E6%96%87%E7%AB%A0/#disqus_thread" itemprop="discussionUrl">
       <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2013/10/14/小爬虫之下载豆瓣文章/" itemprop="commentCount"></span>
@@ -920,7 +1031,7 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2013/10/14/%E5%B0%8F%E7%88%AC%E8%99%AB%E4%B9%8B%E4%B8%8B%E8%BD%BD%E8%B1%86%E7%93%A3%E6%96%87%E7%AB%A0/#more" rel="contents">
-                Read more &raquo;
+                阅读全文 &raquo;
               </a>
             </div>
           <!--/noindex-->
@@ -942,7 +1053,7 @@
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/9/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><span class="page-number current">10</span>
+    <a class="extend prev" rel="prev" href="/page/9/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><span class="page-number current">10</span>
   </nav>
 
 
@@ -986,10 +1097,10 @@
 
       <ul class="sidebar-nav motion-element">
         <li class="sidebar-nav-toc">
-          Table of Contents
+          文章目录
         </li>
         <li class="sidebar-nav-overview">
-          Overview
+          站点概览
         </li>
       </ul>
 
@@ -1008,19 +1119,19 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">97</span>
-          <span class="site-state-item-name">posts</span>
+          <span class="site-state-item-count">98</span>
+          <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
         <span class="site-state-item-count">17</span>
-        <span class="site-state-item-name">categories</span>
+        <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
         <span class="site-state-item-count">40</span>
-        <span class="site-state-item-name">tags</span></a>
+        <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
 </div>
@@ -1039,6 +1150,10 @@
 
 
       </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
 
     </div>
   </aside>
@@ -1063,10 +1178,30 @@
   </span>
   <span class="author" itemprop="copyrightHolder">Ele</span>
 </div>
-  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
   </div>
 
         
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
 
 
 
@@ -1132,5 +1267,5 @@
   window.addEventListener('load', loadCount, false);
 </script>
 
-<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
 </html>

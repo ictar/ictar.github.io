@@ -20,7 +20,7 @@
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
   <meta property="og:type" content="website">
@@ -88,7 +88,7 @@
     <header class="header" itemscope itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-container">
   <div class="site-nav-toggle">
-    <div class="toggle" aria-label="Toggle navigation bar">
+    <div class="toggle" aria-label="切换导航栏">
       <span class="toggle-line toggle-line-first"></span>
       <span class="toggle-line toggle-line-middle"></span>
       <span class="toggle-line toggle-line-last"></span>
@@ -118,27 +118,27 @@
   <ul id="menu" class="main-menu menu">
         <li class="menu-item menu-item-home">
 
-    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
 
   </li>
         <li class="menu-item menu-item-about">
 
-    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
 
   </li>
         <li class="menu-item menu-item-tags">
 
-    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
 
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
 
   </li>
         <li class="menu-item menu-item-commonweal">
 
-    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+    <a href="/404.html" rel="section"><i class="fa fa-heartbeat fa-fw"></i>公益 404</a>
 
   </li>
   </ul>
@@ -151,10 +151,7 @@
     </header>
 
     
-  <div class="back-to-top">
-    <i class="fa fa-arrow-up"></i>
-    <span>0%</span>
-  </div>
+  <div class="reading-progress-bar"></div>
 
 
     <main class="main">
@@ -189,7 +186,7 @@
       <div class="post-body">
           <div class="tag-cloud">
             <div class="tag-cloud-title">
-              40 tags in total
+              目前共计 40 个标签
             </div>
             <div class="tag-cloud-tags">
               <a href="/tags/Ansible/" style="font-size: 13.8px; color: #b9b9b9">Ansible</a> <a href="/tags/Celery/" style="font-size: 12px; color: #ccc">Celery</a> <a href="/tags/Chrome/" style="font-size: 12px; color: #ccc">Chrome</a> <a href="/tags/Django/" style="font-size: 12px; color: #ccc">Django</a> <a href="/tags/Ele%E5%9C%A8%E6%80%9D%E8%80%83/" style="font-size: 24.6px; color: #494949">Ele在思考</a> <a href="/tags/GDA/" style="font-size: 12px; color: #ccc">GDA</a> <a href="/tags/GFW/" style="font-size: 12px; color: #ccc">GFW</a> <a href="/tags/GIS/" style="font-size: 12px; color: #ccc">GIS</a> <a href="/tags/Golang/" style="font-size: 30px; color: #111">Golang</a> <a href="/tags/HelloWorld/" style="font-size: 21px; color: #6f6f6f">HelloWorld</a> <a href="/tags/MSOffice/" style="font-size: 13.8px; color: #b9b9b9">MSOffice</a> <a href="/tags/MongoDB/" style="font-size: 15.6px; color: #a7a7a7">MongoDB</a> <a href="/tags/Python/" style="font-size: 30px; color: #111">Python</a> <a href="/tags/RabbitMQ/" style="font-size: 12px; color: #ccc">RabbitMQ</a> <a href="/tags/SQL/" style="font-size: 12px; color: #ccc">SQL</a> <a href="/tags/Web/" style="font-size: 12px; color: #ccc">Web</a> <a href="/tags/android/" style="font-size: 12px; color: #ccc">android</a> <a href="/tags/checkio/" style="font-size: 12px; color: #ccc">checkio</a> <a href="/tags/hack/" style="font-size: 15.6px; color: #a7a7a7">hack</a> <a href="/tags/http/" style="font-size: 13.8px; color: #b9b9b9">http</a> <a href="/tags/math/" style="font-size: 12px; color: #ccc">math</a> <a href="/tags/pandas/" style="font-size: 12px; color: #ccc">pandas</a> <a href="/tags/pika/" style="font-size: 12px; color: #ccc">pika</a> <a href="/tags/pythonchallenge/" style="font-size: 15.6px; color: #a7a7a7">pythonchallenge</a> <a href="/tags/scrapy/" style="font-size: 13.8px; color: #b9b9b9">scrapy</a> <a href="/tags/uWSGI/" style="font-size: 13.8px; color: #b9b9b9">uWSGI</a> <a href="/tags/%E5%A5%BD%E7%89%A9%E6%8E%A8%E8%8D%90/" style="font-size: 13.8px; color: #b9b9b9">好物推荐</a> <a href="/tags/%E5%AE%89%E5%85%A8/" style="font-size: 12px; color: #ccc">安全</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90/" style="font-size: 12px; color: #ccc">数据分析</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E5%8F%AF%E8%A7%86%E5%8C%96/" style="font-size: 15.6px; color: #a7a7a7">数据可视化</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" style="font-size: 21px; color: #6f6f6f">数据结构</a> <a href="/tags/%E6%B2%A1%E4%BA%8B%E7%BF%BB%E7%9D%80%E7%8E%A9/" style="font-size: 26.4px; color: #363636">没事翻着玩</a> <a href="/tags/%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/" style="font-size: 28.2px; color: #242424">源码解析</a> <a href="/tags/%E7%88%AC%E8%99%AB/" style="font-size: 13.8px; color: #b9b9b9">爬虫</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 17.4px; color: #949494">算法</a> <a href="/tags/%E7%BB%8F%E5%8E%86/" style="font-size: 15.6px; color: #a7a7a7">经历</a> <a href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/" style="font-size: 22.8px; color: #5c5c5c">自动化</a> <a href="/tags/%E8%AF%BB%E4%BB%A3%E7%A0%81/" style="font-size: 21px; color: #6f6f6f">读代码</a> <a href="/tags/%E9%9A%8F%E4%BE%BF%E6%8A%98%E8%85%BE/" style="font-size: 13.8px; color: #b9b9b9">随便折腾</a> <a href="/tags/%E9%A6%99%E8%95%89%E6%B4%BE/" style="font-size: 19.2px; color: #818181">香蕉派</a>
@@ -247,10 +244,10 @@
 
       <ul class="sidebar-nav motion-element">
         <li class="sidebar-nav-toc">
-          Table of Contents
+          文章目录
         </li>
         <li class="sidebar-nav-overview">
-          Overview
+          站点概览
         </li>
       </ul>
 
@@ -269,19 +266,19 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">97</span>
-          <span class="site-state-item-name">posts</span>
+          <span class="site-state-item-count">98</span>
+          <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
         <span class="site-state-item-count">17</span>
-        <span class="site-state-item-name">categories</span>
+        <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
         <span class="site-state-item-count">40</span>
-        <span class="site-state-item-name">tags</span></a>
+        <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
 </div>
@@ -300,6 +297,10 @@
 
 
       </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
 
     </div>
   </aside>
@@ -324,10 +325,30 @@
   </span>
   <span class="author" itemprop="copyrightHolder">Ele</span>
 </div>
-  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
   </div>
 
         
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
 
 
 
@@ -393,5 +414,5 @@
   window.addEventListener('load', loadCount, false);
 </script>
 
-<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
 </html>
