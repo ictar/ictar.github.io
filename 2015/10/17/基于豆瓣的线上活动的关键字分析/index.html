@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="豆瓣上经常有些挺有意思的线上活动，某一天想着，要不分析这些线上活动的答复，看看不同的topic会对应什么样的关键字。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于豆瓣的线上活动的关键字分析">
+<meta property="og:url" content="http://ictar.github.io/2015/10/17/%E5%9F%BA%E4%BA%8E%E8%B1%86%E7%93%A3%E7%9A%84%E7%BA%BF%E4%B8%8A%E6%B4%BB%E5%8A%A8%E7%9A%84%E5%85%B3%E9%94%AE%E5%AD%97%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="豆瓣上经常有些挺有意思的线上活动，某一天想着，要不分析这些线上活动的答复，看看不同的topic会对应什么样的关键字。">
+<meta property="og:locale">
+<meta property="article:published_time" content="2015-10-17T12:07:43.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.997Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="自动化">
+<meta property="article:tag" content="scrapy">
+<meta property="article:tag" content="数据可视化">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2015/10/17/%E5%9F%BA%E4%BA%8E%E8%B1%86%E7%93%A3%E7%9A%84%E7%BA%BF%E4%B8%8A%E6%B4%BB%E5%8A%A8%E7%9A%84%E5%85%B3%E9%94%AE%E5%AD%97%E5%88%86%E6%9E%90/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>基于豆瓣的线上活动的关键字分析 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2015/10/17/%E5%9F%BA%E4%BA%8E%E8%B1%86%E7%93%A3%E7%9A%84%E7%BA%BF%E4%B8%8A%E6%B4%BB%E5%8A%A8%E7%9A%84%E5%85%B3%E9%94%AE%E5%AD%97%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          基于豆瓣的线上活动的关键字分析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2015-10-17 20:07:43" itemprop="dateCreated datePublished" datetime="2015-10-17T20:07:43+08:00">2015-10-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2015/10/17/%E5%9F%BA%E4%BA%8E%E8%B1%86%E7%93%A3%E7%9A%84%E7%BA%BF%E4%B8%8A%E6%B4%BB%E5%8A%A8%E7%9A%84%E5%85%B3%E9%94%AE%E5%AD%97%E5%88%86%E6%9E%90/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/10/17/基于豆瓣的线上活动的关键字分析/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+            <div class="post-description">豆瓣上经常有些挺有意思的线上活动，某一天想着，要不分析这些线上活动的答复，看看不同的topic会对应什么样的关键字。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>最近在玩scrapy。 然后某一天逛豆瓣的时候，看到一个活动：<a target="_blank" rel="noopener" href="http://www.douban.com/online/122763231/">#我的欲望清单</a>。突然很好奇大家的欲望清单都是怎么样的。于是决定放只爬虫出去，获取该活动的所有回复信息。然后计算关键词及词频生成词云。 代码已上传到<a target="_blank" rel="noopener" href="https://github.com/ictar/doubanOnlineAnalyzer">doubanOnlineAnalyzer</a></p>
+<h1 id="爬取活动回复信息">爬取活动回复信息</h1>
+<h2 id="安装scrapy">安装scrapy</h2>
+<p>首先，我们需要安装scrapy。 scrapy的安装这里就不赘述了，可以参考<a target="_blank" rel="noopener" href="http://scrapy-chs.readthedocs.org/zh_CN/1.0/intro/install.html#intro-install-platform-notes">平台安装指南</a></p>
+<h2 id="新建项目">新建项目</h2>
+<p>接着，我们需要创建一个项目，进入到你想要放置这个项目的目录中，执行下列命令： <figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">scrapy startproject doubanScrapy</span></span><br></pre></td></tr></table></figure> 此命令运行结束后，会创建包含下面内容的目录： <figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">doubanScrapy</span>/</span><br><span class="line">    <span class="selector-tag">scrapy</span><span class="selector-class">.cfg</span></span><br><span class="line">    <span class="selector-tag">doubanScrapy</span>/</span><br><span class="line">        __<span class="selector-tag">init__</span><span class="selector-class">.py</span></span><br><span class="line">        <span class="selector-tag">items</span><span class="selector-class">.py</span></span><br><span class="line">        <span class="selector-tag">pipelines</span><span class="selector-class">.py</span></span><br><span class="line">        <span class="selector-tag">settings</span><span class="selector-class">.py</span></span><br><span class="line">        <span class="selector-tag">spiders</span>/</span><br><span class="line">            __<span class="selector-tag">init__</span><span class="selector-class">.py</span></span><br></pre></td></tr></table></figure> ## 定义Item 下面，我们来定义保存保存爬取到的数据的容器。(如果你玩django，会发现这里的Item和django的module很像) 编辑<code>doubanOnline/doubanOnline/items.py</code>： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> scrapy</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">doubanOnlineItem</span>(<span class="params">scrapy.Item</span>):</span></span><br><span class="line">	link = scrapy.Field() <span class="comment"># 回复的链接</span></span><br><span class="line">	content = scrapy.Field() <span class="comment"># 此回复的内容</span></span><br><span class="line">	author = scrapy.Field() <span class="comment"># 此回复的作者</span></span><br><span class="line">	date = scrapy.Field() <span class="comment"># 此回复的日期</span></span><br></pre></td></tr></table></figure> ## 编写爬虫 在<code>doubanScrapy/doubanScrapy/spiders/</code>下新建一个文件<code>doubanOnline.py</code>后编辑： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"><span class="keyword">import</span> scrapy</span><br><span class="line"><span class="keyword">from</span> doubanScrapy.items <span class="keyword">import</span> DoubanOnlineItem</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">doubanOnlineSpider</span>(<span class="params">scrapy.Spider</span>):</span></span><br><span class="line">	name = <span class="string">&quot;doubanOnline&quot;</span></span><br><span class="line">	allowed_domains = [<span class="string">&quot;douban.com&quot;</span>]</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, online1st=<span class="literal">None</span></span>):</span></span><br><span class="line">		self.start_urls = [online1st] <span class="comment"># start_urls通过命令行传参设定</span></span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">def</span> <span class="title">parse</span>(<span class="params">self, response</span>):</span></span><br><span class="line">		item = DoubanOnlineItem()</span><br><span class="line">		item[<span class="string">&#x27;link&#x27;</span>] = response.url <span class="comment">#使用xpath解析内容</span></span><br><span class="line">		item[<span class="string">&#x27;content&#x27;</span>] = response.xpath(<span class="string">&#x27;//blockquote[@class=&quot;photo-text&quot;]/p/text()&#x27;</span>).extract()</span><br><span class="line">		item[<span class="string">&#x27;author&#x27;</span>] = response.xpath(<span class="string">&#x27;//div[@class=&quot;photo-ft&quot;]/a/text()&#x27;</span>).extract()[<span class="number">0</span>].encode(<span class="string">&#x27;utf-8&#x27;</span>)</span><br><span class="line">		item[<span class="string">&#x27;date&#x27;</span>] = response.css(<span class="string">&#x27;div[class=&quot;photo-ft&quot;]::text&#x27;</span>).extract()[-<span class="number">1</span>].strip()[<span class="number">3</span>:].encode(<span class="string">&#x27;utf-8&#x27;</span>)</span><br><span class="line">		item[<span class="string">&#x27;content&#x27;</span>] = item[<span class="string">&#x27;content&#x27;</span>][<span class="number">0</span>].encode(<span class="string">&#x27;utf-8&#x27;</span>).strip() <span class="keyword">if</span> <span class="built_in">len</span>(item[<span class="string">&#x27;content&#x27;</span>])&gt;<span class="number">0</span> <span class="keyword">else</span> <span class="string">&quot;&quot;</span></span><br><span class="line">		<span class="keyword">yield</span> item</span><br><span class="line">		<span class="built_in">next</span> = response.xpath(<span class="string">&#x27;//a[@name=&quot;next_photo&quot;]/@href&#x27;</span>).extract()[<span class="number">0</span>]</span><br><span class="line">		total = response.xpath(<span class="string">&#x27;//span[@class=&quot;ll&quot;]/text()&#x27;</span>).extract()[<span class="number">0</span>]</span><br><span class="line">		cur, total = total.split(<span class="string">&quot;/&quot;</span>)</span><br><span class="line">		<span class="built_in">print</span> <span class="string">&quot;total: %s, current: %s&quot;</span> % (total[<span class="number">1</span>:-<span class="number">1</span>],cur[<span class="number">1</span>:-<span class="number">1</span>])</span><br><span class="line">		<span class="keyword">if</span> cur[<span class="number">1</span>:-<span class="number">1</span>] == total[<span class="number">1</span>:-<span class="number">1</span>]: <span class="comment"># 爬到最后一页，结束</span></span><br><span class="line">			<span class="keyword">raise</span> CloseSpider(<span class="string">&#x27;------------------ End Search! ------------------&#x27;</span>)</span><br><span class="line">		<span class="keyword">yield</span> scrapy.Request(<span class="built_in">next</span>, callback=self.parse)</span><br></pre></td></tr></table></figure> ## 修改配置项 由于有些网站做了防爬虫处理，因此，我们需要修改爬虫的配置项，将其伪装成普通浏览器。 将<code>doubanOnline/doubanOnline/settings.py</code>修改为： <figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">USER_AGENT</span> = &#x27;Mozilla/<span class="number">5</span>.<span class="number">0</span> (Macintosh; Intel Mac OS X <span class="number">10</span>_<span class="number">8</span>_<span class="number">3</span>) AppleWebKit/<span class="number">536</span>.<span class="number">5</span> (KHTML, like Gecko) Chrome/<span class="number">19</span>.<span class="number">0</span>.<span class="number">1084</span>.<span class="number">54</span> Safari/<span class="number">536</span>.<span class="number">5</span>&#x27;</span><br><span class="line"><span class="attribute">DOWNLOAD_DELAY</span>=<span class="number">2</span></span><br></pre></td></tr></table></figure> ## 执行爬虫 运行爬虫很简单，只要cd到项目路径下，运行下面这个命令即可： <figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">scrapy</span> crawl doubanOnline -a online<span class="number">1</span>st=[豆瓣线上活动首页] -o onlineac.json</span><br></pre></td></tr></table></figure> 注： * 这里的<code>doubanOnline</code>即在爬虫中定义的<code>name</code> * <code>-a</code>可以指定传给爬虫的参数。这里，我们需要指定某个线上活动的首页 * <code>-o</code>使用feed export，指定生成的json文件的名称。这样就不必使用Pipline，直接将爬虫中<code>yield item</code>保存为json格式。</p>
+<h2 id="小笔记">小笔记</h2>
+<ol type="1">
+<li>python的json.dumps方法默认会输出成这种格式""。要输出中文需要指定ensure_ascii参数为False，如下代码片段： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">json.dumps(&#123;<span class="string">&#x27;text&#x27;</span>:<span class="string">&quot;中文&quot;</span>&#125;,ensure_ascii=<span class="literal">False</span>,indent=<span class="number">2</span>)</span><br></pre></td></tr></table></figure></li>
+<li>使用scrapy的feed export生成的json文件如果包含了中文，会变成unicode的形式。可以参考<a target="_blank" rel="noopener" href="http://exitna.github.io/">解决Scrapy中feed export为json格式时中文显示为</a>对scrapy源码进行修改。</li>
+</ol>
+<h1 id="关键词可视化">关键词可视化</h1>
+<p>过程如下：分词 -&gt; 词频计算 -&gt; 词云生成</p>
+<h2 id="分词">分词</h2>
+<p>大部分的第三方分词模块都是针对英文分词的。而对于中文，我们需要祭出神器：<a target="_blank" rel="noopener" href="https://github.com/fxsjy/jieba">jieba</a>。</p>
+<p>安装<a target="_blank" rel="noopener" href="https://github.com/fxsjy/jieba">jieba</a>只需要：<code>pip install jieba</code> 而其使用也很简单。<a target="_blank" rel="noopener" href="https://github.com/fxsjy/jieba">jieba</a>支持三种模式的分词：全模式，精确模式，搜索引擎模式。这里我们使用全模式，使用方式如下： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">linewc = jieba.cut(resp[<span class="string">&quot;content&quot;</span>], cut_all=<span class="literal">True</span>)</span><br></pre></td></tr></table></figure> ## 词频计算 由于我们前面已经保存了每一个回复对应的内容，因此我们只需要统计分词后的结果，生成一个以单词为键，出现次数为值的字典即可。 因此，总结第一和第二步，可以得出代码如下： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> jieba</span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_genWordCount</span>(<span class="params">filename, nonsense=[]</span>):</span></span><br><span class="line">	<span class="string">&#x27;&#x27;&#x27; this method is used to abstract the words from the text</span></span><br><span class="line"><span class="string">		and calculate the count of text</span></span><br><span class="line"><span class="string">		filename - file&#x27;s name which generated through scrapy.</span></span><br><span class="line"><span class="string">		nonsense - words&#x27; list which contains the words we&#x27;ll exclude.</span></span><br><span class="line"><span class="string">	&#x27;&#x27;&#x27;</span></span><br><span class="line">	wc = &#123;&#125;  <span class="comment"># 一个以单词为键，出现次数为值的字典</span></span><br><span class="line">	<span class="keyword">with</span> <span class="built_in">open</span>(filename,<span class="string">&quot;r&quot;</span>) <span class="keyword">as</span> f:</span><br><span class="line">		<span class="keyword">for</span> line <span class="keyword">in</span> f.readlines():</span><br><span class="line">			resp = json.loads(line) <span class="comment"># 以json格式解析</span></span><br><span class="line">			linewc = jieba.cut(resp[<span class="string">&quot;content&quot;</span>], cut_all=<span class="literal">True</span>) <span class="comment"># 分词</span></span><br><span class="line">			<span class="keyword">for</span> item <span class="keyword">in</span> linewc:</span><br><span class="line">				<span class="keyword">if</span> item <span class="keyword">in</span> nonsense: <span class="comment"># 排除nonsense中的单词，不统计</span></span><br><span class="line">					<span class="keyword">continue</span></span><br><span class="line">				<span class="keyword">if</span> item.strip():</span><br><span class="line">					wc.setdefault(item,<span class="number">0</span>)</span><br><span class="line">					wc[item] +=<span class="number">1</span> <span class="comment"># 计数</span></span><br><span class="line">	<span class="keyword">return</span> wc</span><br></pre></td></tr></table></figure> ## 词云生成 <a target="_blank" rel="noopener" href="https://github.com/atizo/PyTagCloud">PyTagCloud</a>可以帮助我们生成词云。 首先，安装<a target="_blank" rel="noopener" href="https://github.com/atizo/PyTagCloud">PyTagCloud</a> <figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip <span class="keyword">install</span> pytagcloud</span><br></pre></td></tr></table></figure> * 注意，这里可能需要安装simplejson</p>
+<p>由于我们一般只关心出现频率最高的单词，因此需要对词频字典进行排序，然后取其出现频率最高的前top个词及其频率进行展示。</p>
+<p>另外，pytagcloud本身是不带中文字库的。这样会导致中文无法展示出来。因此我们需要下载一个中文字体文件（随便你喜欢什么中文字体，这里我选择了微软华文雅黑，文件名为<code>yahei.tff</code>）。将此字体文件放在python的安装目录的<code>Lib\site-packages\pytagcloud\fonts</code>下，然后在此目录下的<code>fonts.json</code>文件中添加一条记录。 <figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[</span><br><span class="line">	&#123;</span><br><span class="line">		<span class="attr">&quot;name&quot;</span>: <span class="string">&quot;MSyh&quot;</span>,</span><br><span class="line">		<span class="attr">&quot;ttf&quot;</span>: <span class="string">&quot;yahei.ttf&quot;</span>,</span><br><span class="line">		<span class="attr">&quot;web&quot;</span>: <span class="string">&quot;none&quot;</span></span><br><span class="line">	&#125;,</span><br></pre></td></tr></table></figure> 这样，我们就可以正常显示中文了。 完整的词云图像生成代码如下： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pytagcloud <span class="keyword">import</span> create_tag_image, make_tags</span><br><span class="line"><span class="keyword">from</span> operator <span class="keyword">import</span> itemgetter</span><br><span class="line"><span class="comment">#import random</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">genWdCloud</span>(<span class="params">wc,top=<span class="number">50</span>,SIZE1=<span class="number">1</span>,SIZE2=<span class="number">100</span>, pngname=<span class="string">&#x27;doubanOnlineActivity.png&#x27;</span></span>):</span></span><br><span class="line">	<span class="string">&#x27;&#x27;&#x27; this method is used to generate words cloud according to the words&#x27; frequency</span></span><br><span class="line"><span class="string">		wc - the dictionary which describes the words and corresponding frequency</span></span><br><span class="line"><span class="string">		top - display top max frequency</span></span><br><span class="line"><span class="string">		SIZE1 - minsize of words</span></span><br><span class="line"><span class="string">		SIZE2 - maxsize of words</span></span><br><span class="line"><span class="string">		pngname - the name of the generated image</span></span><br><span class="line"><span class="string">	&#x27;&#x27;&#x27;</span></span><br><span class="line">	swc = <span class="built_in">sorted</span>(wc.iteritems(), key=itemgetter(<span class="number">1</span>), reverse=<span class="literal">True</span>) <span class="comment"># 根据字典键对应的值排序，逆序</span></span><br><span class="line">	<span class="comment">#print swc</span></span><br><span class="line">	tags = make_tags(swc[:top], <span class="comment"># 只取出现频率最高的top个词</span></span><br><span class="line">					minsize=SIZE1,</span><br><span class="line">					maxsize=SIZE2,</span><br><span class="line">					<span class="comment">#colors=random.choice(COOR_SCHEMES.values())</span></span><br><span class="line">					)</span><br><span class="line">	create_tag_image(tags,</span><br><span class="line">					 pngname, </span><br><span class="line">					 background=(<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">255</span>),</span><br><span class="line">					 size=(<span class="number">900</span>,<span class="number">600</span>),</span><br><span class="line">					 fontname=<span class="string">&quot;MSyh&quot;</span>)</span><br></pre></td></tr></table></figure> 你将在当前目录下发现一个名为pngname所指定的名字的图像。</p>
+<h1 id="后续">后续</h1>
+<ol type="1">
+<li>pytagcloud的HTML形式</li>
+<li>如何扩展呢？</li>
+</ol>
+<h1 id="参考资料">参考资料</h1>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/stubborn412/p/3818423.html">python中json.dumps使用的坑以及字符编码</a></li>
+<li><a target="_blank" rel="noopener" href="http://reverland.org/python/2014/01/12/python/">Python中文标签云之pytagcloud</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/" rel="tag"># 自动化</a>
+              <a href="/tags/scrapy/" rel="tag"># scrapy</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%8F%AF%E8%A7%86%E5%8C%96/" rel="tag"># 数据可视化</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2015/10/08/%5BCheckio.org%5DMono%20Captcha%E9%A2%98%E8%A7%A3/" rel="prev" title="Checkio.org | Mono Captcha题解">
+      <i class="fa fa-chevron-left"></i> Checkio.org | Mono Captcha题解
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2015/11/06/%E7%94%A8python%E6%93%8D%E7%BA%B5Microsoft%20Office%E4%B9%8BExcel/" rel="next" title="用python操纵Microsoft Office之Excel">
+      用python操纵Microsoft Office之Excel <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%88%AC%E5%8F%96%E6%B4%BB%E5%8A%A8%E5%9B%9E%E5%A4%8D%E4%BF%A1%E6%81%AF"><span class="nav-number">1.</span> <span class="nav-text">爬取活动回复信息</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85scrapy"><span class="nav-number">1.1.</span> <span class="nav-text">安装scrapy</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B0%E5%BB%BA%E9%A1%B9%E7%9B%AE"><span class="nav-number">1.2.</span> <span class="nav-text">新建项目</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%AC%94%E8%AE%B0"><span class="nav-number">1.3.</span> <span class="nav-text">小笔记</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E8%AF%8D%E5%8F%AF%E8%A7%86%E5%8C%96"><span class="nav-number">2.</span> <span class="nav-text">关键词可视化</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E8%AF%8D"><span class="nav-number">2.1.</span> <span class="nav-text">分词</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%8E%E7%BB%AD"><span class="nav-number">3.</span> <span class="nav-text">后续</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">4.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2015/10/17/%E5%9F%BA%E4%BA%8E%E8%B1%86%E7%93%A3%E7%9A%84%E7%BA%BF%E4%B8%8A%E6%B4%BB%E5%8A%A8%E7%9A%84%E5%85%B3%E9%94%AE%E5%AD%97%E5%88%86%E6%9E%90/";
+    this.page.identifier = "2015/10/17/基于豆瓣的线上活动的关键字分析/";
+    this.page.title = "基于豆瓣的线上活动的关键字分析";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

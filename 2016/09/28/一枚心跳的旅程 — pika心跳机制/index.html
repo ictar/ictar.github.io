@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="简单的背景介绍  1. pika是AMQP 0-9-1协议的一个纯Python实现。本文使用的pika版本为0.10.0  2. AMQP 0-9-1提供了心跳机制，来确保应用服务层及时发现已崩溃的连接（以及完全无响应的对端）。心跳机制也能保证进程不被某些网络设备杀掉。  3. RabbitMQ的心跳机制（搬运自官网） * 使用心跳超时间隔(heartbeat timeout interval)。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一枚心跳的旅程 — pika心跳机制">
+<meta property="og:url" content="http://ictar.github.io/2016/09/28/%E4%B8%80%E6%9E%9A%E5%BF%83%E8%B7%B3%E7%9A%84%E6%97%85%E7%A8%8B%20%E2%80%94%20pika%E5%BF%83%E8%B7%B3%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="简单的背景介绍  1. pika是AMQP 0-9-1协议的一个纯Python实现。本文使用的pika版本为0.10.0  2. AMQP 0-9-1提供了心跳机制，来确保应用服务层及时发现已崩溃的连接（以及完全无响应的对端）。心跳机制也能保证进程不被某些网络设备杀掉。  3. RabbitMQ的心跳机制（搬运自官网） * 使用心跳超时间隔(heartbeat timeout interval)。">
+<meta property="og:locale">
+<meta property="og:image" content="http://ictar.github.io/img/pika.heartbeat.send_and_check.png">
+<meta property="article:published_time" content="2016-09-28T13:21:12.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.980Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="读代码">
+<meta property="article:tag" content="pika">
+<meta property="article:tag" content="RabbitMQ">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://ictar.github.io/img/pika.heartbeat.send_and_check.png">
+
+<link rel="canonical" href="http://ictar.github.io/2016/09/28/%E4%B8%80%E6%9E%9A%E5%BF%83%E8%B7%B3%E7%9A%84%E6%97%85%E7%A8%8B%20%E2%80%94%20pika%E5%BF%83%E8%B7%B3%E6%9C%BA%E5%88%B6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>一枚心跳的旅程 — pika心跳机制 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2016/09/28/%E4%B8%80%E6%9E%9A%E5%BF%83%E8%B7%B3%E7%9A%84%E6%97%85%E7%A8%8B%20%E2%80%94%20pika%E5%BF%83%E8%B7%B3%E6%9C%BA%E5%88%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          一枚心跳的旅程 — pika心跳机制
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-09-28 21:21:12" itemprop="dateCreated datePublished" datetime="2016-09-28T21:21:12+08:00">2016-09-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/MQ/" itemprop="url" rel="index"><span itemprop="name">MQ</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2016/09/28/%E4%B8%80%E6%9E%9A%E5%BF%83%E8%B7%B3%E7%9A%84%E6%97%85%E7%A8%8B%20%E2%80%94%20pika%E5%BF%83%E8%B7%B3%E6%9C%BA%E5%88%B6/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/09/28/一枚心跳的旅程 — pika心跳机制/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="简单的背景介绍">简单的背景介绍</h2>
+<ol type="1">
+<li>pika是AMQP 0-9-1协议的一个纯Python实现。本文使用的pika版本为0.10.0</li>
+<li>AMQP 0-9-1提供了心跳机制，来确保应用服务层及时发现已崩溃的连接（以及完全无响应的对端）。心跳机制也能保证进程不被某些网络设备杀掉。</li>
+<li>RabbitMQ的心跳机制（搬运自官网）
+<ul>
+<li>使用心跳超时间隔(heartbeat timeout interval)。该值定义了经过多长时间，RabbitMQ和客户端库应该认为对端的TCP连接已经失活(dead)。该值是在客户端和RabbitMQ服务器在连接的时候协商决定的。必须配置客户端请求心跳。在RabbitMQ v3.0及之后的版本，broker会尝试协商默认的heartbeat值（客户端仍然可以否决该值）。<strong>默认值是60s（3.5.5版本之前则是580s）</strong></li>
+<li><strong>每半个超时时间发送一个心跳帧。在两次心跳没有响应后，就会认为对端不可达。</strong></li>
+</ul></li>
+</ol>
+<h2 id="角色说明">角色说明</h2>
+<h3 id="heartbeatchecker心跳检查器"><code>HeartbeatChecker</code>：心跳检查器</h3>
+<ul>
+<li><p>初始化：<code>__init__(connection, interval, idle_count=MAX_IDLE_COUNT)</code></p>
+<ol type="1">
+<li>将心跳检查器与connnection对象绑定，设置心跳检查间隔_interval、经过多少个丢失的心跳间隔数后认为连接idle或者断连的心跳间隔数_max_idle_count（默认情况下是MAX_IDLE_COUNT=2）</li>
+<li>初始化多个计数器为0</li>
+<li>为最后一个定时器初始化句柄(None)</li>
+<li>调用<code>_setup_timer()</code>方法设置定时器在每个_interval秒后触发</li>
+</ol></li>
+<li><p>设置定时器：<code>_setup_timer()</code></p>
+<p>添加定时器，在每个_interval秒后调用<code>send_and_check()</code>方法检查及发送心跳</p></li>
+<li><p>定时器方法：<code>send_and_check()</code></p>
+<p><img src="/img/pika.heartbeat.send_and_check.png" /></p>
+<p>由定时器调用，需要时发送一个心跳，检查是否错过了任何心跳，并在太长时间处于idle状态的情况下断开连接</p>
+<ol type="1">
+<li><p>判断连接是否处于idle状态，是则调用<code>_close_connection()</code>方法关闭连接 &gt; 如何判断连接状态：当前的idle计数器大于或等于设置的最大idel计数器时，则认为连接处于idle状态</p></li>
+<li><p>如果connection对象并未收到任何数据，则将当前的idle计数器加一；否则清零当前的idle计数器 &gt; 如何判断connection对象收到数据：判断接收到的字节数计数器(<code>_bytes_received</code>)以及连接对象收到的字节数计数器(<code>bytes_received_on_connection</code>)是否相等。</p></li>
+<li><p>调用<code>_update_counters()</code>方法更新发送/接收到的字节数计数器</p></li>
+<li><p>调用<code>_send_heartbeat_frame()</code>方法发送一个心跳帧给对端（也就是RabbitMQ服务器啦），同时将发送的心跳帧计数器(<code>_heartbeat_frames_sent</code>)加一。</p></li>
+<li><p>调用<code>_start_timer()</code>方法启动新一轮的定时器。这个时候会先判断connection对象的定时器是否还是当前这个实例，如果是的话，会调用<code>_setup_timer()</code>方法设置定时器。</p></li>
+</ol></li>
+<li><p>接收心跳帧：<code>received()</code></p>
+<p>将收到的心跳帧计时器加一</p></li>
+<li><p>停止心跳检查器：<code>stop()</code></p>
+<p>将该定时器从绑定的connection对象移除</p></li>
+</ul>
+<h3 id="connection实现与rabbitmq通信的核心类"><code>Connection</code>：实现与RabbitMQ通信的核心类</h3>
+<blockquote>
+<p>只说明几个跟心跳有关的方法</p>
+</blockquote>
+<ul>
+<li><p>创建心跳检查器：<code>_create_heartbeat_checker()</code></p>
+<p>如果参数heartbeat有值并且大于0，则使用当前的connection实例(self)和设置的heartbeat值来初始化一个心跳检查器</p></li>
+<li><p>停止并删除绑定的心跳检查器：<code>_remove_heartbeat()</code></p></li>
+<li><p>协商心跳超时时间：<code>_tune_heartbeat_timeout(client_value, server_value)</code></p>
+<ul>
+<li>client_value是客户端给出的心跳超时时间，None表示完全接受服务端给出的值(即server_value)，0表示禁用心跳，否则使用一个正整数(s)</li>
+<li>server_value是broker建议的心跳超时时间，0表示禁用心跳</li>
+<li>该方法最终返回一个使用的心跳超时时间，并将其返回给服务器</li>
+</ul></li>
+</ul>
+<h2 id="旅程开始">旅程开始</h2>
+<p>在pika与RabbitMQ服务器通信最最最开始的时候，是需要创建连接的。这个时候呢，pika作为客户端，需要设置一个<code>heartbeat</code>(<code>heartbeat_interval</code>已弃用)参数。默认情况下，该参数的值由<code>DEFAULT_HEARTBEAT_TIMEOUT</code>（默认是<code>None</code>）指定，表示RabbitMQ你说心跳时间间隔是啥就是啥，我客户端这边完全没意见。</p>
+<p>接着，就是连接建立的各种过程中。在这个过程中，当接收到broker发送的Connection.Tune时，客户端会根据对端的心跳时间间隔和客户端定义的心跳间隔（也就是<code>heartbeat</code>参数）协商一个合适的心跳时间间隔（调用<code>_tune_heartbeat_timeout()</code>方法）。协商策略是： * 如果客户端这边的值为None，则心跳时间间隔由RabbitMQ决定； * 如果客户端这边的值或者RabbitMQ那边的值为0，则禁用心跳； * 否则，选客户端这边的值和RabbitMQ那边的值之间的最大值。</p>
+<p>然后根据协商后的心跳时间间隔，绑定一个新的心跳检查器。此时，这个新的心跳检查器就会带着它的处理句柄跳进IOLoop，也就是轮询器中，等待它的时间的到来。</p>
+<p>后面就是业务交互过程了。</p>
+<p>在处理从socket接收到的帧时，如果接收到了心跳，则调用心跳检查器的<code>received()</code>方法，增加心跳检查器的收到心跳帧计时器。</p>
+<p>在轮询的过程中，心跳检查器的时间来了，它会执行绑定的处理句柄，也就是<code>send_and_check()</code>方法。此时，它会设置idle次数计数器、更新接收/发送帧计数器、响应一个心跳帧给对端。然后，带着它的处理句柄再次跳进轮询器中，等待新一轮的时间的到来。</p>
+<p>当然，这是正常的情况。如果上面这一步中，心跳检查器发现自己绑定的connection已经多次没收到数据了，次数多得已经超过自己的容忍程度（此时，猜测对端已经死掉），这个时候，会主动断开与对端的连接。又或者如果绑定的connection的心跳检查器已经不再是自己了，则不再跳进轮询器。</p>
+<p>另外有一点需要注意的是，pika中有个<code>BlockingConnection</code>(它位于pika的异步之上，提供阻塞连接)。因为是阻塞连接，因此定时器在这里并没啥用处，从而导致心跳检查器无法定时触发。这进一步导致了，如果在RabbitMQ多次发送心跳进行探测的时候客户端都阻塞无法响应的话，RabbitMQ会认为客户端已经不在了，从而断开与客户端之间的连接~~</p>
+<p>到了最后的最后，告别的时刻来临。此时，会把心跳检查器停止（如果，它还在的话）……</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://www.rabbitmq.com/heartbeats.html">Detecting Dead TCP Connections with Heartbeats</a></li>
+<li><a target="_blank" rel="noopener" href="https://my.oschina.net/hncscwc/blog/195343">rabbitmq——heartbeat</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E8%AF%BB%E4%BB%A3%E7%A0%81/" rel="tag"># 读代码</a>
+              <a href="/tags/pika/" rel="tag"># pika</a>
+              <a href="/tags/RabbitMQ/" rel="tag"># RabbitMQ</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2016/08/31/%E5%85%AB%E6%9C%88%E6%97%A9%E7%9D%A1%E6%97%A9%E8%B5%B7%E8%BA%AB%E4%BD%93%E5%A5%BD%EF%BC%8C%E5%AF%B9%E7%9D%80%E7%A0%96%E4%B9%A6%E5%86%99%E4%BB%A3%E7%A0%81/" rel="prev" title="八月早睡早起身体好，对着砖书写代码">
+      <i class="fa fa-chevron-left"></i> 八月早睡早起身体好，对着砖书写代码
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2016/09/30/%E4%B9%9D%E6%9C%88%E5%9B%A2%E5%9B%A2%E5%9C%86%E5%9C%86%E5%B9%B3%E5%B9%B3%E6%B7%A1%E6%B7%A1%EF%BC%8C%E5%95%83%E7%9D%80%E7%B3%95%E7%82%B9%E5%86%99%E4%BB%A3%E7%A0%81/" rel="next" title="九月团团圆圆平平淡淡，啃着糕点写代码">
+      九月团团圆圆平平淡淡，啃着糕点写代码 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E7%9A%84%E8%83%8C%E6%99%AF%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">简单的背景介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%92%E8%89%B2%E8%AF%B4%E6%98%8E"><span class="nav-number">2.</span> <span class="nav-text">角色说明</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#heartbeatchecker%E5%BF%83%E8%B7%B3%E6%A3%80%E6%9F%A5%E5%99%A8"><span class="nav-number">2.1.</span> <span class="nav-text">HeartbeatChecker：心跳检查器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#connection%E5%AE%9E%E7%8E%B0%E4%B8%8Erabbitmq%E9%80%9A%E4%BF%A1%E7%9A%84%E6%A0%B8%E5%BF%83%E7%B1%BB"><span class="nav-number">2.2.</span> <span class="nav-text">Connection：实现与RabbitMQ通信的核心类</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%97%85%E7%A8%8B%E5%BC%80%E5%A7%8B"><span class="nav-number">3.</span> <span class="nav-text">旅程开始</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2016/09/28/%E4%B8%80%E6%9E%9A%E5%BF%83%E8%B7%B3%E7%9A%84%E6%97%85%E7%A8%8B%20%E2%80%94%20pika%E5%BF%83%E8%B7%B3%E6%9C%BA%E5%88%B6/";
+    this.page.identifier = "2016/09/28/一枚心跳的旅程 — pika心跳机制/";
+    this.page.title = "一枚心跳的旅程 — pika心跳机制";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

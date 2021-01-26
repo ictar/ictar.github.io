@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="知乎上有人问了一个问题：Python有哪些新手不会了解的深入细节。 其中的一个答案引用了stackoverflow上的一个问题解答。 鉴于一直在努力摆脱Python小白，决定好好研究下这几个特性，顺手翻译一下下，扩展一下下~~  原文：Hidden features of Python  List stepping 切片操作符中的步长(step)参数。例如： 1 2 3   a &#x3D; [1,2,3,">
+<meta property="og:type" content="article">
+<meta property="og:title" content="译|Python的隐藏特性(下)">
+<meta property="og:url" content="http://ictar.github.io/2015/09/28/[%E8%AF%91]Python%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8B)/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="知乎上有人问了一个问题：Python有哪些新手不会了解的深入细节。 其中的一个答案引用了stackoverflow上的一个问题解答。 鉴于一直在努力摆脱Python小白，决定好好研究下这几个特性，顺手翻译一下下，扩展一下下~~  原文：Hidden features of Python  List stepping 切片操作符中的步长(step)参数。例如： 1 2 3   a &#x3D; [1,2,3,">
+<meta property="og:locale">
+<meta property="article:published_time" content="2015-09-28T12:07:43.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.952Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2015/09/28/[%E8%AF%91]Python%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8B)/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>译|Python的隐藏特性(下) | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2015/09/28/[%E8%AF%91]Python%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8B)/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          译|Python的隐藏特性(下)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2015-09-28 20:07:43" itemprop="dateCreated datePublished" datetime="2015-09-28T20:07:43+08:00">2015-09-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2015/09/28/%5B%E8%AF%91%5DPython%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8B)/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/09/28/[译]Python的隐藏特性(下)/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>知乎上有人问了一个问题：Python有哪些新手不会了解的深入细节。 其中的一个答案引用了stackoverflow上的一个问题解答。 鉴于一直在努力摆脱Python小白，决定好好研究下这几个特性，顺手翻译一下下，扩展一下下~~</p>
+<p>原文：<a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python">Hidden features of Python</a></p>
+<h2 id="list-stepping"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#101840">List stepping</a></h2>
+<p>切片操作符中的步长(step)参数。例如： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">a = [<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a[::<span class="number">2</span>]  <span class="comment"># iterate over the whole list in 2-increments</span></span><br><span class="line">[<span class="number">1</span>,<span class="number">3</span>,<span class="number">5</span>]</span><br></pre></td></tr></table></figure> 特殊例子<code>x[::-1]</code>对'x反转'来说相当有用。 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>a[::-<span class="number">1</span>]</span><br><span class="line">[<span class="number">5</span>,<span class="number">4</span>,<span class="number">3</span>,<span class="number">2</span>,<span class="number">1</span>]</span><br></pre></td></tr></table></figure> ### 碎碎念 当然，你可以使用<code>reversed()</code>函数来实现反转。 区别在于，<code>reversed()</code>返回一个迭代器，所以还需要一个额外的步骤来将结果转换成需要的对象类型。 这个特性在判断例如回文的时候灰常有用，一句话搞定 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="literal">True</span> <span class="keyword">if</span> someseq == someseq[::-<span class="number">1</span>] <span class="keyword">else</span> <span class="literal">False</span></span><br></pre></td></tr></table></figure> 今天看到了一个很有意思的东西。拿上面的例子来讲，猜猜<code>a[10::]</code>会输出什么呢？ 如果你猜是<code>IndexError</code>，那就错了。答案是，<code>[]</code>。但是其实当你试图访问一个超过列表索引值的成员，例如<code>a[10]</code>时，确实会导致<code>IndexError</code>。但是，试图访问一个列表的以超出列表成员数作为开始索引的切片时，却会返回一个空列表.</p>
+<h2 id="missing-items"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#112286"><strong>missing</strong> items</a></h2>
+<p>从2.5开始，字典就有一个特别的方法<code>__missing__</code>，它在访问不存在的item时被引用： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="class"><span class="keyword">class</span> <span class="title">MyDict</span>(<span class="params"><span class="built_in">dict</span></span>):</span></span><br><span class="line"><span class="meta">... </span> <span class="function"><span class="keyword">def</span> <span class="title">__missing__</span>(<span class="params">self, key</span>):</span></span><br><span class="line"><span class="meta">... </span>  self[key] = rv = []</span><br><span class="line"><span class="meta">... </span>  <span class="keyword">return</span> rv</span><br><span class="line"><span class="meta">... </span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>m = MyDict()</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>m[<span class="string">&quot;foo&quot;</span>].append(<span class="number">1</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>m[<span class="string">&quot;foo&quot;</span>].append(<span class="number">2</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">dict</span>(m)</span><br><span class="line">&#123;<span class="string">&#x27;foo&#x27;</span>: [<span class="number">1</span>, <span class="number">2</span>]&#125;</span><br></pre></td></tr></table></figure> 还有collections中一个叫做defaultdict的dict子函数跟它灰常像，但这个子类为不存在的item调用了一个无参函数： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">from</span> collections <span class="keyword">import</span> defaultdict</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>m = defaultdict(<span class="built_in">list</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>m[<span class="string">&quot;foo&quot;</span>].append(<span class="number">1</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>m[<span class="string">&quot;foo&quot;</span>].append(<span class="number">2</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">dict</span>(m)</span><br><span class="line">&#123;<span class="string">&#x27;foo&#x27;</span>: [<span class="number">1</span>, <span class="number">2</span>]&#125;</span><br></pre></td></tr></table></figure> 推荐在传给一个不接收这样的子类的函数前，先将这样的dict转换为常规的dict。许多代码使用d[a_key]，然后捕捉keyErrors来检查一个item是否存在，不存在则会在dict中新增一个item。</p>
+<h3 id="碎碎念">碎碎念</h3>
+<p>扩展阅读：<a target="_blank" rel="noopener" href="http://kodango.com/defaultdict-in-python">defaultdict 和 dict.__missing__</a></p>
+<h2 id="multi-line-regex"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#101537">Multi-line Regex</a></h2>
+<p>在Python中，你可以将一个正则表达式拆分成多行，命名你的匹配和插入注释。 详细语法举例（参考<a target="_blank" rel="noopener" href="http://diveintopython.net/regular_expressions/index.html">Dive into Python</a>）： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>pattern = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string"><span class="meta">... </span>^                   # beginning of string</span></span><br><span class="line"><span class="string"><span class="meta">... </span>M&#123;0,4&#125;              # thousands - 0 to 4 M&#x27;s</span></span><br><span class="line"><span class="string"><span class="meta">... </span>(CM|CD|D?C&#123;0,3&#125;)    # hundreds - 900 (CM), 400 (CD), 0-300 (0 to 3 C&#x27;s),</span></span><br><span class="line"><span class="string"><span class="meta">... </span>                    #            or 500-800 (D, followed by 0 to 3 C&#x27;s)</span></span><br><span class="line"><span class="string"><span class="meta">... </span>(XC|XL|L?X&#123;0,3&#125;)    # tens - 90 (XC), 40 (XL), 0-30 (0 to 3 X&#x27;s),</span></span><br><span class="line"><span class="string"><span class="meta">... </span>                    #        or 50-80 (L, followed by 0 to 3 X&#x27;s)</span></span><br><span class="line"><span class="string"><span class="meta">... </span>(IX|IV|V?I&#123;0,3&#125;)    # ones - 9 (IX), 4 (IV), 0-3 (0 to 3 I&#x27;s),</span></span><br><span class="line"><span class="string"><span class="meta">... </span>                    #        or 5-8 (V, followed by 0 to 3 I&#x27;s)</span></span><br><span class="line"><span class="string"><span class="meta">... </span>$                   # end of string</span></span><br><span class="line"><span class="string"><span class="meta">... </span>&quot;&quot;&quot;</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>re.search(pattern, <span class="string">&#x27;M&#x27;</span>, re.VERBOSE)</span><br></pre></td></tr></table></figure> 命名匹配举例（参考<a target="_blank" rel="noopener" href="http://www.amk.ca/python/howto/regex/">Regular Expression HOWTO</a>） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>p = re.<span class="built_in">compile</span>(<span class="string">r&#x27;(?P&lt;word&gt;\b\w+\b)&#x27;</span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>m = p.search( <span class="string">&#x27;(((( Lots of punctuation )))&#x27;</span> )</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>m.group(<span class="string">&#x27;word&#x27;</span>)</span><br><span class="line"><span class="string">&#x27;Lots&#x27;</span></span><br></pre></td></tr></table></figure> 在字符串连接的帮助下，你还可以详尽编写一个正则表达式而不必使用<code>re.VERBOSE</code>. <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>pattern = (</span><br><span class="line"><span class="meta">... </span>    <span class="string">&quot;^&quot;</span>                 <span class="comment"># beginning of string</span></span><br><span class="line"><span class="meta">... </span>    <span class="string">&quot;M&#123;0,4&#125;&quot;</span>            <span class="comment"># thousands - 0 to 4 M&#x27;s</span></span><br><span class="line"><span class="meta">... </span>    <span class="string">&quot;(CM|CD|D?C&#123;0,3&#125;)&quot;</span>  <span class="comment"># hundreds - 900 (CM), 400 (CD), 0-300 (0 to 3 C&#x27;s),</span></span><br><span class="line"><span class="meta">... </span>                        <span class="comment">#            or 500-800 (D, followed by 0 to 3 C&#x27;s)</span></span><br><span class="line"><span class="meta">... </span>    <span class="string">&quot;(XC|XL|L?X&#123;0,3&#125;)&quot;</span>  <span class="comment"># tens - 90 (XC), 40 (XL), 0-30 (0 to 3 X&#x27;s),</span></span><br><span class="line"><span class="meta">... </span>                        <span class="comment">#        or 50-80 (L, followed by 0 to 3 X&#x27;s)</span></span><br><span class="line"><span class="meta">... </span>    <span class="string">&quot;(IX|IV|V?I&#123;0,3&#125;)&quot;</span>  <span class="comment"># ones - 9 (IX), 4 (IV), 0-3 (0 to 3 I&#x27;s),</span></span><br><span class="line"><span class="meta">... </span>                        <span class="comment">#        or 5-8 (V, followed by 0 to 3 I&#x27;s)</span></span><br><span class="line"><span class="meta">... </span>    <span class="string">&quot;$&quot;</span>                 <span class="comment"># end of string</span></span><br><span class="line"><span class="meta">... </span>)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">print</span> pattern</span><br><span class="line"><span class="string">&quot;^M&#123;0,4&#125;(CM|CD|D?C&#123;0,3&#125;)(XC|XL|L?X&#123;0,3&#125;)(IX|IV|V?I&#123;0,3&#125;)$&quot;</span></span><br></pre></td></tr></table></figure> ### 碎碎念 可以在正则中加注释是很棒的。至少让其他人很容易就看懂了这个正则是干什么的。</p>
+<h2 id="named-string-formatting"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#113164">Named string formatting</a></h2>
+<p>%-格式化接收一个字典（也适用于%i%s等） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">print</span> <span class="string">&quot;The %(foo)s is %(bar)i.&quot;</span> % &#123;<span class="string">&#x27;foo&#x27;</span>: <span class="string">&#x27;answer&#x27;</span>, <span class="string">&#x27;bar&#x27;</span>:<span class="number">42</span>&#125;</span><br><span class="line">The answer <span class="keyword">is</span> <span class="number">42.</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>foo, bar = <span class="string">&#x27;question&#x27;</span>, <span class="number">123</span></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">print</span> <span class="string">&quot;The %(foo)s is %(bar)i.&quot;</span> % <span class="built_in">locals</span>()</span><br><span class="line">The question <span class="keyword">is</span> <span class="number">123.</span></span><br></pre></td></tr></table></figure> 而由于<code>locals()</code>也是一个字典，你可以简单的将其当做一个dict来传递，并从本地变量中获得%-字符串替换。虽然它令人难以接受，但是简化了操作。 新的格式化风格 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>print(<span class="string">&quot;The &#123;foo&#125; is &#123;bar&#125;&quot;</span>.<span class="built_in">format</span>(foo=<span class="string">&#x27;answer&#x27;</span>, bar=<span class="number">42</span>))</span><br></pre></td></tr></table></figure> ### 碎碎念 看来<code>format</code>方法还是更被人推崇的，可能就是因为%-格式化方法能做的事它都可以做到，并且比%-格式化方法更漂亮的缘故吧。 但是，就速度来说，%-格式化方法会比<code>str.format</code>方法快。</p>
+<h2 id="nested-listgenerator-comprehensions"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#101549">Nested list/generator comprehensions</a></h2>
+<p>嵌套列表推导和生成器表达式： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[(i,j) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">3</span>) <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(i) ]    </span><br><span class="line">((i,j) <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">4</span>) <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(i) )</span><br></pre></td></tr></table></figure> 这些可以替代大块大块的嵌套循环代码</p>
+<h3 id="碎碎念-1">碎碎念</h3>
+<p>前面也提到过了，这两个是由空间使用上的区别。另外，它们生成的东东也不一样哦~</p>
+<h2 id="new-types-at-runtime"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#108297">New types at runtime</a></h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>NewType = <span class="built_in">type</span>(<span class="string">&quot;NewType&quot;</span>, (<span class="built_in">object</span>,), &#123;<span class="string">&quot;x&quot;</span>: <span class="string">&quot;hello&quot;</span>&#125;)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>n = NewType()</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>n.x</span><br><span class="line"><span class="string">&quot;hello&quot;</span></span><br></pre></td></tr></table></figure>
+<p>它与下面完全一样 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="class"><span class="keyword">class</span> <span class="title">NewType</span>(<span class="params"><span class="built_in">object</span></span>):</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>    x = <span class="string">&quot;hello&quot;</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>n = NewType()</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>n.x</span><br><span class="line"><span class="string">&quot;hello&quot;</span></span><br></pre></td></tr></table></figure> 它可能不是最优用的特性，但知道有这么一个东东也是很棒的。</p>
+<h3 id="碎碎念-2">碎碎念</h3>
+<p>注意，所有的类都是在运行时创建的。因此，你可以在一个条件，或者在一个函数中使用'class'语句。而<code>type</code>的使用，则是给你提供了一个简洁的动态定义一个生成一堆属性的类的方式。 可以定义一个匿名类。例如：<code>type('', (object,), &#123;'x': 'blah'&#125;)</code> 可以在定义类的同时实例化。例如：<code>x = type("X", (object,), &#123;'val':'Hello'&#125;)()</code> 再扩展一下下。<code>type</code>这个东东，还可以用来创建高大上的metaclasses（元类）。</p>
+<h2 id="pth-files"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#113833">.pth files</a></h2>
+<p>为了添加更多的python模块（特别是第三方模块），大部分人似乎都会使用PYTHONPATH环境变量，或者在他们的site-packages目录中增加符号链接或目录。另一种方法是使用*.pth文件。下面是python官方文档的解释： “修改python搜索路径最方便的方法是将一个路径配置文件添加到已经存在于python搜索路径中的目录下，通常是.../site-packages/目录。路径配置文件有<code>.pth</code>扩展名，并且每一行必须包含一个会添加到sys.pah的单一路径。（因为新的路径将会追加到sys.path中，新增的目录下的模块将不会覆盖掉标准模块。这意味着你不能使用这个机制来安装标准模块的修正版本。）”</p>
+<h3 id="碎碎念-3">碎碎念</h3>
+<p>引用<a target="_blank" rel="noopener" href="http://www.elias.cn/Python/PythonPath?from=Develop.PythonPath">如何方便地给Python环境注册新类库</a>: 原理上， Python 运行环境查找库文件时本质是对 sys.path 列表的遍历，如果我们想给运行环境注册新的类库进来， 要么得用代码给 sys.path 列表增加新路径； 要么得调整 PYTHONPATH 环境变量； 要么就得把库文件复制到已经在 sys.path 设置中的路径中去（比如 site-packages 目录）； 最简单的办法是用 .pth 文件来实现。Python 在遍历已知的库文件目录过程中，如果见到一个 .pth 文件，就会将文件中所记录的路径加入到 sys.path 设置中，于是 .pth 文件说指明的库也就可以被 Python 运行环境找到了。 python模块的绿色安装方法：只要将模块路径写入.pth文件中并把此文件放在正确的sys.path路径下即可。</p>
+<h2 id="rot13-encoding"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#1024693">ROT13 Encoding</a></h2>
+<p>对源代码来说，当你在代码文件顶部使用正确的编码声明时，ROT13是一种有效的编码。 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="comment"># -*- coding: rot13 -*-</span></span><br><span class="line"></span><br><span class="line">cevag <span class="string">&quot;Uryyb fgnpxbiresybj!&quot;</span>.rapbqr(<span class="string">&quot;rot13&quot;</span>)</span><br><span class="line">cevag h<span class="string">&quot;Uryyb fgnpxbiresybj!&quot;</span></span><br></pre></td></tr></table></figure> ### 碎碎念 上面例子的运行结果都是：<code>Hello stackoverflow!</code> 这个特性貌似在py3k中被移除了~~ 当然，有小伙伴提出来了邪恶的想法，可以用来对付反病毒工具……</p>
+<h2 id="regex-debugging"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#143636">Regex Debugging</a></h2>
+<p>正则表达式是python的一个很棒的特性，但是调试它们却是一件痛不欲生的事，然而，我们相当容易犯关于正则的错误Orz…… 幸运的是，通过传递一个未公开的实验性的隐藏标记<code>re.DEBUG</code>(实际上是，128)给<code>re.compile</code>函数，python可以打印正则解析树， <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>re.<span class="built_in">compile</span>(<span class="string">&quot;^\[font(?:=(?P&lt;size&gt;[-+][0-9]&#123;1,2&#125;))?\](.*?)[/font]&quot;</span>,</span><br><span class="line">    re.DEBUG)</span><br><span class="line">at at_beginning</span><br><span class="line">literal <span class="number">91</span></span><br><span class="line">literal <span class="number">102</span></span><br><span class="line">literal <span class="number">111</span></span><br><span class="line">literal <span class="number">110</span></span><br><span class="line">literal <span class="number">116</span></span><br><span class="line">max_repeat <span class="number">0</span> <span class="number">1</span></span><br><span class="line">  subpattern <span class="literal">None</span></span><br><span class="line">    literal <span class="number">61</span></span><br><span class="line">    subpattern <span class="number">1</span></span><br><span class="line">      <span class="keyword">in</span></span><br><span class="line">        literal <span class="number">45</span></span><br><span class="line">        literal <span class="number">43</span></span><br><span class="line">      max_repeat <span class="number">1</span> <span class="number">2</span></span><br><span class="line">        <span class="keyword">in</span></span><br><span class="line">          <span class="built_in">range</span> (<span class="number">48</span>, <span class="number">57</span>)</span><br><span class="line">literal <span class="number">93</span></span><br><span class="line">subpattern <span class="number">2</span></span><br><span class="line">  min_repeat <span class="number">0</span> <span class="number">65535</span></span><br><span class="line">    <span class="built_in">any</span> <span class="literal">None</span></span><br><span class="line"><span class="keyword">in</span></span><br><span class="line">  literal <span class="number">47</span></span><br><span class="line">  literal <span class="number">102</span></span><br><span class="line">  literal <span class="number">111</span></span><br><span class="line">  literal <span class="number">110</span></span><br><span class="line">  literal <span class="number">116</span></span><br></pre></td></tr></table></figure> 一旦你了解了语法，则可以发现错误。在这里，我们可以看到，错误是忘记在<code>[/font]</code>中去掉<code>[]</code>。 当然，你可以把它和任何你想要的标记组合在一起，例如注释正则： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>re.<span class="built_in">compile</span>(<span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">^              # start of a line</span></span><br><span class="line"><span class="string">\[font         # the font tag</span></span><br><span class="line"><span class="string">(?:=(?P&lt;size&gt;  # optional [font=+size]</span></span><br><span class="line"><span class="string">[-+][0-9]&#123;1,2&#125; # size specification</span></span><br><span class="line"><span class="string">))?</span></span><br><span class="line"><span class="string">\]             # end of tag</span></span><br><span class="line"><span class="string">(.*?)          # text between the tags</span></span><br><span class="line"><span class="string">\[/font\]      # end of the tag</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span>, re.DEBUG|re.VERBOSE|re.DOTALL)</span><br></pre></td></tr></table></figure> ### 碎碎念 虽然你也可以用128代替re.DEBUG，但是，为了可读性，还是推荐使用re.DEBUG。 另外，推荐一个可以解析正则表达式的网站：<a target="_blank" rel="noopener" href="https://regex101.com/#python">regular expressions 101</a></p>
+<h2 id="sending-to-generators"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#101739">Sending to Generators</a></h2>
+<p><a target="_blank" rel="noopener" href="http://www.python.org/dev/peps/pep-0342/">发送值到生成器函数</a>。例如下面这个函数： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">mygen</span>():</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;Yield 5 until something else is passed back via send()&quot;&quot;&quot;</span></span><br><span class="line">    a = <span class="number">5</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        f = (<span class="keyword">yield</span> a) <span class="comment">#yield a and possibly get f in return</span></span><br><span class="line">        <span class="keyword">if</span> f <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>: </span><br><span class="line">            a = f  <span class="comment">#store the new value</span></span><br></pre></td></tr></table></figure> 你可以： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>g = mygen()</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>g.<span class="built_in">next</span>()</span><br><span class="line"><span class="number">5</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>g.<span class="built_in">next</span>()</span><br><span class="line"><span class="number">5</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>g.send(<span class="number">7</span>)  <span class="comment">#we send this back to the generator</span></span><br><span class="line"><span class="number">7</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>g.<span class="built_in">next</span>() <span class="comment">#now it will yield 7 until we send something else</span></span><br><span class="line"><span class="number">7</span></span><br></pre></td></tr></table></figure></p>
+<h2 id="tab-completion-in-interactive-interpreter"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#168270">Tab Completion in Interactive Interpreter</a></h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    <span class="keyword">import</span> readline</span><br><span class="line"><span class="keyword">except</span> ImportError:</span><br><span class="line">    <span class="built_in">print</span> <span class="string">&quot;Unable to load readline module.&quot;</span></span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    <span class="keyword">import</span> rlcompleter</span><br><span class="line">    readline.parse_and_bind(<span class="string">&quot;tab: complete&quot;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="class"><span class="keyword">class</span> <span class="title">myclass</span>:</span></span><br><span class="line"><span class="meta">... </span>   <span class="function"><span class="keyword">def</span> <span class="title">function</span>(<span class="params">self</span>):</span></span><br><span class="line"><span class="meta">... </span>      <span class="built_in">print</span> <span class="string">&quot;my function&quot;</span></span><br><span class="line"><span class="meta">... </span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>class_instance = myclass()</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>class_instance.&lt;TAB&gt;</span><br><span class="line">class_instance.__class__   class_instance.__module__</span><br><span class="line">class_instance.__doc__     class_instance.function</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>class_instance.f&lt;TAB&gt;unction()</span><br></pre></td></tr></table></figure>
+<p>当然，你需要设置一个环境变量：PYTHONSTARTUP</p>
+<h3 id="碎碎念-4">碎碎念</h3>
+<p>噢，暂时还看不懂，~~~~(&gt;_&lt;)~~~~</p>
+<h2 id="ternary-expression"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#116480">Ternary Expression</a></h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x = <span class="number">3</span> <span class="keyword">if</span> (y == <span class="number">1</span>) <span class="keyword">else</span> <span class="number">2</span></span><br></pre></td></tr></table></figure>
+<p>上面这个语句会做这样的事：“将x赋值为3，如果y是1，否则将x赋值为2”。注意，括号不是必须的，但是有它们会使得代码更具可读性。如果你有更复杂的需求，也可以将它们串联起来： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x = <span class="number">3</span> <span class="keyword">if</span> (y == <span class="number">1</span>) <span class="keyword">else</span> <span class="number">2</span> <span class="keyword">if</span> (y == -<span class="number">1</span>) <span class="keyword">else</span> <span class="number">1</span></span><br></pre></td></tr></table></figure> 虽然在某种意义上，有点过分了。 注意，你可以在任何表达式中使用<code>if ... else</code>。例如： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(func1 <span class="keyword">if</span> y == <span class="number">1</span> <span class="keyword">else</span> func2)(arg1, arg2) </span><br></pre></td></tr></table></figure> 这里，当y为1时，func1将会被调用，否则，func2将会被调用。在这两种情况下，参数arg1和arg2都将会作为被调用的对应的函数的参数。 类似地，下面也是有效的： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x = (class1 <span class="keyword">if</span> y == <span class="number">1</span> <span class="keyword">else</span> class2)(arg1, arg2)</span><br></pre></td></tr></table></figure> 这里，class1和class2是两个类。</p>
+<h3 id="碎碎念-5">碎碎念</h3>
+<p>常用的还有<code>return 3 if (y == 1) else 2</code> 上面第一个例子还有一种容易让人困惑的等价写法：<code>y == 1 and 3 or 2</code>。</p>
+<h2 id="tryexceptelse"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#114157">try/except/else</a></h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span>:</span><br><span class="line">  put_4000000000_volts_through_it(parrot)</span><br><span class="line"><span class="keyword">except</span> Voom:</span><br><span class="line">  <span class="built_in">print</span> <span class="string">&quot;&#x27;E&#x27;s pining!&quot;</span></span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">  <span class="built_in">print</span> <span class="string">&quot;This parrot is no more!&quot;</span></span><br><span class="line"><span class="keyword">finally</span>:</span><br><span class="line">  end_sketch()</span><br></pre></td></tr></table></figure>
+<p>使用else从句比增加额外的代码在try子句中要好得多，因为它避免了无意中捕获到不是由try...except语句所保护的代码抛出的异常。</p>
+<h3 id="碎碎念-6">碎碎念</h3>
+<p>else语句块只有当try语句正常执行（也就是说，except语句未执行）的时候，才会执行。 python中的try/except/else/finally语句的语法如下： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span>:</span><br><span class="line">     Normal execution block</span><br><span class="line"><span class="keyword">except</span> A:</span><br><span class="line">     Exception A handle</span><br><span class="line"><span class="keyword">except</span> B:</span><br><span class="line">     Exception B handle</span><br><span class="line"><span class="keyword">except</span>:</span><br><span class="line">     Other exception handle</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">     <span class="keyword">if</span> no exception,get here</span><br><span class="line"><span class="keyword">finally</span>:</span><br><span class="line">     this block will be excuted no matter how it goes above</span><br></pre></td></tr></table></figure> 扩展阅读： * <a target="_blank" rel="noopener" href="http://www.cnblogs.com/windlazio/archive/2013/01/24/2874417.html">python中的try/except/else/finally语句</a></p>
+<h2 id="with-statement"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#109182">with statement</a></h2>
+<p><a target="_blank" rel="noopener" href="http://www.python.org/dev/peps/pep-0343/">PEP 343</a>中引进的<a target="_blank" rel="noopener" href="http://docs.python.org/library/stdtypes.html#context-manager-types">context manager</a>是一个将一套语句作为运行时上下文的对象。由于这个特性使用了一些新的关键字，因此它是被逐步推行的：在Python 2.5中通过<code>__future__</code>可用。Python 2.6及以上（包括Python 3）则默认可用。 会经常使用<a target="_blank" rel="noopener" href="http://www.python.org/dev/peps/pep-0343/">with语句</a>，则是因为它是一个非常有用的结构。下面是一个快速演示： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> __future__ <span class="keyword">import</span> with_statement</span><br><span class="line"></span><br><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&#x27;foo.txt&#x27;</span>, <span class="string">&#x27;w&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">    f.write(<span class="string">&#x27;hello!&#x27;</span>)</span><br></pre></td></tr></table></figure> 在这个场景背后，则是<a target="_blank" rel="noopener" href="http://www.python.org/dev/peps/pep-0343/">with语句</a>在file对象上调用特殊的<code>__enter__</code>和<code>__exit__</code>方法。如果在with语句体中发生了异常，异常细节也会传给<code>__exit__</code>，因此允许异常处理。 在这个特殊场景下，它为你所做的事是，保证了当执行到了with语句体之外时，file会被关闭，而忽略语句体正常结构或是否抛出了异常。它基本上是一种抽象出公用异常处理代码的方式。 其他常用场景包括线程锁和数据库事务锁。</p>
+<h3 id="碎碎念-7">碎碎念</h3>
+<p>支持多个with形式，例如：<code>with open('filea') as filea, open('fileb') as fileb:...</code></p>
+<p>扩展阅读： * <a target="_blank" rel="noopener" href="https://www.ibm.com/developerworks/cn/opensource/os-cn-pythonwith/">浅谈 Python 的 with 语句</a></p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2015/09/27/%5B%E8%AF%91%5DPython%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8A)/" rel="prev" title="译|Python的隐藏特性(上)">
+      <i class="fa fa-chevron-left"></i> 译|Python的隐藏特性(上)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2015/10/07/%5B%E5%A4%96%E9%9D%A2%E7%9A%84%E4%B8%96%E7%95%8C%E5%BE%88%E7%B2%BE%E5%BD%A9%5D%E4%BD%BF%E7%94%A8shadowsocks+tsocks%E8%AE%BE%E7%BD%AE%E5%85%A8%E5%B1%80%E4%BB%A3%E7%90%86/" rel="next" title="外面的世界很精彩|使用shadowsocks+tsocks设置全局代理">
+      外面的世界很精彩|使用shadowsocks+tsocks设置全局代理 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#list-stepping"><span class="nav-number">1.</span> <span class="nav-text">List stepping</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#missing-items"><span class="nav-number">2.</span> <span class="nav-text">missing items</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5"><span class="nav-number">2.1.</span> <span class="nav-text">碎碎念</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#multi-line-regex"><span class="nav-number">3.</span> <span class="nav-text">Multi-line Regex</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#named-string-formatting"><span class="nav-number">4.</span> <span class="nav-text">Named string formatting</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#nested-listgenerator-comprehensions"><span class="nav-number">5.</span> <span class="nav-text">Nested list&#x2F;generator comprehensions</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5-1"><span class="nav-number">5.1.</span> <span class="nav-text">碎碎念</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#new-types-at-runtime"><span class="nav-number">6.</span> <span class="nav-text">New types at runtime</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5-2"><span class="nav-number">6.1.</span> <span class="nav-text">碎碎念</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pth-files"><span class="nav-number">7.</span> <span class="nav-text">.pth files</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5-3"><span class="nav-number">7.1.</span> <span class="nav-text">碎碎念</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rot13-encoding"><span class="nav-number">8.</span> <span class="nav-text">ROT13 Encoding</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#regex-debugging"><span class="nav-number">9.</span> <span class="nav-text">Regex Debugging</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sending-to-generators"><span class="nav-number">10.</span> <span class="nav-text">Sending to Generators</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tab-completion-in-interactive-interpreter"><span class="nav-number">11.</span> <span class="nav-text">Tab Completion in Interactive Interpreter</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5-4"><span class="nav-number">11.1.</span> <span class="nav-text">碎碎念</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ternary-expression"><span class="nav-number">12.</span> <span class="nav-text">Ternary Expression</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5-5"><span class="nav-number">12.1.</span> <span class="nav-text">碎碎念</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tryexceptelse"><span class="nav-number">13.</span> <span class="nav-text">try&#x2F;except&#x2F;else</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5-6"><span class="nav-number">13.1.</span> <span class="nav-text">碎碎念</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#with-statement"><span class="nav-number">14.</span> <span class="nav-text">with statement</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5-7"><span class="nav-number">14.1.</span> <span class="nav-text">碎碎念</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2015/09/28/[%E8%AF%91]Python%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8B)/";
+    this.page.identifier = "2015/09/28/[译]Python的隐藏特性(下)/";
+    this.page.title = "译|Python的隐藏特性(下)";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="栈 LIFO: last-in, first-out 后进先出 可以用一个数组S[1..n]来实现一个最多可容纳n个元素的栈。该数组有一个属性S.top， 指向最新插入的元素。栈中包含的元素为S[1..S.top]，其中S[1]是栈底元素，S[S.top]是栈顶元素。  两种操作： 1. PUSH：压入，栈上的INSERT操作，时间复杂度O(1) 2. POP：弹出，栈上的DELETE操作，时间复">
+<meta property="og:type" content="article">
+<meta property="og:title" content="堆、栈、队列及其Python的简单实现">
+<meta property="og:url" content="http://ictar.github.io/2015/12/15/%E5%A0%86%E3%80%81%E6%A0%88%E3%80%81%E9%98%9F%E5%88%97%E5%8F%8A%E5%85%B6Python%E7%9A%84%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="栈 LIFO: last-in, first-out 后进先出 可以用一个数组S[1..n]来实现一个最多可容纳n个元素的栈。该数组有一个属性S.top， 指向最新插入的元素。栈中包含的元素为S[1..S.top]，其中S[1]是栈底元素，S[S.top]是栈顶元素。  两种操作： 1. PUSH：压入，栈上的INSERT操作，时间复杂度O(1) 2. POP：弹出，栈上的DELETE操作，时间复">
+<meta property="og:locale">
+<meta property="article:published_time" content="2015-12-15T02:50:38.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.954Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="数据结构">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2015/12/15/%E5%A0%86%E3%80%81%E6%A0%88%E3%80%81%E9%98%9F%E5%88%97%E5%8F%8A%E5%85%B6Python%E7%9A%84%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>堆、栈、队列及其Python的简单实现 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2015/12/15/%E5%A0%86%E3%80%81%E6%A0%88%E3%80%81%E9%98%9F%E5%88%97%E5%8F%8A%E5%85%B6Python%E7%9A%84%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          堆、栈、队列及其Python的简单实现
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2015-12-15 10:50:38" itemprop="dateCreated datePublished" datetime="2015-12-15T10:50:38+08:00">2015-12-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">算法与数据结构</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2015/12/15/%E5%A0%86%E3%80%81%E6%A0%88%E3%80%81%E9%98%9F%E5%88%97%E5%8F%8A%E5%85%B6Python%E7%9A%84%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/12/15/堆、栈、队列及其Python的简单实现/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="栈">栈</h1>
+<p>LIFO: last-in, first-out 后进先出 可以用一个数组S[1..n]来实现一个最多可容纳n个元素的栈。该数组有一个属性S.top， 指向最新插入的元素。栈中包含的元素为S[1..S.top]，其中S[1]是栈底元素，S[S.top]是栈顶元素。</p>
+<p>两种操作： 1. PUSH：压入，栈上的INSERT操作，时间复杂度O(1) 2. POP：弹出，栈上的DELETE操作，时间复杂度O(1)</p>
+<p>两种错误： 1. 栈下溢(underflow)：试图对一个空栈执行弹出操作 2. 栈上溢(overflow)：试图对一个已满的栈执行压入操作</p>
+<h2 id="python实现">python实现</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UNDERFLOW</span>(<span class="params">Exception</span>):</span><span class="keyword">pass</span> <span class="comment"># 下溢</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">OVERFLOW</span>(<span class="params">Exception</span>):</span><span class="keyword">pass</span> <span class="comment"># 上溢</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Stack</span>(<span class="params"><span class="built_in">object</span></span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, size</span>):</span></span><br><span class="line">        self.top = -<span class="number">1</span> <span class="comment">#指向最新插入的元素</span></span><br><span class="line">        self.S = [<span class="number">0</span> <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,size)]</span><br><span class="line">        self.size = size</span><br><span class="line">    <span class="comment">#测试一个栈是否为空</span></span><br><span class="line">    STACK_EMPTY = <span class="keyword">lambda</span> self: self.top == -<span class="number">1</span></span><br><span class="line">    <span class="comment">#测试一个栈是否已满</span></span><br><span class="line">    STACK_FULL = <span class="keyword">lambda</span> self: self.top == self.size-<span class="number">1</span></span><br><span class="line">    <span class="comment">#插入元素到栈顶</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">PUSH</span>(<span class="params">self,x</span>):</span></span><br><span class="line">        <span class="keyword">if</span> self.STACK_FULL():</span><br><span class="line"> </span><br><span class="line">               <span class="keyword">raise</span> OVERFLOW(<span class="string">&quot;stack is full&quot;</span>)</span><br><span class="line">        self.top += <span class="number">1</span></span><br><span class="line">        self.S[self.top] = x</span><br><span class="line">    <span class="comment">#将栈顶元素返回并删除</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">POP</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="keyword">if</span> self.STACK_EMPTY():</span><br><span class="line">            <span class="keyword">raise</span> UNDERFLOW(<span class="string">&quot;stack is empty&quot;</span>)</span><br><span class="line">        x = self.S[self.top]</span><br><span class="line">        self.top -= <span class="number">1</span></span><br><span class="line">        <span class="keyword">return</span> x</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>说明： 可以直接用python中的list来实现栈。PUSH操作相当于list.append(x)，POP操作相当于list.pop()</p>
+</blockquote>
+<h1 id="队列">队列</h1>
+<p>FIFO: first-in, first-out 先进先出</p>
+<p>队列有队头和队尾，当一个元素入队时，被放在队尾的位置；而出队的元素则总是在队头的那个。 利用数组Q[1..n]来实现含有n-1个元素队列（保留一位元素用来判断队列空或满）。该队列有一个属性Q.head指向对头元素，属性Q.tail指向下一个新元素将要插入的位置，队列中的元素存放在位置Q.head, Q.head+1, ..., Q.tail-1上。 初始时，Q.head = Q.tail = 1。当Q.head = Q.tail时， 队列为空。当Q.head=Q.tail+1时，队列是满的。</p>
+<p>两种操作： 1. ENQUEUE：入队，队列上的INSERT操作，时间复杂度O(1) 2. DEQUEUE：出队，队列上的DELETE操作，时间复杂度O(1)</p>
+<h2 id="python实现-1">python实现</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UNDERFLOW</span>(<span class="params">Exception</span>):</span><span class="keyword">pass</span> <span class="comment"># 下溢</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">OVERFLOW</span>(<span class="params">Exception</span>):</span><span class="keyword">pass</span> <span class="comment"># 上溢</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Queue</span>(<span class="params"><span class="built_in">object</span></span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self,size</span>):</span></span><br><span class="line">        self.head = self.tail = <span class="number">0</span></span><br><span class="line">        self.S = [<span class="number">0</span> <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,size)]</span><br><span class="line">        self.size = size</span><br><span class="line">    <span class="comment"># 判断队列是否已满</span></span><br><span class="line">    QUEUE_FULL = <span class="keyword">lambda</span> self: self.head == (self.tail+<span class="number">1</span>)%self.size</span><br><span class="line">    <span class="comment"># 判断队列是否为空</span></span><br><span class="line">    QUEUE_EMPTY = <span class="keyword">lambda</span> self: self.head == self.tail</span><br><span class="line">    <span class="comment"># 入队</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">ENQUEUE</span>(<span class="params">self, x</span>):</span></span><br><span class="line">        <span class="keyword">if</span> self.QUEUE_FULL(): <span class="keyword">raise</span> OVERFLOW(<span class="string">&quot;the queue is full&quot;</span>)</span><br><span class="line">        self.S[self.tail] = x</span><br><span class="line">        self.tail = (self.tail+<span class="number">1</span>) % self.size</span><br><span class="line">    <span class="comment"># 出队</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">DEQUEUE</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="keyword">if</span> self.QUEUE_EMPTY(): <span class="keyword">raise</span> UNDERFLOW(<span class="string">&quot;the queue is empty&quot;</span>)</span><br><span class="line">        x = self.S[self.head]</span><br><span class="line">        self.head = (self.head+<span class="number">1</span>) % self.size</span><br><span class="line">        <span class="keyword">return</span> x</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注： 可以使用python中的collections.deque来实现队列。ENQUEUE相当于deque.append(), DEQUEUE相当于deque.popleft()</p>
+</blockquote>
+<h1 id="堆">堆</h1>
+<p>在<a href="/2015/12/07/九大排序算法及其Python实现之堆排序/">九大排序算法及其Python实现之堆排序</a>中已经基本讲述了堆的性质。 下面讲讲堆的应用之一：优先队列 优先队列是一种用来维护由一组元素构成的集合S的数据结构，其中的每一个元素都有一个相关的值，称为关键字(key)。 一个最大优先队列S支持以下操作： 1. INSERT(S, x)：把元素x插入集合S中。 2. MAXIMUM(S)：返回S中具有最大键值的元素 3. EXTRACT-MAX(S)：去掉并返回S中的具有最大键值的元素 4. INCREASE-KEY(S, x, k)：将元素x的关键字值增加到k，这里假设k的值不小于x的原关键字值。</p>
+<h2 id="实现">实现</h2>
+<p>伪代码： <figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"># 时间复杂度：<span class="constructor">O(1)</span></span><br><span class="line">HEAP-<span class="constructor">MAXIMUM(S)</span></span><br><span class="line">    return S<span class="literal">[<span class="number">1</span>]</span></span><br><span class="line"># 时间复杂度：<span class="constructor">O(<span class="params">logn</span>)</span></span><br><span class="line">HEAP-EXTRACT-<span class="constructor">MAX(S)</span></span><br><span class="line">    <span class="keyword">if</span> <span class="module-access"><span class="module"><span class="identifier">S</span>.</span></span>heap-size &lt; <span class="number">1</span></span><br><span class="line">        error <span class="string">&quot;heap underflow&quot;</span></span><br><span class="line">    max = S<span class="literal">[<span class="number">1</span>]</span></span><br><span class="line">    S<span class="literal">[<span class="number">1</span>]</span> = S<span class="literal">[S.<span class="identifier">heap</span>-<span class="identifier">size</span>]</span></span><br><span class="line">    <span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>heap-size = <span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>heap-size - <span class="number">1</span></span><br><span class="line">    MAX-<span class="constructor">HEAPIFY(A, 1)</span></span><br><span class="line">    return max</span><br><span class="line"># i为x的下标</span><br><span class="line"># 时间复杂度：<span class="constructor">O(<span class="params">logn</span>)</span></span><br><span class="line">HEAP-INCREASE-<span class="constructor">KEY(S, <span class="params">i</span>, <span class="params">k</span>)</span></span><br><span class="line">    <span class="keyword">if</span> k &lt; S<span class="literal">[<span class="identifier">i</span>]</span></span><br><span class="line">        error <span class="string">&quot;new key is smaller than current key&quot;</span></span><br><span class="line">    A<span class="literal">[<span class="identifier">i</span>]</span> = key</span><br><span class="line">    <span class="keyword">while</span> i &gt; <span class="number">1</span> <span class="keyword">and</span> A<span class="literal">[PARENT(<span class="identifier">i</span>)]</span> &lt; A<span class="literal">[<span class="identifier">i</span>]</span> # 维护优先队列，即维护最大堆</span><br><span class="line">        exchange A<span class="literal">[<span class="identifier">i</span>]</span> <span class="keyword">with</span> A<span class="literal">[PARENT(<span class="identifier">i</span>)]</span></span><br><span class="line">        i = <span class="constructor">PARENT(<span class="params">i</span>)</span></span><br><span class="line"># key表示元素x的值</span><br><span class="line"># 时间复杂度：<span class="constructor">O(<span class="params">logn</span>)</span></span><br><span class="line">MAX-HEAP-<span class="constructor">INSERT(S, <span class="params">key</span>)</span></span><br><span class="line">    <span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>heap-size = <span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>heap-size + <span class="number">1</span></span><br><span class="line">    A<span class="literal">[<span class="identifier">heap</span>-<span class="identifier">size</span>]</span> = -∞</span><br><span class="line">    HEAP-INCREASE-<span class="constructor">KEY(S, A.<span class="params">heap</span>-<span class="params">size</span>, <span class="params">key</span>)</span></span><br></pre></td></tr></table></figure> ## python实现 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UNDERFLOW</span>(<span class="params">Exception</span>):</span><span class="keyword">pass</span> <span class="comment"># 下溢</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">OVERFLOW</span>(<span class="params">Exception</span>):</span><span class="keyword">pass</span> <span class="comment"># 上溢</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BADVALUE</span>(<span class="params">Exception</span>):</span> <span class="keyword">pass</span> <span class="comment">#错误的值</span></span><br><span class="line"><span class="comment"># 最大堆</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Heap</span>(<span class="params"><span class="built_in">object</span></span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, A</span>):</span></span><br><span class="line">        self.S = A[:]</span><br><span class="line">        self.size = self.heap_size = <span class="built_in">len</span>(A)</span><br><span class="line">        self._BUILD_MAX_HEAP()</span><br><span class="line">    </span><br><span class="line">    PARENT = <span class="keyword">lambda</span> self, i: i/<span class="number">2</span> <span class="comment">#获得i的父结点下标</span></span><br><span class="line">    LEFT = <span class="keyword">lambda</span> self, i: <span class="number">2</span>*i <span class="comment"># 获得i的左子树的根结点下标</span></span><br><span class="line">    RIGHT = <span class="keyword">lambda</span> self, i: <span class="number">2</span>*i+<span class="number">1</span> <span class="comment"># 获得i的右子树的根结点下标</span></span><br><span class="line">        </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">MAX_HEAPIFY</span>(<span class="params">self, i</span>):</span> <span class="comment"># 维护最大堆</span></span><br><span class="line">        left, right = self.LEFT(i), self.RIGHT(i)</span><br><span class="line">        largest = left <span class="keyword">if</span> left &lt; self.heap_size <span class="keyword">and</span> self.S[left] &gt; self.S[i] <span class="keyword">else</span> i</span><br><span class="line">        largest = right <span class="keyword">if</span> right &lt; self.heap_size <span class="keyword">and</span> self.S[right] &gt; self.S[largest] <span class="keyword">else</span> largest</span><br><span class="line">        <span class="keyword">if</span> largest != i:</span><br><span class="line">            self.S[i], self.S[largest] = self.S[largest], self.S[i]</span><br><span class="line">            self.MAX_HEAPIFY(largest)</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_BUILD_MAX_HEAP</span>(<span class="params">self</span>):</span> <span class="comment"># 构建最大堆</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(self.PARENT(self.size-<span class="number">1</span>),-<span class="number">1</span>,-<span class="number">1</span>):</span><br><span class="line">            self.MAX_HEAPIFY(i)</span><br><span class="line">    <span class="comment"># 最大优先队列</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">INSERT</span>(<span class="params">self, key</span>):</span> <span class="comment"># 插入key到堆中</span></span><br><span class="line">        <span class="keyword">if</span> self.heap_size &gt;= self.size: <span class="keyword">raise</span> OVERFLOW(<span class="string">&quot;the heap is full&quot;</span>)</span><br><span class="line">        self.heap_size += <span class="number">1</span></span><br><span class="line">        self.S[self.heap_size-<span class="number">1</span>] = <span class="built_in">float</span>(<span class="string">&#x27;-INF&#x27;</span>)</span><br><span class="line">        self.INCREASE_KEY(self.heap_size-<span class="number">1</span>, key)</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">MAXIMUM</span>(<span class="params">self</span>):</span> <span class="comment"># 获得堆中最大元素</span></span><br><span class="line">        <span class="keyword">return</span> self.S[<span class="number">0</span>]</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">EXTRACT_MAX</span>(<span class="params">self</span>):</span> <span class="comment"># 删除并返回堆中最大元素</span></span><br><span class="line">        <span class="keyword">if</span> self.heap_size &lt; <span class="number">1</span>: <span class="keyword">raise</span> UNDERFLOW(<span class="string">&quot;the heap is empty&quot;</span>)</span><br><span class="line">        <span class="built_in">max</span> = self.S[<span class="number">0</span>]</span><br><span class="line">        self.S[<span class="number">0</span>] = self.S[self.heap_size-<span class="number">1</span>]</span><br><span class="line">        self.heap_size -= <span class="number">1</span></span><br><span class="line">        self.MAX_HEAPIFY(<span class="number">0</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">max</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">INCREASE_KEY</span>(<span class="params">self, i, key</span>):</span> <span class="comment"># 将下标为i的值增加到key值，维护最大堆</span></span><br><span class="line">        <span class="keyword">if</span> self.S[i] &gt; key: <span class="keyword">raise</span> BADVALUE(<span class="string">&quot;new key is smaller than current key&quot;</span>)</span><br><span class="line">        self.S[i] = key</span><br><span class="line">        <span class="keyword">while</span> i&gt; <span class="number">0</span> <span class="keyword">and</span> self.S[i] &gt; self.S[self.PARENT(i)]:</span><br><span class="line">            self.S[i], self.S[self.PARENT(i)] = self.S[self.PARENT(i)], self.S[i]</span><br><span class="line">            i = self.PARENT(i)</span><br></pre></td></tr></table></figure></p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag"># 数据结构</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2015/12/08/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F/" rel="prev" title="九大排序算法及其Python实现之快速排序">
+      <i class="fa fa-chevron-left"></i> 九大排序算法及其Python实现之快速排序
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2015/12/16/%E9%82%A3%E4%BA%9B%E4%BB%A4%E4%BA%BAwow%E7%9A%84%E5%B0%8F%E6%8A%80%E5%B7%A7%E9%9B%86%E9%94%A6/" rel="next" title="那些令人wow的小技巧集锦">
+      那些令人wow的小技巧集锦 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%A0%88"><span class="nav-number">1.</span> <span class="nav-text">栈</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#python%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.1.</span> <span class="nav-text">python实现</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%98%9F%E5%88%97"><span class="nav-number">2.</span> <span class="nav-text">队列</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#python%E5%AE%9E%E7%8E%B0-1"><span class="nav-number">2.1.</span> <span class="nav-text">python实现</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%A0%86"><span class="nav-number">3.</span> <span class="nav-text">堆</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.1.</span> <span class="nav-text">实现</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2015/12/15/%E5%A0%86%E3%80%81%E6%A0%88%E3%80%81%E9%98%9F%E5%88%97%E5%8F%8A%E5%85%B6Python%E7%9A%84%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/";
+    this.page.identifier = "2015/12/15/堆、栈、队列及其Python的简单实现/";
+    this.page.title = "堆、栈、队列及其Python的简单实现";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

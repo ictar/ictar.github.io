@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在实现一些服务的过程中，我们需要对内部处理时间进行控制，以防客户端一直在等待响应。  select-case 实现的超时控制 在 go 中，利用 select + case + time 包，就可以很轻松实现超时控制。我们修改Go by Example: Timeouts中的一个例子：  1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 2">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何用 go 实现超时控制">
+<meta property="og:url" content="http://ictar.github.io/2018/03/20/%E5%A6%82%E4%BD%95%E7%94%A8go%E5%AE%9E%E7%8E%B0%E8%B6%85%E6%97%B6%E6%8E%A7%E5%88%B6/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="在实现一些服务的过程中，我们需要对内部处理时间进行控制，以防客户端一直在等待响应。  select-case 实现的超时控制 在 go 中，利用 select + case + time 包，就可以很轻松实现超时控制。我们修改Go by Example: Timeouts中的一个例子：  1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 2">
+<meta property="og:locale">
+<meta property="article:published_time" content="2018-03-20T14:21:13.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.953Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Golang">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2018/03/20/%E5%A6%82%E4%BD%95%E7%94%A8go%E5%AE%9E%E7%8E%B0%E8%B6%85%E6%97%B6%E6%8E%A7%E5%88%B6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>如何用 go 实现超时控制 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2018/03/20/%E5%A6%82%E4%BD%95%E7%94%A8go%E5%AE%9E%E7%8E%B0%E8%B6%85%E6%97%B6%E6%8E%A7%E5%88%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          如何用 go 实现超时控制
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2018-03-20 22:21:13" itemprop="dateCreated datePublished" datetime="2018-03-20T22:21:13+08:00">2018-03-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2018/03/20/%E5%A6%82%E4%BD%95%E7%94%A8go%E5%AE%9E%E7%8E%B0%E8%B6%85%E6%97%B6%E6%8E%A7%E5%88%B6/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/03/20/如何用go实现超时控制/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在实现一些服务的过程中，我们需要对内部处理时间进行控制，以防客户端一直在等待响应。</p>
+<h3 id="select-case-实现的超时控制">select-case 实现的超时控制</h3>
+<p>在 go 中，利用 select + case + time 包，就可以很轻松实现超时控制。我们修改<a target="_blank" rel="noopener" href="https://gobyexample.com/timeouts">Go by Example: Timeouts</a>中的一个例子：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;time&quot;</span></span><br><span class="line">    <span class="string">&quot;fmt&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">    c1 := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">string</span>, <span class="number">1</span>)</span><br><span class="line">    <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        time.Sleep(<span class="number">2</span> * time.Second)</span><br><span class="line">		fmt.Println(<span class="string">&quot;get result 1&quot;</span>)</span><br><span class="line">        c1 &lt;- <span class="string">&quot;result 1&quot;</span></span><br><span class="line">    &#125;()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">select</span> &#123;</span><br><span class="line">    <span class="keyword">case</span> res := &lt;-c1:</span><br><span class="line">        fmt.Println(res)</span><br><span class="line">    <span class="keyword">case</span> &lt;-time.After(<span class="number">1</span> * time.Second):</span><br><span class="line">        fmt.Println(<span class="string">&quot;timeout 1&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    c2 := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">string</span>, <span class="number">1</span>)</span><br><span class="line">    <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        time.Sleep(<span class="number">2</span> * time.Second)</span><br><span class="line">		fmt.Println(<span class="string">&quot;get result 2&quot;</span>)</span><br><span class="line">        c2 &lt;- <span class="string">&quot;result 2&quot;</span></span><br><span class="line">    &#125;()</span><br><span class="line">    <span class="keyword">select</span> &#123;</span><br><span class="line">    <span class="keyword">case</span> res := &lt;-c2:</span><br><span class="line">        fmt.Println(res)</span><br><span class="line">    <span class="keyword">case</span> &lt;-time.After(<span class="number">3</span> * time.Second):</span><br><span class="line">        fmt.Println(<span class="string">&quot;timeout 2&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在上面的例子中，从第 10 到第 22 行，我们创建了一个大小为 1 的 channel <code>c1</code>，然后创建一个 goroutine。在这个 goroutine 中，等待 2 秒后，打印日志，并发送一条消息到 channel <code>c1</code> 中。接着，我们利用 select-case 实现超时时间为 1 秒的超时控制。在第一个 <code>case</code> 中，等待来自 <code>c1</code> 的消息，并将此消息打印出来。在第二个 <code>case</code> 中，利用 <code>time</code> 包的 <code>After</code> 方法（这个方法在指定的时间间隔后，发送当前时间到返回的 channel 中），等待 1 秒后打印超时信息。</p>
+<p>从第 24 到第 35 行，我们创建了另一个大小为 2 的 channel <code>c2</code>，然后创建另一个 goroutine。在这个 goroutine 中，同样等待 2 秒后打印日志，并发送一条消息到 channel <code>c2</code> 中。接着，利用另一个 select-case 实现超时时间为 3 秒的超时控制。在第一个 <code>case</code> 中，等待来自 <code>c1</code> 的消息，并将此消息打印出来。在第二个 <code>case</code> 中，利用 <code>time</code> 包的 <code>After</code> 方法，等待 3 秒后打印超时信息。</p>
+<p><a target="_blank" rel="noopener" href="https://play.golang.org/p/jBu2W6gBss0">运行</a>得到输出如下： <figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">timeout</span> <span class="number">1</span></span><br><span class="line"><span class="keyword">get</span> <span class="literal">result</span> <span class="number">1</span></span><br><span class="line"><span class="keyword">get</span> <span class="literal">result</span> <span class="number">2</span></span><br><span class="line"><span class="literal">result</span> <span class="number">2</span></span><br></pre></td></tr></table></figure> ### 超时传播 从上面的例子的输出，我们会发现，第一个 goroutine 并没有在 1 秒超时后结束，而是完整地执行了整个方法。这是不彻底的超时控制，有可能影响后续的处理。为了更清楚地看出这个问题，我们稍微修改下上面的例子：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;sync&quot;</span></span><br><span class="line">	<span class="string">&quot;time&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> (</span><br><span class="line">	mutex sync.Mutex</span><br><span class="line">	id    <span class="keyword">int</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">dosomething</span><span class="params">(val <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	mutex.Lock()</span><br><span class="line">	<span class="keyword">defer</span> mutex.Unlock()</span><br><span class="line">	<span class="comment">//....</span></span><br><span class="line">	time.Sleep(time.Second)</span><br><span class="line">	id = val</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">3</span>; i++ &#123;</span><br><span class="line">		done := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">bool</span>)</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">(i <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">			dosomething(i)</span><br><span class="line">			done &lt;-<span class="literal">true</span></span><br><span class="line">		&#125;(i)</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> res := &lt;-done:</span><br><span class="line">			fmt.Println(time.Now(), res, id)</span><br><span class="line">		<span class="keyword">case</span> &lt;-time.After(time.Duration(i) * time.Second):</span><br><span class="line">			fmt.Println(time.Now(), <span class="string">&quot;timeout &quot;</span>, i)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>在上面的例子中，从第 10 到 13 行，我们声明了一个类型为 <code>Mutext</code> 的全局锁 <code>mutex</code> 和一个全局变量 <code>id</code>。前者用以解决后者的同步写冲突。接下来的第 15 到 21 行，定义了一个函数 <code>dosomething</code>，这个函数等待 1 秒后对变量 <code>id</code> 进行设值。</p>
+<p>程序主入口处，我们依次创建 3 个 goroutine，每个 goroutine 都调用了 <code>dosomething</code> 函数进行设值。函数执行结束后，通过外部的 channel <code>done</code> 来通知调用者。接下来，在第 31 到 36 行，利用 select-case 进行超时控制，超时时间为当前索引指定的秒数。为了更清楚地看出耗时，我们在日志打印中加上了时间打印。</p>
+<p><a target="_blank" rel="noopener" href="https://play.golang.org/p/Aj8Y3kvJCHI">运行</a>会发现，第 2 个请求因为第 1 个请求尚未返回导致没有释放锁，从而超时。而接下来的第 3 个请求也因为同样的原因超时了： <figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">2009</span>-<span class="number">11</span>-<span class="number">10</span> <span class="number">23</span>:<span class="number">00</span>:<span class="number">00</span> +<span class="number">0000</span> UTC m=+<span class="number">0</span>.<span class="number">000000001</span> timeout  <span class="number">0</span></span><br><span class="line"><span class="attribute">2009</span>-<span class="number">11</span>-<span class="number">10</span> <span class="number">23</span>:<span class="number">00</span>:<span class="number">01</span> +<span class="number">0000</span> UTC m=+<span class="number">1</span>.<span class="number">000000001</span> timeout  <span class="number">1</span></span><br><span class="line"><span class="attribute">2009</span>-<span class="number">11</span>-<span class="number">10</span> <span class="number">23</span>:<span class="number">00</span>:<span class="number">03</span> +<span class="number">0000</span> UTC m=+<span class="number">3</span>.<span class="number">000000001</span> timeout  <span class="number">2</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="加上-context-如何">加上 <code>context</code> 如何？</h3>
+<p>在上面的例子中，上次请求超时对下次请求，甚至是下下次请求会发生影响。而这种影响是可以减轻或者避免的。我们可以使用 <a target="_blank" rel="noopener" href="https://golang.org/pkg/context/">context</a> 包来处理这种问题。</p>
+<p><code>context</code> 中有两个方法： * <code>func WithDeadline(parent Context, d time.Time) (Context, CancelFunc)</code>：返回参数 <code>parent</code> 的一个拷贝，并且调整该拷贝的截止时间至不超过 <code>d</code> 指定的时间。如果 <code>parent</code> 的截止时间比 <code>d</code> 早，那么该拷贝语义上等同于 <code>parent</code>。当截止时间过期时，或者调用了返回的 <code>CancelFunc</code>，又或者 <code>parent</code> 的 <code>Done</code> channel 被关闭了，这三种情况之一发生了，返回的 context 的 Done channel 就会被关闭。注意，关闭该 context 会释放其相关资源，因此，只要在这个 context 上的操作完成了，就必须立即调用 <code>CancelFunc</code>。 * <code>func WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc)</code>：返回 <code>WithDeadline(parent, time.Now().Add(timeout))</code></p>
+<p>现在，我们使用 <code>WithTimeout</code> 方法来改进上面的例子。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;sync&quot;</span></span><br><span class="line">	<span class="string">&quot;time&quot;</span></span><br><span class="line">	<span class="string">&quot;context&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> (</span><br><span class="line">	mutex sync.Mutex</span><br><span class="line">	id    <span class="keyword">int</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">dosomething</span><span class="params">(ctx context.Context, val <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	mutex.Lock()</span><br><span class="line">	<span class="keyword">defer</span> mutex.Unlock()</span><br><span class="line">	<span class="keyword">select</span> &#123;</span><br><span class="line">	<span class="keyword">case</span> &lt;- ctx.Done():</span><br><span class="line">		fmt.Println(time.Now(), <span class="string">&quot;op timeout&quot;</span>, val)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	<span class="keyword">default</span>:</span><br><span class="line">		<span class="comment">//....</span></span><br><span class="line">		time.Sleep(time.Second)</span><br><span class="line">		id = val</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="number">3</span>; i++ &#123;</span><br><span class="line">		done := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">bool</span>)</span><br><span class="line">		<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(i) * time.Second)</span><br><span class="line">			<span class="keyword">defer</span> cancel()</span><br><span class="line">			dosomething(ctx, i)</span><br><span class="line">			done &lt;-<span class="literal">true</span></span><br><span class="line">		&#125;()</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> res := &lt;-done:</span><br><span class="line">			fmt.Println(time.Now(), res, id)</span><br><span class="line">		<span class="keyword">case</span> &lt;-time.After(time.Duration(i) * time.Second):</span><br><span class="line">			fmt.Println(time.Now(), <span class="string">&quot;timeout &quot;</span>, i)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>在第 15 行至 28 行，我们修改 <code>dosomething</code> 的函数签名，将 <code>context.Context</code> 类型的参数作为函数的第一个参数。然后，在该函数中，利用 select-case 和这个参数的 <code>Done</code> 方法来判断是否退出。在第 35 行到第 37 行，调用 <code>context.WithTimeout</code> 方法创建一个 <code>context.Context</code> 对象，超时时间为该 goroutine 的超时时间。然后将其传给 <code>dosomething</code> 函数。</p>
+<p><a target="_blank" rel="noopener" href="https://play.golang.org/p/GZbs7QCCCbQ">运行</a>得到以下输出： <figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">2009</span>-<span class="number">11</span>-<span class="number">10</span> <span class="number">23</span>:<span class="number">00</span>:<span class="number">00</span> +<span class="number">0000</span> UTC m=+<span class="number">0</span>.<span class="number">000000001</span> timeout  <span class="number">0</span></span><br><span class="line"><span class="attribute">2009</span>-<span class="number">11</span>-<span class="number">10</span> <span class="number">23</span>:<span class="number">00</span>:<span class="number">01</span> +<span class="number">0000</span> UTC m=+<span class="number">1</span>.<span class="number">000000001</span> timeout  <span class="number">1</span></span><br><span class="line"><span class="attribute">2009</span>-<span class="number">11</span>-<span class="number">10</span> <span class="number">23</span>:<span class="number">00</span>:<span class="number">01</span> +<span class="number">0000</span> UTC m=+<span class="number">1</span>.<span class="number">000000001</span> op timeout <span class="number">1</span></span><br><span class="line"><span class="attribute">2009</span>-<span class="number">11</span>-<span class="number">10</span> <span class="number">23</span>:<span class="number">00</span>:<span class="number">02</span> +<span class="number">0000</span> UTC m=+<span class="number">2</span>.<span class="number">000000001</span> true <span class="number">2</span></span><br></pre></td></tr></table></figure> 可以看到，虽然第 2 个请求超时了。但是，第 3 个请求能够快速恢复。</p>
+<h3 id="总结">总结</h3>
+<p>第一次在 go 中实现超时控制的时候，满篇的 select-case，粗糙地在超时的时候返回而不管尚在执行中的 goroutine 的死活。结果是，大批量调用受到几个调用超时的影响，一直超时无法恢复。</p>
+<p><code>context</code> 这个包就在这种情况下出现在我的视线中。按惯例，<code>context.Context</code> 对象应该作为函数的第一个参数，并且不建议将其当成结构体的一个部分。此外，它还可以用来传递值等等。</p>
+<p>但是，如果只是为了进行超时控制，而不得不把所有的函数方法都加上这个参数的话，总感觉不那么漂亮。希望未来 go 可以更好地更漂亮地解决超时退出下 goroutine 的退出问题。</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Golang/" rel="tag"># Golang</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/03/14/Go%E7%9A%84HTTP%E6%A0%87%E5%87%86%E5%BA%93%E5%AF%B9%E8%AF%B7%E6%B1%82%E5%A4%B4%E7%9A%84%E5%A4%84%E7%90%86%E7%AE%80%E6%9E%90/" rel="prev" title="Go/HTTP | 标准库对请求头的处理简析">
+      <i class="fa fa-chevron-left"></i> Go/HTTP | 标准库对请求头的处理简析
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/03/30/%E8%AF%91%EF%BC%9A%E6%96%B0%E7%A0%94%E7%A9%B6%E8%A1%A8%E6%98%8E%EF%BC%8C%E9%BB%91%E5%AE%A2%E5%8F%AF%E4%BB%A5%E8%BD%BB%E8%80%8C%E6%98%93%E4%B8%BE%E5%9C%B0%E7%AA%83%E5%8F%96%E4%BD%A0%E7%9A%84%E6%95%B0%E6%8D%AE/" rel="next" title="译|新研究表明，黑客可以轻而易举地窃取你的数据">
+      译|新研究表明，黑客可以轻而易举地窃取你的数据 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#select-case-%E5%AE%9E%E7%8E%B0%E7%9A%84%E8%B6%85%E6%97%B6%E6%8E%A7%E5%88%B6"><span class="nav-number">1.</span> <span class="nav-text">select-case 实现的超时控制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A0%E4%B8%8A-context-%E5%A6%82%E4%BD%95"><span class="nav-number">2.</span> <span class="nav-text">加上 context 如何？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2018/03/20/%E5%A6%82%E4%BD%95%E7%94%A8go%E5%AE%9E%E7%8E%B0%E8%B6%85%E6%97%B6%E6%8E%A7%E5%88%B6/";
+    this.page.identifier = "2018/03/20/如何用go实现超时控制/";
+    this.page.title = "如何用 go 实现超时控制";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="概述 对于函数调用，Go 语言使用调用者预先分配的栈来传递参数和返回值，使得多值返回成为可能。  以下基于 Go1.14  考虑以下代码： 1 2 3 4 5 6 7 8 9   package main  func do(a, b int) (int, bool) { 	return a + b, a &#x3D;&#x3D; b }  func main() { 	do(33, 66) }   然后运行以下命令查">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入理解 Go | 函数调用">
+<meta property="og:url" content="http://ictar.github.io/2020/03/24/dive-into-go-func-call/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="概述 对于函数调用，Go 语言使用调用者预先分配的栈来传递参数和返回值，使得多值返回成为可能。  以下基于 Go1.14  考虑以下代码： 1 2 3 4 5 6 7 8 9   package main  func do(a, b int) (int, bool) { 	return a + b, a &#x3D;&#x3D; b }  func main() { 	do(33, 66) }   然后运行以下命令查">
+<meta property="og:locale">
+<meta property="og:image" content="http://ictar.github.io/img/20200324212922.jpg">
+<meta property="article:published_time" content="2020-03-24T12:11:39.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.998Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Golang">
+<meta property="article:tag" content="源码解析">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://ictar.github.io/img/20200324212922.jpg">
+
+<link rel="canonical" href="http://ictar.github.io/2020/03/24/dive-into-go-func-call/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>深入理解 Go | 函数调用 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2020/03/24/dive-into-go-func-call/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          深入理解 Go | 函数调用
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-03-24 20:11:39" itemprop="dateCreated datePublished" datetime="2020-03-24T20:11:39+08:00">2020-03-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2020/03/24/dive-into-go-func-call/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2020/03/24/dive-into-go-func-call/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="概述">概述</h2>
+<p>对于函数调用，Go 语言使用调用者预先分配的栈来传递参数和返回值，使得多值返回成为可能。</p>
+<blockquote>
+<p>以下基于 Go1.14</p>
+</blockquote>
+<p>考虑以下代码： <figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">do</span><span class="params">(a, b <span class="keyword">int</span>)</span> <span class="params">(<span class="keyword">int</span>, <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> a + b, a == b</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	do(<span class="number">33</span>, <span class="number">66</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 然后运行以下命令查看对应的汇编指令： <figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">$ go tool compile -S -N -l hello.go</span><br><span class="line">....</span><br><span class="line"><span class="string">&quot;&quot;</span>.main STEXT size=68 args=0x0 locals=0x28</span><br><span class="line">	0x0000 00000 (hello.go:7)	TEXT	<span class="string">&quot;&quot;</span>.main(SB), ABIInternal, <span class="variable">$40</span>-0</span><br><span class="line">	0x0000 00000 (hello.go:7)	MOVQ	(TLS), CX</span><br><span class="line">	0x0009 00009 (hello.go:7)	CMPQ	SP, 16(CX)</span><br><span class="line">	0x000d 00013 (hello.go:7)	PCDATA	<span class="variable">$0</span>, $-2</span><br><span class="line">	0x000d 00013 (hello.go:7)	JLS	61</span><br><span class="line">	0x000f 00015 (hello.go:7)	PCDATA	<span class="variable">$0</span>, $-1</span><br><span class="line">	0x000f 00015 (hello.go:7)	SUBQ	<span class="variable">$40</span>, SP <span class="comment"># 分配 40 字节的栈空间</span></span><br><span class="line">	0x0013 00019 (hello.go:7)	MOVQ	BP, 32(SP) <span class="comment"># 保存基址指针 BP 到栈上</span></span><br><span class="line">	0x0018 00024 (hello.go:7)	LEAQ	32(SP), BP <span class="comment"># 修改基址指针</span></span><br><span class="line">	0x001d 00029 (hello.go:7)	PCDATA	<span class="variable">$0</span>, $-2</span><br><span class="line">	0x001d 00029 (hello.go:7)	PCDATA	<span class="variable">$1</span>, $-2</span><br><span class="line">	0x001d 00029 (hello.go:7)	FUNCDATA	<span class="variable">$0</span>, gclocals·33cdeccccebe80329f1fdbee7f5874cb(SB)</span><br><span class="line">	0x001d 00029 (hello.go:7)	FUNCDATA	<span class="variable">$1</span>, gclocals·33cdeccccebe80329f1fdbee7f5874cb(SB)</span><br><span class="line">	0x001d 00029 (hello.go:7)	FUNCDATA	<span class="variable">$2</span>, gclocals·33cdeccccebe80329f1fdbee7f5874cb(SB)</span><br><span class="line">	0x001d 00029 (hello.go:8)	PCDATA	<span class="variable">$0</span>, <span class="variable">$0</span></span><br><span class="line">	0x001d 00029 (hello.go:8)	PCDATA	<span class="variable">$1</span>, <span class="variable">$0</span></span><br><span class="line">	0x001d 00029 (hello.go:8)	MOVQ	<span class="variable">$33</span>, (SP) <span class="comment"># 第一个参数</span></span><br><span class="line">	0x0025 00037 (hello.go:8)	MOVQ	<span class="variable">$66</span>, 8(SP) <span class="comment"># 第二个参数</span></span><br><span class="line">	0x002e 00046 (hello.go:8)	CALL	<span class="string">&quot;&quot;</span>.<span class="keyword">do</span>(SB) <span class="comment"># 将当前的 IP 压入栈中，然后调用函数 do</span></span><br><span class="line">	0x0033 00051 (hello.go:9)	MOVQ	32(SP), BP <span class="comment"># 恢复基址指针</span></span><br><span class="line">	0x0038 00056 (hello.go:9)	ADDQ	<span class="variable">$40</span>, SP <span class="comment"># 回收分配的栈空间</span></span><br><span class="line">	0x003c 00060 (hello.go:9)	RET</span><br><span class="line">......</span><br></pre></td></tr></table></figure> 从上面可以看出，在进行函数调用前，会为调用的函数分配栈空间（用于入参和返回值）、保存基址指针并修改其指向，然后将入参压入栈中（第一个参数在栈顶，以此类推）。</p>
+<p>接着通过 <code>CALL</code> 指令，将 <code>main</code> 的返回地址压入栈中，然后进行函数调用。 <figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;&quot;</span>.<span class="keyword">do</span> STEXT nosplit size=45 args=0x20 locals=0x0</span><br><span class="line">    ......</span><br><span class="line">	0x0000 00000 (hello.go:3)	MOVQ	<span class="variable">$0</span>, <span class="string">&quot;&quot;</span>.~r2+24(SP) <span class="comment"># 初始化第一个返回值</span></span><br><span class="line">	0x0009 00009 (hello.go:3)	MOVB	<span class="variable">$0</span>, <span class="string">&quot;&quot;</span>.~r3+32(SP) <span class="comment"># 初始化第二个返回值</span></span><br><span class="line">	0x000e 00014 (hello.go:4)	MOVQ	<span class="string">&quot;&quot;</span>.a+8(SP), AX <span class="comment"># 获取第一个参数，AX = 33</span></span><br><span class="line">	0x0013 00019 (hello.go:4)	ADDQ	<span class="string">&quot;&quot;</span>.b+16(SP), AX <span class="comment"># 做加法，AX = AX + 66 = 99</span></span><br><span class="line">	0x0018 00024 (hello.go:4)	MOVQ	AX, <span class="string">&quot;&quot;</span>.~r2+24(SP) <span class="comment"># 把计算结果保存在第一个返回值中，24(SP) = AX = 99</span></span><br><span class="line">	0x001d 00029 (hello.go:4)	MOVQ	<span class="string">&quot;&quot;</span>.b+16(SP), AX <span class="comment"># AX = 66</span></span><br><span class="line">	0x0022 00034 (hello.go:4)	CMPQ	<span class="string">&quot;&quot;</span>.a+8(SP), AX <span class="comment"># 8(SP) 和 AX 进行比较，即 AX - 8(SP) = 66 - 33 = 33</span></span><br><span class="line">	0x0027 00039 (hello.go:4)	SETEQ	<span class="string">&quot;&quot;</span>.~r3+32(SP) <span class="comment"># 判断上一步的计算结果是否为 0，保存在第二个返回值中，32(SP) = 0</span></span><br><span class="line">	0x002c 00044 (hello.go:4)	RET <span class="comment"># 修改 IP，返回调用点</span></span><br><span class="line">    ......</span><br></pre></td></tr></table></figure> 被调用的函数在执行的时候，会将调用栈里面保存返回值的位置初始化为 0，然后进行一系列的操作后，将返回值保存在栈中，最后返回该函数的调用点。</p>
+<p><img src="/img/20200324212922.jpg" /></p>
+<h2 id="参数传递">参数传递</h2>
+<h3 id="变长参数">变长参数</h3>
+<p>将 <code>do</code> 函数修改为支持变长参数，如下所示： <figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">do</span><span class="params">(nums ...<span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	fmt.Printf(<span class="string">&quot;%T %v\n&quot;</span>, nums, nums)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	do() <span class="comment">// output: []int []</span></span><br><span class="line">	do(<span class="number">33</span>, <span class="number">44</span>, <span class="number">55</span>) <span class="comment">// output: []int [33 44 55]</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 可以看到，变长参数其实是一个语法糖，golang 会为这些变长参数隐式创建一个 slice，然后再把这个 slice 作为参数传入到调用的函数中。 <figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;&quot;</span>.main STEXT size=196 args=0x0 locals=0x40</span><br><span class="line">    ……</span><br><span class="line">    <span class="comment"># do(33, 44, 55)</span></span><br><span class="line">    <span class="comment"># 创建一个大小为 3，容量为 3 的 slice，值为[33, 44, 55]</span></span><br><span class="line">	0x0036 00054 (hello.go:11)	LEAQ	<span class="built_in">type</span>.[3]int(SB), AX </span><br><span class="line">	0x003d 00061 (hello.go:11)	PCDATA	<span class="variable">$0</span>, <span class="variable">$0</span></span><br><span class="line">	0x003d 00061 (hello.go:11)	MOVQ	AX, (SP)</span><br><span class="line">	0x0041 00065 (hello.go:11)	CALL	runtime.newobject(SB)</span><br><span class="line">	0x0046 00070 (hello.go:11)	PCDATA	<span class="variable">$0</span>, <span class="variable">$1</span></span><br><span class="line">	0x0046 00070 (hello.go:11)	MOVQ	8(SP), AX</span><br><span class="line">	0x004b 00075 (hello.go:11)	PCDATA	<span class="variable">$1</span>, <span class="variable">$1</span></span><br><span class="line">	0x004b 00075 (hello.go:11)	MOVQ	AX, <span class="string">&quot;&quot;</span>..autotmp_1+24(SP)</span><br><span class="line">	0x0050 00080 (hello.go:11)	PCDATA	<span class="variable">$0</span>, <span class="variable">$0</span></span><br><span class="line">	0x0050 00080 (hello.go:11)	MOVQ	<span class="variable">$33</span>, (AX)</span><br><span class="line">	0x0057 00087 (hello.go:11)	PCDATA	<span class="variable">$0</span>, <span class="variable">$1</span></span><br><span class="line">	0x0057 00087 (hello.go:11)	MOVQ	<span class="string">&quot;&quot;</span>..autotmp_1+24(SP), AX</span><br><span class="line">	0x005c 00092 (hello.go:11)	TESTB	AL, (AX)</span><br><span class="line">	0x005e 00094 (hello.go:11)	PCDATA	<span class="variable">$0</span>, <span class="variable">$0</span></span><br><span class="line">	0x005e 00094 (hello.go:11)	MOVQ	<span class="variable">$44</span>, 8(AX)</span><br><span class="line">	0x0066 00102 (hello.go:11)	PCDATA	<span class="variable">$0</span>, <span class="variable">$1</span></span><br><span class="line">	0x0066 00102 (hello.go:11)	MOVQ	<span class="string">&quot;&quot;</span>..autotmp_1+24(SP), AX</span><br><span class="line">	0x006b 00107 (hello.go:11)	TESTB	AL, (AX)</span><br><span class="line">	0x006d 00109 (hello.go:11)	PCDATA	<span class="variable">$0</span>, <span class="variable">$0</span></span><br><span class="line">	0x006d 00109 (hello.go:11)	MOVQ	<span class="variable">$55</span>, 16(AX)</span><br><span class="line">	0x0075 00117 (hello.go:11)	PCDATA	<span class="variable">$0</span>, <span class="variable">$1</span></span><br><span class="line">	0x0075 00117 (hello.go:11)	PCDATA	<span class="variable">$1</span>, <span class="variable">$0</span></span><br><span class="line">	0x0075 00117 (hello.go:11)	MOVQ	<span class="string">&quot;&quot;</span>..autotmp_1+24(SP), AX</span><br><span class="line">	0x007a 00122 (hello.go:11)	TESTB	AL, (AX)</span><br><span class="line">	0x007c 00124 (hello.go:11)	JMP	126</span><br><span class="line">	0x007e 00126 (hello.go:11)	MOVQ	AX, <span class="string">&quot;&quot;</span>..autotmp_0+32(SP)</span><br><span class="line">	0x0083 00131 (hello.go:11)	MOVQ	<span class="variable">$3</span>, <span class="string">&quot;&quot;</span>..autotmp_0+40(SP)</span><br><span class="line">	0x008c 00140 (hello.go:11)	MOVQ	<span class="variable">$3</span>, <span class="string">&quot;&quot;</span>..autotmp_0+48(SP)</span><br><span class="line">	0x0095 00149 (hello.go:11)	PCDATA	<span class="variable">$0</span>, <span class="variable">$0</span></span><br><span class="line">	0x0095 00149 (hello.go:11)	MOVQ	AX, (SP)</span><br><span class="line">	0x0099 00153 (hello.go:11)	MOVQ	<span class="variable">$3</span>, 8(SP)</span><br><span class="line">	0x00a2 00162 (hello.go:11)	MOVQ	<span class="variable">$3</span>, 16(SP)</span><br><span class="line">    <span class="comment"># 调用 do 函数</span></span><br><span class="line">	0x00ab 00171 (hello.go:11)	CALL	<span class="string">&quot;&quot;</span>.<span class="keyword">do</span>(SB)</span><br><span class="line">	0x00b0 00176 (hello.go:12)	MOVQ	56(SP), BP</span><br><span class="line">	0x00b5 00181 (hello.go:12)	ADDQ	<span class="variable">$64</span>, SP</span><br><span class="line">	0x00b9 00185 (hello.go:12)	RET</span><br></pre></td></tr></table></figure> ## 返回值 ### 命名返回值 我们将代码稍微修改下，命名函数 <code>do</code> 的返回值： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">do</span><span class="params">(a, b <span class="keyword">int</span>)</span> <span class="params">(res <span class="keyword">int</span>, equal <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> a + b, a == b</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 然后查看汇编，可以发现，<code>main</code> 在进行函数调用的时候基本没有改动，但是被调用函数在执行的时候多了几项操作。<strong>在执行前，会申请额外的栈空间来存放临时返回值。</strong>然后，初始化命名返回值，进行一系列操作后，把返回结果保存在临时返回值中。最后，再使用临时返回值一一设置命名返回值。接着释放存放临时返回值的栈空间，返回到函数调用点。 <figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;&quot;</span>.<span class="keyword">do</span> STEXT nosplit size=87 args=0x20 locals=0x18</span><br><span class="line">	0x0000 00000 (hello.go:3)	TEXT	<span class="string">&quot;&quot;</span>.<span class="keyword">do</span>(SB), NOSPLIT|ABIInternal, <span class="variable">$24</span>-32</span><br><span class="line">	0x0000 00000 (hello.go:3)	SUBQ	<span class="variable">$24</span>, SP // 申请空间存放临时返回值</span><br><span class="line">	0x0004 00004 (hello.go:3)	MOVQ	BP, 16(SP)</span><br><span class="line">	0x0009 00009 (hello.go:3)	LEAQ	16(SP), BP</span><br><span class="line">	0x000e 00014 (hello.go:3)	PCDATA	<span class="variable">$0</span>, $-2</span><br><span class="line">	0x000e 00014 (hello.go:3)	PCDATA	<span class="variable">$1</span>, $-2</span><br><span class="line">	0x000e 00014 (hello.go:3)	FUNCDATA	<span class="variable">$0</span>, gclocals·33cdeccccebe80329f1fdbee7f5874cb(SB)</span><br><span class="line">	0x000e 00014 (hello.go:3)	FUNCDATA	<span class="variable">$1</span>, gclocals·33cdeccccebe80329f1fdbee7f5874cb(SB)</span><br><span class="line">	0x000e 00014 (hello.go:3)	FUNCDATA	<span class="variable">$2</span>, gclocals·33cdeccccebe80329f1fdbee7f5874cb(SB)</span><br><span class="line">	0x000e 00014 (hello.go:3)	PCDATA	<span class="variable">$0</span>, <span class="variable">$0</span></span><br><span class="line">	0x000e 00014 (hello.go:3)	PCDATA	<span class="variable">$1</span>, <span class="variable">$0</span></span><br><span class="line">	0x000e 00014 (hello.go:3)	MOVQ	<span class="variable">$0</span>, <span class="string">&quot;&quot;</span>.res+48(SP) // 初始化第一个返回值，res = 0</span><br><span class="line">	0x0017 00023 (hello.go:3)	MOVB	<span class="variable">$0</span>, <span class="string">&quot;&quot;</span>.equal+56(SP) // 初始化第二个返回值，equal = 0</span><br><span class="line">	0x001c 00028 (hello.go:4)	MOVQ	<span class="string">&quot;&quot;</span>.a+32(SP), AX // AX = a = 33</span><br><span class="line">	0x0021 00033 (hello.go:4)	ADDQ	<span class="string">&quot;&quot;</span>.b+40(SP), AX // AX = AX + b = 33 + 66 = 99</span><br><span class="line">	0x0026 00038 (hello.go:4)	MOVQ	AX, <span class="string">&quot;&quot;</span>..autotmp_4+8(SP) // 计算结果保存在临时变量中</span><br><span class="line">	0x002b 00043 (hello.go:4)	MOVQ	<span class="string">&quot;&quot;</span>.b+40(SP), AX</span><br><span class="line">	0x0030 00048 (hello.go:4)	CMPQ	<span class="string">&quot;&quot;</span>.a+32(SP), AX</span><br><span class="line">	0x0035 00053 (hello.go:4)	SETEQ	<span class="string">&quot;&quot;</span>..autotmp_5+7(SP) // 计算结果保存在临时变量中</span><br><span class="line">	0x003a 00058 (hello.go:4)	MOVQ	<span class="string">&quot;&quot;</span>..autotmp_4+8(SP), AX</span><br><span class="line">	0x003f 00063 (hello.go:4)	MOVQ	AX, <span class="string">&quot;&quot;</span>.res+48(SP) // 用临时变量设置命名返回值</span><br><span class="line">	0x0044 00068 (hello.go:4)	MOVBLZX	<span class="string">&quot;&quot;</span>..autotmp_5+7(SP), AX // 用临时变量设置命名返回值</span><br><span class="line">	0x0049 00073 (hello.go:4)	MOVB	AL, <span class="string">&quot;&quot;</span>.equal+56(SP)</span><br><span class="line">	0x004d 00077 (hello.go:4)	MOVQ	16(SP), BP</span><br><span class="line">	0x0052 00082 (hello.go:4)	ADDQ	<span class="variable">$24</span>, SP</span><br><span class="line">	0x0056 00086 (hello.go:4)	RET</span><br></pre></td></tr></table></figure> 也就是说，如果对于非命名返回值，执行逻辑为： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">do</span><span class="params">(a, b <span class="keyword">int</span>)</span> <span class="params">(<span class="keyword">int</span>, <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">    r1, r2 := a+b, a == b</span><br><span class="line">    <span class="keyword">return</span> r1, r2</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 那么命名返回值的执行逻辑为： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">do</span><span class="params">(a, b <span class="keyword">int</span>)</span> <span class="params">(res <span class="keyword">int</span>, equal <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">    tmp1, tmp2 := a+b, a == b</span><br><span class="line">    res = tmp1</span><br><span class="line">    equal = tmp2</span><br><span class="line">    <span class="keyword">return</span> res, equal</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> ## 总结 golang 的函数调用具有以下特征： * 参数完全通过栈传递，从参数列表右至左压栈（第一个参数在栈顶） * 返回值通过栈传递 * 调用者负责清理栈空间</p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://draveness.me/golang/docs/part2-foundation/ch04-basic/golang-function-call/">函数调用（）</a></li>
+<li><a target="_blank" rel="noopener" href="https://mojotv.cn/2019/07/21/golang-stack-function">Go 函数调用 ━ 栈和寄存器视角</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Golang/" rel="tag"># Golang</a>
+              <a href="/tags/%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/" rel="tag"># 源码解析</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/03/23/dive-into-go-make-new/" rel="prev" title="深入理解 Go | make vs. new">
+      <i class="fa fa-chevron-left"></i> 深入理解 Go | make vs. new
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/03/25/dive-into-go-defer/" rel="next" title="深入理解 Go | defer">
+      深入理解 Go | defer <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E6%95%B0%E4%BC%A0%E9%80%92"><span class="nav-number">2.</span> <span class="nav-text">参数传递</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%98%E9%95%BF%E5%8F%82%E6%95%B0"><span class="nav-number">2.1.</span> <span class="nav-text">变长参数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">3.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2020/03/24/dive-into-go-func-call/";
+    this.page.identifier = "2020/03/24/dive-into-go-func-call/";
+    this.page.title = "深入理解 Go | 函数调用";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

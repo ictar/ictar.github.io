@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="上一个部分解释了如何根据目标获取数据源，接下来，可以对已读图书清单进行分析了。  获取指定年度的数据 因为我们是对某个年度进行分析，所以需要将特定年度的数据筛选出来。这里，先将数据读进 pandas.DataFrame 中：  1 2 3 4 5 6 7 8   import json from pandas import DataFrame, Series  path &#x3D; &#39;item.json&#39;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="我的年度读书报告生成攻略：第二部分">
+<meta property="og:url" content="http://ictar.github.io/2019/01/14/how_to_generate_annual_read_report_part2/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="上一个部分解释了如何根据目标获取数据源，接下来，可以对已读图书清单进行分析了。  获取指定年度的数据 因为我们是对某个年度进行分析，所以需要将特定年度的数据筛选出来。这里，先将数据读进 pandas.DataFrame 中：  1 2 3 4 5 6 7 8   import json from pandas import DataFrame, Series  path &#x3D; &#39;item.json&#39;">
+<meta property="og:locale">
+<meta property="og:image" content="http://ictar.github.io/img/rating_count_2018.png">
+<meta property="og:image" content="http://ictar.github.io/img/catagory_count_2018.png">
+<meta property="og:image" content="http://ictar.github.io/img/wordcloud_2018.png">
+<meta property="article:published_time" content="2019-01-14T12:48:12.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.995Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="数据分析">
+<meta property="article:tag" content="数据可视化">
+<meta property="article:tag" content="pandas">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://ictar.github.io/img/rating_count_2018.png">
+
+<link rel="canonical" href="http://ictar.github.io/2019/01/14/how_to_generate_annual_read_report_part2/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>我的年度读书报告生成攻略：第二部分 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2019/01/14/how_to_generate_annual_read_report_part2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          我的年度读书报告生成攻略：第二部分
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-01-14 20:48:12" itemprop="dateCreated datePublished" datetime="2019-01-14T20:48:12+08:00">2019-01-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90/" itemprop="url" rel="index"><span itemprop="name">数据分析</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2019/01/14/how_to_generate_annual_read_report_part2/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/01/14/how_to_generate_annual_read_report_part2/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>上一个部分解释了如何根据目标获取数据源，接下来，可以对已读图书清单进行分析了。</p>
+<h2 id="获取指定年度的数据">获取指定年度的数据</h2>
+<p>因为我们是对某个年度进行分析，所以需要将特定年度的数据筛选出来。这里，先将数据读进 <code>pandas.DataFrame</code> 中：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">from</span> pandas <span class="keyword">import</span> DataFrame, Series</span><br><span class="line"></span><br><span class="line">path = <span class="string">&#x27;item.json&#x27;</span></span><br><span class="line"><span class="comment"># read</span></span><br><span class="line">records = [json.loads(line.strip().strip(<span class="string">&quot;,&quot;</span>)) <span class="keyword">for</span> line <span class="keyword">in</span> <span class="built_in">open</span>(path)]</span><br><span class="line">df = DataFrame(records)</span><br><span class="line">print(df.head(<span class="number">1</span>))</span><br></pre></td></tr></table></figure>
+<p>已读日期保存在 <code>readDate</code> 中，而这个数据的类型是 <code>object</code>，值格式诸如 <code>2018-12-06\n      读过</code>。因此我们需要将其转换成 datetime，以便于提取：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 提取有效已读日期</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">valid_read_date</span>(<span class="params">d</span>):</span></span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(d) &gt; <span class="number">0</span>:</span><br><span class="line">        tmp = d.split(<span class="string">&quot;\n&quot;</span>)</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">len</span>(tmp) &gt; <span class="number">0</span>:</span><br><span class="line">            <span class="keyword">return</span> tmp[<span class="number">0</span>].strip()</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;Missing&quot;</span></span><br><span class="line"></span><br><span class="line">df[<span class="string">&#x27;readDate&#x27;</span>] = df[<span class="string">&#x27;readDate&#x27;</span>].apply(valid_read_date)</span><br><span class="line"><span class="comment">#print(df[&#x27;readDate&#x27;].head())</span></span><br><span class="line">df[<span class="string">&#x27;readDate&#x27;</span>] = pd.to_datetime(df[<span class="string">&#x27;readDate&#x27;</span>])</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置已读日期为索引</span></span><br><span class="line">df = df.set_index(<span class="string">&#x27;readDate&#x27;</span>)</span><br></pre></td></tr></table></figure>
+<p>处理后，如果我们想获取的是 2018 的数据，就可以像下面这样直接获得： <figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">df_2018 = df[<span class="string">&#x27;2018&#x27;</span>]</span><br></pre></td></tr></table></figure> ## 哪些书籍评分最高，哪些书籍令人大失所望</p>
+<p>拿到了指定年份的数据后，我们就可以着手分析了。</p>
+<p>每本书的评分信息存储在 <code>rating</code> 字段中。其中，<code>rating5-t</code> 表示五星，<code>rating4-t</code> 表示四星，以此类推。为了方便，我们可以定义一个映射表，又来规整下数据： <figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">mapping = &#123;</span><br><span class="line">    <span class="string">&quot;rating5-t&quot;</span>: <span class="string">&quot;5.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;rating4-t&quot;</span>: <span class="string">&quot;4.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;rating3-t&quot;</span>: <span class="string">&quot;3.0&quot;</span>,</span><br><span class="line">    <span class="string">&quot;rating2-t&quot;</span>: <span class="string">&quot;2.0&quot;</span>,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 然后就可以绘制饼图来看下每个评分占的比例了。 <figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">rating_count</span>(<span class="params">df, path=<span class="string">&quot;&quot;</span></span>):</span></span><br><span class="line">    <span class="comment"># 给缺失或未知对评分填上替代值</span></span><br><span class="line">    clean_rating = df[<span class="string">&#x27;rating&#x27;</span>].fillna(<span class="string">&#x27;Missing&#x27;</span>)</span><br><span class="line">    clean_rating[clean_rating == <span class="string">&#x27;date&#x27;</span>] = <span class="string">&#x27;Missing&#x27;</span></span><br><span class="line">    clean_rating[clean_rating == <span class="string">&#x27;&#x27;</span>] = <span class="string">&#x27;Unknown&#x27;</span></span><br><span class="line">    <span class="keyword">for</span> k, v <span class="keyword">in</span> mapping.items():</span><br><span class="line">        clean_rating[clean_rating == k] = v</span><br><span class="line">    rating_counts = clean_rating.value_counts()</span><br><span class="line">    <span class="comment"># 绘图</span></span><br><span class="line">    rc = rating_counts.plot(kind=<span class="string">&#x27;pie&#x27;</span>, autopct=<span class="string">&#x27;%.2f&#x27;</span>, figsize=(<span class="number">8</span>,<span class="number">8</span>))</span><br><span class="line">    <span class="keyword">if</span> path:</span><br><span class="line">        fig = rc.get_figure()</span><br><span class="line">        fig.savefig(path)</span><br><span class="line"></span><br><span class="line">rating_count(df_2018)</span><br></pre></td></tr></table></figure> 执行后得到：</p>
+<p><img src="/img/rating_count_2018.png" /></p>
+<p>从绘制出来的图可以看出，2018 年评为四星的书最多，五星的书次之，而最低评级为两星。可以查看具体哪些书强推，那些书令人大失所望：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">print(<span class="string">&quot;rating 5:\n&quot;</span>, df_2018[df_2018[<span class="string">&quot;rating&quot;</span>] == <span class="string">&#x27;rating5-t&#x27;</span>][[<span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;catagory&#x27;</span>]])</span><br><span class="line">print()</span><br><span class="line">print(<span class="string">&quot;rating 2:\n&quot;</span>, df_2018[df_2018[<span class="string">&quot;rating&quot;</span>] == <span class="string">&#x27;rating2-t&#x27;</span>][[<span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;catagory&#x27;</span>]])</span><br></pre></td></tr></table></figure>
+<h2 id="一年中都看了什么类型的书">一年中都看了什么类型的书？</h2>
+<p>为了检查下已阅书籍有没有达到计划中的“博览”，需要检查下类别情况。</p>
+<p>从上一篇文章中，我们知道，类别数据可以从 <code>catagory</code> 字段取得。因为该字段的格式有如 <code>文学(1)</code>，因此我们需要对其进行清理，去掉括号，以便统计：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">clear_catagory</span>(<span class="params">c</span>):</span></span><br><span class="line">    <span class="keyword">if</span> <span class="string">&quot;(&quot;</span> <span class="keyword">in</span> c:</span><br><span class="line">        <span class="keyword">return</span> c[:c.index(<span class="string">&quot;(&quot;</span>)]</span><br><span class="line">    <span class="keyword">return</span> c</span><br><span class="line"></span><br><span class="line">df_2018[<span class="string">&quot;catagory&quot;</span>] = df_2018[<span class="string">&quot;catagory&quot;</span>].apply(clear_catagory)</span><br></pre></td></tr></table></figure>
+<p>然后就可以像评级信息那样绘制饼图了：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plot</span><br><span class="line"> </span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt <span class="comment"># 引入matplotlib包</span></span><br><span class="line">plt.rcParams[<span class="string">&#x27;font.sans-serif&#x27;</span>]=[<span class="string">&#x27;SimHei&#x27;</span>]<span class="comment"># 设置加载的字体名</span></span><br><span class="line">plt.rcParams[<span class="string">&#x27;axes.unicode_minus&#x27;</span>]=<span class="literal">False</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 对类别进行计数</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">catagory_count</span>(<span class="params">df, path=<span class="string">&quot;&quot;</span></span>):</span></span><br><span class="line">    <span class="comment"># 给缺失或未知对类别填上替代值</span></span><br><span class="line">    clean_catagory = df[<span class="string">&#x27;catagory&#x27;</span>].fillna(<span class="string">&#x27;Missing&#x27;</span>)</span><br><span class="line">    clean_catagory[clean_catagory == <span class="string">&#x27;&#x27;</span>] = <span class="string">&#x27;Unknown&#x27;</span></span><br><span class="line">    clean_catagory[clean_catagory == <span class="string">&#x27;not found&#x27;</span>] = <span class="string">u&#x27;文学&#x27;</span></span><br><span class="line">    catagory_counts = clean_catagory.value_counts()</span><br><span class="line">    <span class="comment"># 绘图</span></span><br><span class="line">    cc = catagory_counts.plot(kind=<span class="string">&#x27;pie&#x27;</span>, autopct=<span class="string">&#x27;%.2f&#x27;</span>, figsize=(<span class="number">8</span>,<span class="number">8</span>))</span><br><span class="line">    <span class="keyword">if</span> path:</span><br><span class="line">        fig = cc.get_figure()</span><br><span class="line">        fig.savefig(path)</span><br><span class="line">    </span><br><span class="line">catagory_count(df_2018)</span><br></pre></td></tr></table></figure>
+<p>执行后得到：</p>
+<p><img src="/img/catagory_count_2018.png" /></p>
+<p>根据上面的图可以得出，2018 涉猎的领域确实有所增加。</p>
+<h2 id="查看标签情况">查看标签情况</h2>
+<p>类别信息有时过于泛泛，例如上面文学类占了一半有余，但是却无法直观的看出所阅书籍的具体情况。此时标签信息就派上用场了。</p>
+<p>照例，因为 <code>tags</code> 字段是像 <code>标签: 绘本 生活 治愈</code> 这样的字符串信息，所以我们需要将无效的<code>“标签: ”</code>部分移除。另外，为了便于统计，我们还需要将其转换为列表：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">clear_tag</span>(<span class="params">v</span>):</span></span><br><span class="line">    res = []</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> v:</span><br><span class="line">        <span class="keyword">return</span> res</span><br><span class="line"></span><br><span class="line">    items = v.split(<span class="string">&quot; &quot;</span>)</span><br><span class="line">    <span class="keyword">for</span> k <span class="keyword">in</span> items:</span><br><span class="line">        <span class="keyword">if</span> k.startswith(<span class="string">&quot;标签&quot;</span>):</span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line">        res.append(k.strip())</span><br><span class="line">    <span class="keyword">return</span> res</span><br><span class="line">df_2018[<span class="string">&quot;tags&quot;</span>] = df_2018[<span class="string">&quot;tags&quot;</span>].apply(clear_tag)</span><br></pre></td></tr></table></figure>
+<p>这样，我们就可以对标签信息进行统计并生成词云了。这里，词云使用 <code>wordcloud</code> 库来生成：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pandas <span class="keyword">import</span> Series</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">list_count</span>(<span class="params">s</span>):</span></span><br><span class="line">    lc = s.apply(<span class="keyword">lambda</span> x: Series(x).value_counts()).<span class="built_in">sum</span>()</span><br><span class="line">    stat = lc.iteritems()</span><br><span class="line">    <span class="keyword">return</span> &#123;x[<span class="number">0</span>]: x[<span class="number">1</span>] <span class="keyword">for</span> x <span class="keyword">in</span> stat&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成词云</span></span><br><span class="line"><span class="keyword">from</span> wordcloud <span class="keyword">import</span> WordCloud</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">word_cloud_gen</span>(<span class="params">d, save_to=<span class="string">&quot;wordcloud.png&quot;</span></span>):</span></span><br><span class="line">    <span class="comment"># Generate a word cloud image</span></span><br><span class="line">    wordcloud = WordCloud(font_path=<span class="string">&quot;/System/Library/Fonts/STHeiti Medium.ttc&quot;</span>, width=<span class="number">800</span>, height=<span class="number">400</span>).fit_words(d)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Display the generated image:</span></span><br><span class="line">    <span class="comment"># the matplotlib way:</span></span><br><span class="line">    <span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line">    plt.imshow(wordcloud, interpolation=<span class="string">&#x27;bilinear&#x27;</span>)</span><br><span class="line">    plt.axis(<span class="string">&quot;off&quot;</span>)</span><br><span class="line">    <span class="comment"># 保存</span></span><br><span class="line">    <span class="comment">#wordcloud.to_file(save_to)</span></span><br><span class="line"></span><br><span class="line">word_cloud_gen(list_count(df_2018[<span class="string">&quot;tags&quot;</span>]), <span class="string">&quot;wordcloud_2018.png&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>执行后得到：</p>
+<p><img src="/img/wordcloud_2018.png" /></p>
+<p>好了，2018 看的书有点奇怪 (&gt;﹏&lt;)</p>
+<h2 id="总结一下">总结一下</h2>
+<p>初尝数据分析，有献丑之嫌。但是通过这一遭，对数据分析这件事倒是增添了几分兴趣。毕竟，分析不了国家大事，可以对小我进行分析呀！</p>
+<p>希望 2019 年可以读更多好书，年终可以分析出更多东西，就酱～</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90/" rel="tag"># 数据分析</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%8F%AF%E8%A7%86%E5%8C%96/" rel="tag"># 数据可视化</a>
+              <a href="/tags/pandas/" rel="tag"># pandas</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/12/26/how_to_generate_annual_read_report_part1/" rel="prev" title="我的年度读书报告生成攻略：第一部分">
+      <i class="fa fa-chevron-left"></i> 我的年度读书报告生成攻略：第一部分
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/01/31/trans-http-3-from-root-to-tip/" rel="next" title="译|HTTP/3：从起源到建议">
+      译|HTTP/3：从起源到建议 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96%E6%8C%87%E5%AE%9A%E5%B9%B4%E5%BA%A6%E7%9A%84%E6%95%B0%E6%8D%AE"><span class="nav-number">1.</span> <span class="nav-text">获取指定年度的数据</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E5%B9%B4%E4%B8%AD%E9%83%BD%E7%9C%8B%E4%BA%86%E4%BB%80%E4%B9%88%E7%B1%BB%E5%9E%8B%E7%9A%84%E4%B9%A6"><span class="nav-number">2.</span> <span class="nav-text">一年中都看了什么类型的书？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E6%A0%87%E7%AD%BE%E6%83%85%E5%86%B5"><span class="nav-number">3.</span> <span class="nav-text">查看标签情况</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93%E4%B8%80%E4%B8%8B"><span class="nav-number">4.</span> <span class="nav-text">总结一下</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2019/01/14/how_to_generate_annual_read_report_part2/";
+    this.page.identifier = "2019/01/14/how_to_generate_annual_read_report_part2/";
+    this.page.title = "我的年度读书报告生成攻略：第二部分";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

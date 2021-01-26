@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="知乎上有人问了一个问题：Python有哪些新手不会了解的深入细节。 其中的一个答案引用了stackoverflow上的一个问题解答。 鉴于一直在努力摆脱Python小白，决定好好研究下这几个特性，顺手翻译一下下，扩展一下下~~  原文：Hidden features of Python  Argument Unpacking 可以使用*和**分别将一个列表或一个字典解包为函数参数。 例如： 1 2">
+<meta property="og:type" content="article">
+<meta property="og:title" content="译|Python的隐藏特性(上)">
+<meta property="og:url" content="http://ictar.github.io/2015/09/27/[%E8%AF%91]Python%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8A)/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="知乎上有人问了一个问题：Python有哪些新手不会了解的深入细节。 其中的一个答案引用了stackoverflow上的一个问题解答。 鉴于一直在努力摆脱Python小白，决定好好研究下这几个特性，顺手翻译一下下，扩展一下下~~  原文：Hidden features of Python  Argument Unpacking 可以使用*和**分别将一个列表或一个字典解包为函数参数。 例如： 1 2">
+<meta property="og:locale">
+<meta property="article:published_time" content="2015-09-27T12:07:43.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.949Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="爬虫">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2015/09/27/[%E8%AF%91]Python%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8A)/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>译|Python的隐藏特性(上) | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2015/09/27/[%E8%AF%91]Python%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8A)/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          译|Python的隐藏特性(上)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2015-09-27 20:07:43" itemprop="dateCreated datePublished" datetime="2015-09-27T20:07:43+08:00">2015-09-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2015/09/27/%5B%E8%AF%91%5DPython%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8A)/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/09/27/[译]Python的隐藏特性(上)/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>知乎上有人问了一个问题：Python有哪些新手不会了解的深入细节。 其中的一个答案引用了stackoverflow上的一个问题解答。 鉴于一直在努力摆脱Python小白，决定好好研究下这几个特性，顺手翻译一下下，扩展一下下~~</p>
+<p>原文：<a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python">Hidden features of Python</a></p>
+<h2 id="argument-unpacking"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#111176">Argument Unpacking</a></h2>
+<p>可以使用*和**分别将一个列表或一个字典解包为函数参数。 例如： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">draw_point</span>(<span class="params">x, y</span>):</span></span><br><span class="line">    <span class="comment"># do some magic</span></span><br><span class="line"></span><br><span class="line">point_foo = (<span class="number">3</span>, <span class="number">4</span>)</span><br><span class="line">point_bar = &#123;<span class="string">&#x27;y&#x27;</span>: <span class="number">3</span>, <span class="string">&#x27;x&#x27;</span>: <span class="number">2</span>&#125;</span><br><span class="line"></span><br><span class="line">draw_point(*point_foo)</span><br><span class="line">draw_point(**point_bar)</span><br></pre></td></tr></table></figure> 由于列表、元组和字典被广泛作为容器使用，因此这是一个非常有用的捷径。 ### 碎碎念 看了下面的评论，发现这个特性广为大家喜爱呀~~ 比较悲催的是，<a href="www.pylint.org">Pylint</a>貌似不大喜欢它。 "*"这个东东也叫作"splat"操作符。鉴于搜索一般会对某些字符当做特殊字符处理，因此，记着英文名也好找些。</p>
+<h2 id="braces"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#112303">Braces</a></h2>
+<p>假如你不喜欢用空格来表示范围，那么可以通过下面的方式来使用C风格的{} <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> __future__ <span class="keyword">import</span> braces</span><br></pre></td></tr></table></figure> ### 碎碎念 其实这个是个复活节彩蛋啦。 当输入这句话的时候，会得到一个错误<code>SyntaxError: not a chance (&lt;pyshell#1&gt;, line 2)</code> 这说明，这个特性永远不可能实现的。 Python开发者超有幽默感的，你可以试试输入例如<code>import __hello__</code>, <code>import this</code>, <code>import antigravity</code>看看会发生啥事~~</p>
+<h2 id="chaining-comparison-operators"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#101945">Chaining Comparison Operators</a></h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>x = <span class="number">5</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="number">1</span> &lt; x &lt; <span class="number">10</span></span><br><span class="line"><span class="literal">True</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="number">10</span> &lt; x &lt; <span class="number">20</span> </span><br><span class="line"><span class="literal">False</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>x &lt; <span class="number">10</span> &lt; x*<span class="number">10</span> &lt; <span class="number">100</span></span><br><span class="line"><span class="literal">True</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="number">10</span> &gt; x &lt;= <span class="number">9</span></span><br><span class="line"><span class="literal">True</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="number">5</span> == x &gt; <span class="number">4</span></span><br><span class="line"><span class="literal">True</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="number">10</span> &lt; x &lt; <span class="number">20</span></span><br><span class="line"><span class="literal">False</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>(<span class="number">5</span> <span class="keyword">in</span> [<span class="number">5</span>] <span class="keyword">is</span> <span class="literal">True</span>)</span><br><span class="line"><span class="literal">False</span></span><br></pre></td></tr></table></figure>
+<p>如果你是这样想的：首先<code>1 &lt; x</code>，结果是<code>True</code>，然后比较<code>True &lt; 10</code>，结果也是<code>True</code>。那么，不好意思，你错了哦，事实根本不是这样的好不好。它会转换为<code>1 &lt; x and x &lt; 10</code>,和<code>x &lt; 10 and 10 &lt; x * 10 and x*10 &lt; 100</code>。当然，这样就不需要输入那么多东东，而且每一个语句只会被计算一次。</p>
+<h3 id="碎碎念">碎碎念</h3>
+<p>Lisp貌似也是这样玩的。 然后，上面最后例子为嘛是False呢？其实你可以理解为<code>5 in [5] and [5] is True</code>，这样，就知道为嘛了~~</p>
+<h2 id="decorators"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#101447">Decorators</a></h2>
+<p><a target="_blank" rel="noopener" href="http://docs.python.org/ref/function.html#tok-decorators">装饰器</a>允许在另一个函数中包装一个函数或方法，这样可以增加功能，修改参数或结果等。在函数定义的上面一行写上装饰器，以"at"(@)标志开头。 下面的例子展示了一个<code>print_args</code>装饰器，它在调用函数前打印所装饰的函数参数： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="function"><span class="keyword">def</span> <span class="title">print_args</span>(<span class="params">function</span>):</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>    <span class="function"><span class="keyword">def</span> <span class="title">wrapper</span>(<span class="params">*args, **kwargs</span>):</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>        <span class="built_in">print</span> <span class="string">&#x27;Arguments:&#x27;</span>, args, kwargs</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>        <span class="keyword">return</span> function(*args, **kwargs)</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>    <span class="keyword">return</span> wrapper</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>@print_args</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="function"><span class="keyword">def</span> <span class="title">write</span>(<span class="params">text</span>):</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>    <span class="built_in">print</span> text</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>write(<span class="string">&#x27;foo&#x27;</span>)</span><br><span class="line">Arguments: (<span class="string">&#x27;foo&#x27;</span>,) &#123;&#125;</span><br><span class="line">foo</span><br></pre></td></tr></table></figure> ### 碎碎念 为什么要使用装饰器而不是另外定义一个函数，然后在这个函数中增加可选参数呢？ 答案就是，如果你想增加的功能是一个通用功能呢？总不能为每一个用到这个功能的函数都增加一个新的函数吧？而且，只要短短一句话，就可以将它附加到任意一个函数上哦。例如，当你想要调试的时候，就可以直接加上那么一句，调试完就可以直接移除啦。</p>
+<h2 id="default-argument-gotchas-dangers-of-mutable-default-arguments"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#113198">Default Argument Gotchas / Dangers of Mutable Default arguments</a></h2>
+<p>要小心可变的默认参数哦~~ <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="function"><span class="keyword">def</span> <span class="title">foo</span>(<span class="params">x=[]</span>):</span></span><br><span class="line"><span class="meta">... </span>    x.append(<span class="number">1</span>)</span><br><span class="line"><span class="meta">... </span>    <span class="built_in">print</span> x</span><br><span class="line"><span class="meta">... </span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>foo()</span><br><span class="line">[<span class="number">1</span>]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>foo()</span><br><span class="line">[<span class="number">1</span>, <span class="number">1</span>]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>foo()</span><br><span class="line">[<span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>]</span><br></pre></td></tr></table></figure> 相反，你应该使用一个警戒值来表示“未提供”，然后将可变参数的默认值替换成为这个警戒值： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="function"><span class="keyword">def</span> <span class="title">foo</span>(<span class="params">x=<span class="literal">None</span></span>):</span></span><br><span class="line"><span class="meta">... </span>    <span class="keyword">if</span> x <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line"><span class="meta">... </span>        x = []</span><br><span class="line"><span class="meta">... </span>    x.append(<span class="number">1</span>)</span><br><span class="line"><span class="meta">... </span>    <span class="built_in">print</span> x</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>foo()</span><br><span class="line">[<span class="number">1</span>]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>foo()</span><br><span class="line">[<span class="number">1</span>]</span><br></pre></td></tr></table></figure> ### 碎碎念 这个属性藏得很深呢，估计给不少人埋了雷。 至于要怎么理解呢？我们强悍的小伙伴这样解释： 因为def是一个可执行语句，只有def执行的时候才会计算默认默认参数的值，所以使用默认参数会造成函数执行的时候一直在使用同一个对象，引起bug。</p>
+<p>另外，上面第二个例子可以改写为 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">foo</span>(<span class="params">x=<span class="literal">None</span></span>):</span></span><br><span class="line">	x = x <span class="keyword">or</span> [] <span class="comment"># 或者 x = [] if x is None</span></span><br><span class="line">	x.append(<span class="number">1</span>)</span><br><span class="line">	<span class="built_in">print</span> x</span><br></pre></td></tr></table></figure> 在这里，可以跟lambda来对比一下。考虑下面的例子： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>x = <span class="number">10</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a = <span class="keyword">lambda</span> y:x+y</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>x = <span class="number">20</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>b = <span class="keyword">lambda</span> y:x+y</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a(<span class="number">10</span>)</span><br><span class="line"><span class="number">30</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>b(<span class="number">10</span>)</span><br><span class="line"><span class="number">30</span></span><br></pre></td></tr></table></figure> 结果是不是很出乎意料？ 这是因为，跟函数的默认值参数定义不同，这里lambda表达式中的x是一个自由变量，在运行时绑定值，而不是像函数的默认值参数是在定义时就绑定值了。因此，每次运行一次lambda表达式，就会取最新的x值来绑定计算。 如果你想让某个匿名函数（lambda）在定义时捕获到值，则只要将那个参数值定义成默认值参数(也就是使用函数默认值参数定义的形式)即可。如： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>x = <span class="number">10</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a = <span class="keyword">lambda</span> y, x=x:x+y</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>x = <span class="number">20</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>b = <span class="keyword">lambda</span> y, x=x:x+y</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a(<span class="number">10</span>)</span><br><span class="line"><span class="number">20</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>b(<span class="number">10</span>)</span><br><span class="line"><span class="number">30</span></span><br></pre></td></tr></table></figure> 扩展阅读： * <a target="_blank" rel="noopener" href="https://github.com/acmerfight/insight_python/blob/master/Default_Parameter.md">Default_Parameter</a> * <a target="_blank" rel="noopener" href="http://python3-cookbook.readthedocs.org/zh_CN/latest/c07/p05_define_functions_with_default_arguments.html">定义有默认参数的函数</a> * <a target="_blank" rel="noopener" href="http://python3-cookbook.readthedocs.org/zh_CN/latest/c07/p07_capturing_variables_in_anonymous_functions.html">匿名函数捕获变量值</a></p>
+<h2 id="descriptors"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#102062">Descriptors</a></h2>
+<p>他们是一大堆Python核心特性后面的魔法~~ 当你使用"."访问的形式来查找一个成员(例如，<code>x.y</code>)，Python首先查找实例字典中的成员。如果找不到，则在类字典中查找。如果在类字典中找到了，而对象实现了描述符(descriptor)协议，Python会执行它，而不是仅仅返回它。一个描述符是任何实现<code>__get__</code>, <code>__set__</code>或者<code>__delete__</code>方法的类。 下面是如何使用描述符实现你自己的属性的(只读)版本： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Property</span>(<span class="params"><span class="built_in">object</span></span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, fget</span>):</span></span><br><span class="line">        self.fget = fget</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__get__</span>(<span class="params">self, obj, <span class="built_in">type</span></span>):</span></span><br><span class="line">        <span class="keyword">if</span> obj <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            <span class="keyword">return</span> self</span><br><span class="line">        <span class="keyword">return</span> self.fget(obj)</span><br></pre></td></tr></table></figure> 而你可以像内建的<code>property()</code>属性一样使用它: <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyClass</span>(<span class="params"><span class="built_in">object</span></span>):</span></span><br><span class="line"><span class="meta">    @Property</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">foo</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;Foo!&quot;</span></span><br></pre></td></tr></table></figure> Python中使用描述符来在其他东东中实现属性，绑定方法，静态方法，类方法和slot。了解它们可以很容易看到之前看起来像Python的“怪癖”的东东为什么会是那样。 Raymond Hettinger有<a target="_blank" rel="noopener" href="http://users.rcn.com/python/download/Descriptor.htm">一个很棒的教程</a>极好的描述了描述符这个东东。</p>
+<h3 id="碎碎念-1">碎碎念</h3>
+<p>装饰器和描述符是两个不一样的东东哦~ 扩展阅读： * <a target="_blank" rel="noopener" href="http://hbprotoss.github.io/posts/python-descriptor.html">Python descriptor</a> * <a target="_blank" rel="noopener" href="http://www.geekfan.net/7862/">Python描述符（descriptor）解密</a></p>
+<h2 id="dictionary-default-.get-value"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#111970">Dictionary default .get value</a></h2>
+<p>字典有一个<code>get()</code>方法。若你使用<code>d['key']</code>而key不存在，那么你将会得到一个异常。而如果使用<code>d.get('key')</code>，那么当key不存在时，会返回None。当然<code>.get()</code>方法提供给了第二个参数，若此参数设了值，那么当key不存在的时候，会返回你所制定的值。例如，<code>d.get('key',0)</code>，当d['key']不存在时，返回0. 这对某些操作很有用，列入，给数字做加法： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">sum</span>[value] = <span class="built_in">sum</span>.get(value, <span class="number">0</span>) + <span class="number">1</span></span><br></pre></td></tr></table></figure> ### 碎碎念 从前，有个函数，叫做setdefault。d.setdefault('key',0)表示，若d['key']存在，则返回d['key'];否则，设置d['key'] = 0。</p>
+<h2 id="docstring-tests"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#102065">Docstring Tests</a></h2>
+<p><a target="_blank" rel="noopener" href="https://docs.python.org/2/library/doctest.html">Doctest</a>: 文档和单元测试同时进行 从Python文档中抽取的例子： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">factorial</span>(<span class="params">n</span>):</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;Return the factorial of n, an exact integer &gt;= 0.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    If the result is small enough to fit in an int, return an int.</span></span><br><span class="line"><span class="string">    Else return a long.</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    &gt;&gt;&gt; [factorial(n) for n in range(6)]</span></span><br><span class="line"><span class="string">    [1, 1, 2, 6, 24, 120]</span></span><br><span class="line"><span class="string">    &gt;&gt;&gt; factorial(-1)</span></span><br><span class="line"><span class="string">    Traceback (most recent call last):</span></span><br><span class="line"><span class="string">        ...</span></span><br><span class="line"><span class="string">    ValueError: n must be &gt;= 0</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">    Factorials of floats are OK, but the float must be an exact integer:</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">import</span> math</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> n &gt;= <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">raise</span> ValueError(<span class="string">&quot;n must be &gt;= 0&quot;</span>)</span><br><span class="line">    <span class="keyword">if</span> math.floor(n) != n:</span><br><span class="line">        <span class="keyword">raise</span> ValueError(<span class="string">&quot;n must be exact integer&quot;</span>)</span><br><span class="line">    <span class="keyword">if</span> n+<span class="number">1</span> == n:  <span class="comment"># catch a value like 1e300</span></span><br><span class="line">        <span class="keyword">raise</span> OverflowError(<span class="string">&quot;n too large&quot;</span>)</span><br><span class="line">    result = <span class="number">1</span></span><br><span class="line">    factor = <span class="number">2</span></span><br><span class="line">    <span class="keyword">while</span> factor &lt;= n:</span><br><span class="line">        result *= factor</span><br><span class="line">        factor += <span class="number">1</span></span><br><span class="line">    <span class="keyword">return</span> result</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">_test</span>():</span></span><br><span class="line">    <span class="keyword">import</span> doctest</span><br><span class="line">    doctest.testmod()    </span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    _test()</span><br></pre></td></tr></table></figure> ### 碎碎念 doctest会在docstring部分加入测试代码，这就是所谓的文章和单元测试同步进行。如果doctest通过，则不会有任何输出。 好处呢，是可以用来进行回归测试，而且，直接上示例比用文字说明更直观。另外，还可以用来确认这个docString有木有过期。</p>
+<h2 id="ellipsis-slicing-syntax"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python/112316#112316">Ellipsis Slicing Syntax</a></h2>
+<p>Python高级切片操作有一个罕为人知的语法元素：省略(Ellipsis)： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="class"><span class="keyword">class</span> <span class="title">C</span>(<span class="params"><span class="built_in">object</span></span>):</span></span><br><span class="line"><span class="meta">... </span> <span class="function"><span class="keyword">def</span> <span class="title">__getitem__</span>(<span class="params">self, item</span>):</span></span><br><span class="line"><span class="meta">... </span>  <span class="keyword">return</span> item</span><br><span class="line"><span class="meta">... </span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>C()[<span class="number">1</span>:<span class="number">2</span>, ..., <span class="number">3</span>]</span><br><span class="line">(<span class="built_in">slice</span>(<span class="number">1</span>, <span class="number">2</span>, <span class="literal">None</span>), <span class="literal">Ellipsis</span>, <span class="number">3</span>)</span><br></pre></td></tr></table></figure> 不幸的是，这个特性很少有用，因为只有在包含元祖的时候才支持省略。</p>
+<h3 id="碎碎念-2">碎碎念</h3>
+<p>这个特性真是令人困惑呢~~ 一般会出现在numpy或者scipy模块中，几个例子体会一下： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">from</span> numpy <span class="keyword">import</span> *</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a = array([[<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>],[<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>],[<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>]])</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">print</span> a</span><br><span class="line">[[<span class="number">1</span> <span class="number">2</span> <span class="number">3</span>]</span><br><span class="line"> [<span class="number">3</span> <span class="number">4</span> <span class="number">5</span>]</span><br><span class="line"> [<span class="number">5</span> <span class="number">6</span> <span class="number">7</span>]]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">print</span> a[...,<span class="number">0</span>]</span><br><span class="line">[<span class="number">1</span> <span class="number">3</span> <span class="number">5</span>]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">print</span> a[<span class="number">0</span>,...,<span class="number">0</span>] <span class="comment"># a[0,...,0] == a[0][0]</span></span><br><span class="line"><span class="number">1</span></span><br></pre></td></tr></table></figure> 至于Ellipsis会输出神马，就要看所定义的<code>__getitem__</code>了</p>
+<h2 id="enumeration"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#117116">Enumeration</a></h2>
+<p>用enumerate包住一个可迭代对象，它将会将index和item绑在一起，返回一个enumerate对象。 例如： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>a = [<span class="string">&#x27;a&#x27;</span>, <span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;c&#x27;</span>, <span class="string">&#x27;d&#x27;</span>, <span class="string">&#x27;e&#x27;</span>]</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">for</span> index, item <span class="keyword">in</span> <span class="built_in">enumerate</span>(a): <span class="built_in">print</span> index, item</span><br><span class="line">...</span><br><span class="line"><span class="number">0</span> a</span><br><span class="line"><span class="number">1</span> b</span><br><span class="line"><span class="number">2</span> c</span><br><span class="line"><span class="number">3</span> d</span><br><span class="line"><span class="number">4</span> e</span><br><span class="line">&gt;&gt;&gt;</span><br></pre></td></tr></table></figure> 参考： * <a target="_blank" rel="noopener" href="http://docs.python.org/tutorial/datastructures.html#looping-techniques">Python tutorial—looping techniques</a> * <a target="_blank" rel="noopener" href="http://docs.python.org/library/functions.html#enumerate">Python docs—built-in functions—enumerate</a> * <a target="_blank" rel="noopener" href="http://www.python.org/dev/peps/pep-0279/">PEP 279</a></p>
+<h3 id="碎碎念-3">碎碎念</h3>
+<p>这个当同时需要索引和值的时候灰常有用。 比如说，当你想这样做的时候： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(a)): <span class="built_in">print</span> i, a[i]</span><br></pre></td></tr></table></figure> 不妨换成上面这种高大上的写法，会显得更python。 当然， enumerate提供第二个参数，可以指定索引开始的位置。例如，<code>enumereate(a,1)</code></p>
+<h2 id="forelse"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#114420">For/else</a></h2>
+<p>for...else<a target="_blank" rel="noopener" href="http://docs.python.org/ref/for.html">语法</a>如下： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> foo:</span><br><span class="line">    <span class="keyword">if</span> i == <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    print(<span class="string">&quot;i was never 0&quot;</span>)</span><br></pre></td></tr></table></figure> "else"代码块会在循环正常结束后执行，但如果循环中的break语句被调用，则else代码块不会被执行。 上面的代码也等价于 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">found = <span class="literal">False</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> foo:</span><br><span class="line">    <span class="keyword">if</span> i == <span class="number">0</span>:</span><br><span class="line">        found = <span class="literal">True</span></span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line"><span class="keyword">if</span> <span class="keyword">not</span> found: </span><br><span class="line">    print(<span class="string">&quot;i was never 0&quot;</span>)</span><br></pre></td></tr></table></figure> ### 碎碎念 这个语法其实挺容易让人认为如果循环体从不被执行的情况下，else语句应该被执行。因此，在使用的时候，最好还是注释下，免得被其他小伙伴看到搞错它的含义。</p>
+<p>上面的代码也等价于 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">found = <span class="literal">False</span></span><br><span class="line"><span class="keyword">if</span> <span class="built_in">any</span>(i == <span class="number">0</span> <span class="keyword">for</span> i <span class="keyword">in</span> foo):</span><br><span class="line">	<span class="keyword">pass</span></span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">	print(<span class="string">&quot;i was never 0&quot;</span>)</span><br></pre></td></tr></table></figure> 同类语法有while...else。</p>
+<h2 id="function-as-iter-argument"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#102202">Function as iter() argument</a></h2>
+<p>iter()接收一个可回调参数。 例如： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">seek_next_line</span>(<span class="params">f</span>):</span></span><br><span class="line">    <span class="keyword">for</span> c <span class="keyword">in</span> <span class="built_in">iter</span>(<span class="keyword">lambda</span>: f.read(<span class="number">1</span>),<span class="string">&#x27;\n&#x27;</span>):</span><br><span class="line">        <span class="keyword">pass</span></span><br></pre></td></tr></table></figure> <figure class="highlight plain"><figcaption><span>until_value)```函数重复调用callable，然后yield结果，直到返回until_value。</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">### 碎碎念</span><br><span class="line">函数说明：</span><br><span class="line">&#96;&#96;&#96;python</span><br><span class="line">iter(...)</span><br><span class="line">    iter(collection) -&gt; iterator</span><br><span class="line">    iter(callable, sentinel) -&gt; iterator</span><br><span class="line">    </span><br><span class="line">    Get an iterator from an object.  In the first form, the argument must</span><br><span class="line">    supply its own iterator, or be a sequence.</span><br><span class="line">    In the second form, the callable is called until it returns the sentinel.</span><br></pre></td></tr></table></figure></p>
+<h2 id="generator-expressions"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#101310">Generator expressions</a></h2>
+<p>假如你像下面这样写： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">x=(n <span class="keyword">for</span> n <span class="keyword">in</span> foo <span class="keyword">if</span> bar(n))</span><br></pre></td></tr></table></figure> 你将获得一个生成器，并可以把它付给一个变量x。现在，你可以像下面这样玩它了： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> n <span class="keyword">in</span> x:</span><br></pre></td></tr></table></figure> 这样做得好处是，你不需要中间存储，而如果你像下面这样做，则需要： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">x = [n <span class="keyword">for</span> n <span class="keyword">in</span> foo <span class="keyword">if</span> bar(n)]</span><br><span class="line"><span class="comment">#列表推导</span></span><br></pre></td></tr></table></figure> 在某些情况下，这会导致极重要的速度提升。 你可以添加许多if语句到生成器的尾端，基本复制for循环嵌套： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>n = ((a,b) <span class="keyword">for</span> a <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="number">2</span>) <span class="keyword">for</span> b <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">4</span>,<span class="number">6</span>))</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">for</span> i <span class="keyword">in</span> n:</span><br><span class="line"><span class="meta">... </span>  <span class="built_in">print</span> i </span><br><span class="line"></span><br><span class="line">(<span class="number">0</span>, <span class="number">4</span>)</span><br><span class="line">(<span class="number">0</span>, <span class="number">5</span>)</span><br><span class="line">(<span class="number">1</span>, <span class="number">4</span>)</span><br><span class="line">(<span class="number">1</span>, <span class="number">5</span>)</span><br></pre></td></tr></table></figure> ### 碎碎念 使用生成器最大的好处就是节省内存了。因为每一个值只有在你需要的时候才会生成，而不像列表推导那样一次性生成所有的结果。储存一个值和储存一堆值，比比看，就知道谁更省空间了。 但素，要注意的一点是，因为生成器的这个特性，所以它只能被用一次哦，这个就是所谓的"no rewind"特性。 扩展阅读：<a target="_blank" rel="noopener" href="http://www.dabeaz.com/generators/">Generator Tricks for Systems Programmers</a></p>
+<h2 id="import-this"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#101276">import this</a></h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> this</span><br><span class="line"><span class="comment"># btw look at this module&#x27;s source :)</span></span><br></pre></td></tr></table></figure>
+<p>结果是（翻译见<a target="_blank" rel="noopener" href="http://article.yeeyan.org/view/287706/264148">The Zen of Python</a>）： The Zen of Python, by Tim Peters</p>
+<pre><code>Beautiful is better than ugly.
+Explicit is better than implicit.
+Simple is better than complex.
+Complex is better than complicated.
+Flat is better than nested.
+Sparse is better than dense.
+Readability counts.
+Special cases aren&#39;t special enough to break the rules.
+Although practicality beats purity.
+Errors should never pass silently.
+Unless explicitly silenced.
+In the face of ambiguity, refuse the temptation to guess. There should be one-- and preferably only one --obvious way to do it.
+Although that way may not be obvious at first unless you&#39;re Dutch.
+Now is better than never.
+Although never is often better than right now.
+If the implementation is hard to explain, it&#39;s a bad idea.
+If the implementation is easy to explain, it may be a good idea.
+Namespaces are one honking great idea -- let&#39;s do more of those!</code></pre>
+<h3 id="碎碎念-4">碎碎念</h3>
+<p>前面<code>from __future__ ipmort braces</code>提到了这个<code>import this</code>。现在就让我们来看看会发生神马吧。 从这个模块的源代码来看（位于python目录下的Lib/this.py），这个是对一段加密后的s进行解密操作（<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/ROT13">ROT13</a>），然后输出。</p>
+<p>从源码来看，这个彩蛋是很令人困惑的。至于为什么这样写，有人说，只是个玩笑，因为这个源码本身就违反了Zen of Python。你觉得呢？</p>
+<h2 id="in-place-value-swapping"><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/101268/hidden-features-of-python#102037">In Place Value Swapping</a></h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span>a = <span class="number">10</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>b = <span class="number">5</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a, b</span><br><span class="line">(<span class="number">10</span>, <span class="number">5</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a, b = b, a</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>a, b</span><br><span class="line">(<span class="number">5</span>, <span class="number">10</span>)</span><br></pre></td></tr></table></figure>
+<p>等号右边是一个表达式，它创建了一个新的元组。等号左边立即将这个未引用的元组拆封赋值给a和b 赋值后，新的元组属于未被引用，并标记为可回收垃圾，而a和b绑定的值则被互换。 注意在<a target="_blank" rel="noopener" href="http://docs.python.org/tutorial/datastructures.html#tuples-and-sequences">Python tutorial section on data structures</a>中有， 注意，多重赋值其实只是元组封装和序列拆封的组合。</p>
+<h3 id="碎碎念-5">碎碎念</h3>
+<p>此时，有小伙伴提出疑问，这会不会被传统的方式使用更多的内存空间呢？ 答案是，不会！</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E7%88%AC%E8%99%AB/" rel="tag"># 爬虫</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2015/09/26/%5BPython%5D%E6%B2%AA%E6%B1%9F%E9%83%A8%E8%90%BD%E8%87%AA%E5%8A%A8%E7%99%BB%E5%BD%95%E6%89%93%E5%8D%A1/" rel="prev" title="Python | 沪江部落自动登录打卡">
+      <i class="fa fa-chevron-left"></i> Python | 沪江部落自动登录打卡
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2015/09/28/%5B%E8%AF%91%5DPython%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8B)/" rel="next" title="译|Python的隐藏特性(下)">
+      译|Python的隐藏特性(下) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#argument-unpacking"><span class="nav-number">1.</span> <span class="nav-text">Argument Unpacking</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#braces"><span class="nav-number">2.</span> <span class="nav-text">Braces</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#chaining-comparison-operators"><span class="nav-number">3.</span> <span class="nav-text">Chaining Comparison Operators</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5"><span class="nav-number">3.1.</span> <span class="nav-text">碎碎念</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#decorators"><span class="nav-number">4.</span> <span class="nav-text">Decorators</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#default-argument-gotchas-dangers-of-mutable-default-arguments"><span class="nav-number">5.</span> <span class="nav-text">Default Argument Gotchas &#x2F; Dangers of Mutable Default arguments</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#descriptors"><span class="nav-number">6.</span> <span class="nav-text">Descriptors</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5-1"><span class="nav-number">6.1.</span> <span class="nav-text">碎碎念</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#dictionary-default-.get-value"><span class="nav-number">7.</span> <span class="nav-text">Dictionary default .get value</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#docstring-tests"><span class="nav-number">8.</span> <span class="nav-text">Docstring Tests</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ellipsis-slicing-syntax"><span class="nav-number">9.</span> <span class="nav-text">Ellipsis Slicing Syntax</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5-2"><span class="nav-number">9.1.</span> <span class="nav-text">碎碎念</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#enumeration"><span class="nav-number">10.</span> <span class="nav-text">Enumeration</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5-3"><span class="nav-number">10.1.</span> <span class="nav-text">碎碎念</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#forelse"><span class="nav-number">11.</span> <span class="nav-text">For&#x2F;else</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#function-as-iter-argument"><span class="nav-number">12.</span> <span class="nav-text">Function as iter() argument</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#generator-expressions"><span class="nav-number">13.</span> <span class="nav-text">Generator expressions</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#import-this"><span class="nav-number">14.</span> <span class="nav-text">import this</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5-4"><span class="nav-number">14.1.</span> <span class="nav-text">碎碎念</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#in-place-value-swapping"><span class="nav-number">15.</span> <span class="nav-text">In Place Value Swapping</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5-5"><span class="nav-number">15.1.</span> <span class="nav-text">碎碎念</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2015/09/27/[%E8%AF%91]Python%E7%9A%84%E9%9A%90%E8%97%8F%E7%89%B9%E6%80%A7(%E4%B8%8A)/";
+    this.page.identifier = "2015/09/27/[译]Python的隐藏特性(上)/";
+    this.page.title = "译|Python的隐藏特性(上)";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="python + win32com，玩转Microsoft Office Word文档">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用python操纵Microsoft Office之Word">
+<meta property="og:url" content="http://ictar.github.io/2015/11/06/%E7%94%A8python%E6%93%8D%E7%BA%B5Microsoft%20Office%E4%B9%8BWord/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="python + win32com，玩转Microsoft Office Word文档">
+<meta property="og:locale">
+<meta property="article:published_time" content="2015-11-06T13:25:22.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.958Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="MSOffice">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2015/11/06/%E7%94%A8python%E6%93%8D%E7%BA%B5Microsoft%20Office%E4%B9%8BWord/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>用python操纵Microsoft Office之Word | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2015/11/06/%E7%94%A8python%E6%93%8D%E7%BA%B5Microsoft%20Office%E4%B9%8BWord/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          用python操纵Microsoft Office之Word
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2015-11-06 21:25:22" itemprop="dateCreated datePublished" datetime="2015-11-06T21:25:22+08:00">2015-11-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2015/11/06/%E7%94%A8python%E6%93%8D%E7%BA%B5Microsoft%20Office%E4%B9%8BWord/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/11/06/用python操纵Microsoft Office之Word/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+            <div class="post-description">python + win32com，玩转Microsoft Office Word文档</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>前面说了怎么操作EXCEL，现在讲讲如何操作WORD。</p>
+<p>当我还是个小菜鸟的时候，曾经每半个月就要将一份病毒扫描报告的内容复制粘贴到几十份文档中。个中心酸，无法言表。而网上关于使用<a target="_blank" rel="noopener" href="http://sourceforge.net/projects/pywin32/files/">pywin32</a>这个模块操作WORD文档的信息都很初步。因此，虽然win32com很好用，但是还是无法用它来达成解放劳动力的目的。</p>
+<p>在一番摸索下，终于明白了如何参考MSDN上Office相关的接口文档来使用win32com操作WORD文档。下面，就来讲讲如何结合MSDN的接口文档(<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/EN-US/library/microsoft.office.interop.word.aspx">Microsoft.Office.Interop.Word</a>)使用win32com操作WORD文档吧</p>
+<h2 id="word基本操作">Word基本操作</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 导入模块</span></span><br><span class="line"><span class="keyword">import</span> win32com</span><br><span class="line"><span class="keyword">from</span> win32com.client <span class="keyword">import</span> *</span><br><span class="line"><span class="comment"># 新建一个基于COM对象的应用</span></span><br><span class="line">docApp = win32com.client.Dispatch(<span class="string">&quot;Word.Application&quot;</span>)</span><br><span class="line"><span class="comment"># 设置应用可见</span></span><br><span class="line">docApp.Visible = <span class="literal">True</span></span><br><span class="line"><span class="comment"># 新增一个文档</span></span><br><span class="line">doc = docApp.Documents.Add()</span><br><span class="line"><span class="comment"># 保存并关闭文档</span></span><br><span class="line">doc.SaveAs(<span class="string">&quot;E:\\text.doc&quot;</span>)</span><br><span class="line">doc.Close()</span><br><span class="line"><span class="comment"># 打开已有的应用</span></span><br><span class="line">doc = docApp.Documents.Open(<span class="string">&quot;E:\\text.doc&quot;</span>)</span><br><span class="line"><span class="comment"># 不保存，直接退出</span></span><br><span class="line">doc.Close(SaveChanges=<span class="number">0</span>)</span><br><span class="line"><span class="comment"># 关闭应用</span></span><br><span class="line">docApp.Quit()</span><br></pre></td></tr></table></figure>
+<p>参考： * <a target="_blank" rel="noopener" href="https://msdn.microsoft.com/EN-US/library/microsoft.office.interop.word.applicationclass_members.aspx">应用：Application</a> * <a target="_blank" rel="noopener" href="https://msdn.microsoft.com/EN-US/library/microsoft.office.interop.word.applicationclass.visible.aspx">是否可见：Visible</a> * <a target="_blank" rel="noopener" href="https://msdn.microsoft.com/EN-US/library/microsoft.office.interop.word.documents_members.aspx">文档：Documents</a></p>
+<h2 id="selectiontable">Selection/Table</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># selection表示文档中的一个选中区域，或者光标所指的地方</span></span><br><span class="line">sel = docApp.Selection</span><br><span class="line"><span class="comment"># 在selection后插入</span></span><br><span class="line">sel.Range.InsertAfter(<span class="string">&quot;hello, ele&quot;</span>)</span><br><span class="line"><span class="comment"># 向下移动，MoveDown(Unit, Count, Extend)</span></span><br><span class="line">sel.MoveDown(<span class="number">5</span>,<span class="number">12</span>)</span><br><span class="line"><span class="comment"># 表格操作</span></span><br><span class="line"><span class="comment"># 文档中表格个数</span></span><br><span class="line">tblcnt = doc.Tables.Count</span><br><span class="line"><span class="comment"># 表格的Index也是从0开始的</span></span><br><span class="line">doc.Tables[<span class="number">0</span>].Rows[<span class="number">0</span>].Cells[<span class="number">0</span>].Range.Text = <span class="string">&quot;hello, ele&quot;</span></span><br><span class="line"><span class="comment"># 复制粘贴</span></span><br><span class="line"><span class="comment"># 拷贝第2个表格到剪切板上</span></span><br><span class="line">doc.Tables[<span class="number">1</span>].Range.Copy()</span><br><span class="line"><span class="comment"># 粘贴到sel所在位置上</span></span><br><span class="line">sel.Range.Paste()</span><br></pre></td></tr></table></figure>
+<p>参考： * <a target="_blank" rel="noopener" href="https://msdn.microsoft.com/EN-US/library/microsoft.office.interop.word.selection_members.aspx">Selection</a> * <a target="_blank" rel="noopener" href="https://msdn.microsoft.com/EN-US/library/microsoft.office.interop.word.range_members.aspx">Range</a> * <a target="_blank" rel="noopener" href="https://msdn.microsoft.com/EN-US/library/microsoft.office.interop.word.tables_members.aspx">Tables</a></p>
+<h2 id="其他">其他</h2>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 选中一大块区域</span></span><br><span class="line"><span class="built_in">range</span> = doc.Range(doc.Tables[<span class="number">0</span>].Range.Start, doc.Tables[<span class="number">2</span>].Range.End)</span><br><span class="line"><span class="comment"># 移动到某一个heading下</span></span><br><span class="line"><span class="keyword">from</span> win32com.client <span class="keyword">import</span> constants</span><br><span class="line"><span class="comment"># GoTo(What:WdGoToItem, Which:WdGoToDirection, Count, Name)</span></span><br><span class="line"><span class="comment"># 往下移动到第十个heading</span></span><br><span class="line">doc.ActiveWindow.Selection.GoTo(constants.wdGoToHeading, constants.wdGoToNext, <span class="number">10</span>)</span><br><span class="line"><span class="comment"># 往下移动一个heading</span></span><br><span class="line">sel = doc.ActiveWindow.Selection.GoToNext(constants.wdGoToHeading)</span><br><span class="line"><span class="comment"># 第一个段落的文字</span></span><br><span class="line">sel.Paragraphs[<span class="number">0</span>].Range.Text</span><br><span class="line"><span class="comment"># 刷新目录</span></span><br><span class="line">doc.TablesOfContents[<span class="number">0</span>].Update()</span><br></pre></td></tr></table></figure>
+<p>参考： * <a target="_blank" rel="noopener" href="https://msdn.microsoft.com/EN-US/library/microsoft.office.interop.word.applicationclass.activewindow.aspx">ActiveWindow</a> * <a target="_blank" rel="noopener" href="https://msdn.microsoft.com/EN-US/library/microsoft.office.interop.word.wdgotoitem.aspx">constants: WdGoToItem</a> * <a target="_blank" rel="noopener" href="https://msdn.microsoft.com/EN-US/library/microsoft.office.interop.word.wdgotodirection.aspx">constants: WdGoToDirection</a></p>
+<p>珍爱生命，我用python。 学会了如何自动化操作word，大批量文档修改也不是一件令人烦心的事情了，O(∩_∩)O~</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/MSOffice/" rel="tag"># MSOffice</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2015/11/06/%E7%94%A8python%E6%93%8D%E7%BA%B5Microsoft%20Office%E4%B9%8BExcel/" rel="prev" title="用python操纵Microsoft Office之Excel">
+      <i class="fa fa-chevron-left"></i> 用python操纵Microsoft Office之Excel
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2015/11/10/MongoDB%E5%88%9D%E8%AF%86%E4%B9%8B%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E5%8F%8A%E5%AE%89%E8%A3%85%E4%BD%BF%E7%94%A8/" rel="next" title="MongoDB初识之基本概念及安装使用">
+      MongoDB初识之基本概念及安装使用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#word%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C"><span class="nav-number">1.</span> <span class="nav-text">Word基本操作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#selectiontable"><span class="nav-number">2.</span> <span class="nav-text">Selection&#x2F;Table</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B6%E4%BB%96"><span class="nav-number">3.</span> <span class="nav-text">其他</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2015/11/06/%E7%94%A8python%E6%93%8D%E7%BA%B5Microsoft%20Office%E4%B9%8BWord/";
+    this.page.identifier = "2015/11/06/用python操纵Microsoft Office之Word/";
+    this.page.title = "用python操纵Microsoft Office之Word";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

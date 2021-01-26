@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="西溪植物园饱满的蒲公英正题之前，先碎碎念几句。  Ele近来对系列文略感兴趣，因此准备开一个好物推荐的系列文，讲讲工作生活中用到的小而美的东东（可能是某些库，工具之类的）。算是雁过留痕，以备后续翻阅吧。  好啦，絮絮叨叨的话讲完了，我们进入正题吧。  话说这近一年来，Ele少数不多坚持下来的事情就是python-doc了。一开始仅仅是为了入门python顺便练练专业英语，虽然到后面有所懈怠，但是每">
+<meta property="og:type" content="article">
+<meta property="og:title" content="好物推荐|从HTML到markdown - html2text">
+<meta property="og:url" content="http://ictar.github.io/2017/03/18/%E5%A5%BD%E7%89%A9%E6%8E%A8%E8%8D%90%EF%BC%9A%E4%BB%8EHTML%E5%88%B0markdown%20-%20html2text/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="西溪植物园饱满的蒲公英正题之前，先碎碎念几句。  Ele近来对系列文略感兴趣，因此准备开一个好物推荐的系列文，讲讲工作生活中用到的小而美的东东（可能是某些库，工具之类的）。算是雁过留痕，以备后续翻阅吧。  好啦，絮絮叨叨的话讲完了，我们进入正题吧。  话说这近一年来，Ele少数不多坚持下来的事情就是python-doc了。一开始仅仅是为了入门python顺便练练专业英语，虽然到后面有所懈怠，但是每">
+<meta property="og:locale">
+<meta property="og:image" content="http://ictar.github.io/img/599059083419276074.jpg">
+<meta property="article:published_time" content="2017-03-18T02:41:39.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.984Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="好物推荐">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://ictar.github.io/img/599059083419276074.jpg">
+
+<link rel="canonical" href="http://ictar.github.io/2017/03/18/%E5%A5%BD%E7%89%A9%E6%8E%A8%E8%8D%90%EF%BC%9A%E4%BB%8EHTML%E5%88%B0markdown%20-%20html2text/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>好物推荐|从HTML到markdown - html2text | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2017/03/18/%E5%A5%BD%E7%89%A9%E6%8E%A8%E8%8D%90%EF%BC%9A%E4%BB%8EHTML%E5%88%B0markdown%20-%20html2text/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          好物推荐|从HTML到markdown - html2text
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-03-18 10:41:39" itemprop="dateCreated datePublished" datetime="2017-03-18T10:41:39+08:00">2017-03-18</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%A5%BD%E7%89%A9%E6%8E%A8%E8%8D%90/" itemprop="url" rel="index"><span itemprop="name">好物推荐</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2017/03/18/%E5%A5%BD%E7%89%A9%E6%8E%A8%E8%8D%90%EF%BC%9A%E4%BB%8EHTML%E5%88%B0markdown%20-%20html2text/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2017/03/18/好物推荐：从HTML到markdown - html2text/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <figure>
+<img src="/img/599059083419276074.jpg" alt="西溪植物园饱满的蒲公英" /><figcaption aria-hidden="true">西溪植物园饱满的蒲公英</figcaption>
+</figure>
+<p>正题之前，先碎碎念几句。</p>
+<p>Ele近来对系列文略感兴趣，因此准备开一个<code>好物推荐</code>的系列文，讲讲工作生活中用到的小而美的东东（可能是某些库，工具之类的）。算是雁过留痕，以备后续翻阅吧。</p>
+<p>好啦，絮絮叨叨的话讲完了，我们进入正题吧。</p>
+<p>话说这近一年来，Ele少数不多坚持下来的事情就是<a target="_blank" rel="noopener" href="https://github.com/ictar/python-doc">python-doc</a>了。一开始仅仅是为了入门python顺便练练专业英语，虽然到后面有所懈怠，但是每周不翻一次<a target="_blank" rel="noopener" href="http://us2.campaign-archive2.com/home/?u=e2e180baf855ac797ef407fc7&amp;id=9e26887fc5">Python Weekly</a>总觉得亏欠了谁什么似的。因为放在github上，所以当初选择了markdown作为文本格式。</p>
+<p>但是，Ele翻的文章都是在网上找的，因此需要将HTML转成markdown。</p>
+<p>一开始，Ele用的是在线的<a target="_blank" rel="noopener" href="http://www.atool.org/html2markdown.php">HTML转MarkDown工具</a>。这个工具虽好，但是对我而言却有几个问题： * 每次都要打开文章，然后F12找到文章正文 * 对代码块的支持很差，转出来的markdown文本里面的代码块都是原生的HTML文本。所以转后还得对结果里面的代码块再一次进行处理 * 对每篇文章都得<strong>重复</strong>上面的过程</p>
+<p>由于这个过程都是可重复的，因此，此时不自动化更待何时呢？本着造轮子之前先找找有没有轮子的精神，Ele在github上找到了库：<a target="_blank" rel="noopener" href="https://github.com/aaronsw/html2text">aaronsw/html2text</a>。</p>
+<p>这个库是用python写的，它可以把html文本转成干净易读的纯ASCII文本，并且文本是有效的markdown格式。</p>
+<p>BINGO！！！github大法好~~</p>
+<p>如果PyPi上搜<code>html2text</code>的话，找到的是另外一个库：<a target="_blank" rel="noopener" href="https://github.com/Alir3z4/html2text/">Alir3z4/html2text</a>。这个库是从<a target="_blank" rel="noopener" href="https://github.com/aaronsw/html2text">aaronsw/html2text</a> fork过来，并在此基础上对功能进行了扩展。因为Ele是直接用pip安装的，因此本文主要来讲讲这个库。</p>
+<p>首先，进行安装： <figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install html2text</span><br></pre></td></tr></table></figure> ### 命令行方式使用<code>html2text</code></p>
+<p>安装完后，就可以通过命令<code>html2text</code>进行一系列的操作了。</p>
+<p><code>html2text</code>命令使用方式为：<code>html2text [(filename|url) [encoding]]</code>。通过<code>html2text -h</code>，我们可以查看该命令支持的选项：</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>选项</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>--version</code></td>
+<td>显示程序版本号并退出</td>
+</tr>
+<tr class="even">
+<td><code>-h, --help</code></td>
+<td>显示帮助信息并退出</td>
+</tr>
+<tr class="odd">
+<td><code>--no-wrap-links</code></td>
+<td>转换期间包装链接</td>
+</tr>
+<tr class="even">
+<td><code>--ignore-emphasis</code></td>
+<td>对于强调，不包含任何格式</td>
+</tr>
+<tr class="odd">
+<td><code>--reference-links</code></td>
+<td>使用参考样式的链接，而不是内联链接</td>
+</tr>
+<tr class="even">
+<td><code>--ignore-links</code></td>
+<td>对于链接，不包含任何格式</td>
+</tr>
+<tr class="odd">
+<td><code>--protect-links</code></td>
+<td>保护链接不换行，并用尖角括号将其围起来</td>
+</tr>
+<tr class="even">
+<td><code>--ignore-images</code></td>
+<td>对于图像，不包含任何格式</td>
+</tr>
+<tr class="odd">
+<td><code>--images-to-alt</code></td>
+<td>丢弃图像数据，只保留替换文本</td>
+</tr>
+<tr class="even">
+<td><code>--images-with-size</code></td>
+<td>将图像标签作为原生html，并带height和width属性，以保留维度</td>
+</tr>
+<tr class="odd">
+<td><code>-g, --google-doc</code></td>
+<td>转换一个被导出为html的谷歌文档</td>
+</tr>
+<tr class="even">
+<td><code>-d, --dash-unordered-list</code></td>
+<td>对于无序列表，使用破折号而不是星号</td>
+</tr>
+<tr class="odd">
+<td><code>-e, --asterisk-emphasis</code></td>
+<td>对于被强调文本，使用星号而不是下划线</td>
+</tr>
+<tr class="even">
+<td><code>-b BODY_WIDTH, --body-width=BODY_WIDTH</code></td>
+<td>每个输出行的字符数，0表示不自动换行</td>
+</tr>
+<tr class="odd">
+<td><code>-i LIST_INDENT, --google-list-indent=LIST_INDENT</code></td>
+<td>Google缩进嵌套列表的像素数</td>
+</tr>
+<tr class="even">
+<td><code>-s, --hide-strikethrough</code></td>
+<td>隐藏带删除线文本。只有当也指定-g的时候才有用</td>
+</tr>
+<tr class="odd">
+<td><code>--escape-all</code></td>
+<td>转义所有特殊字符。输出较为不可读，但是会避免极端情况下的格式化问题。</td>
+</tr>
+<tr class="even">
+<td><code>--bypass-tables</code></td>
+<td>以HTML格式格式化表单，而不是Markdown语法。</td>
+</tr>
+<tr class="odd">
+<td><code>--single-line-break</code></td>
+<td>在一个块元素后使用单个换行符，而不是两个换行符。注意：要求--body-width=0</td>
+</tr>
+<tr class="even">
+<td><code>--unicode-snob</code></td>
+<td>整个文档中都使用unicode</td>
+</tr>
+<tr class="odd">
+<td><code>--no-automatic-links</code></td>
+<td>在任何适用情况下，不要使用自动链接</td>
+</tr>
+<tr class="even">
+<td><code>--no-skip-internal-links</code></td>
+<td>不要跳过内部链接</td>
+</tr>
+<tr class="odd">
+<td><code>--links-after-para</code></td>
+<td>将链接置于每段之后而不是文档之后</td>
+</tr>
+<tr class="even">
+<td><code>--mark-code</code></td>
+<td>用[code]...[/code]将代码块标记出来</td>
+</tr>
+<tr class="odd">
+<td><code>--decode-errors=DECODE_ERRORS</code></td>
+<td>如何处理decode错误。接受值为'ignore', 'strict'和'replace'</td>
+</tr>
+</tbody>
+</table>
+<p>具体使用如下： <figure class="highlight vala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta"># 传递url</span></span><br><span class="line">html2text http:<span class="comment">//eepurl.com/cK06Gn</span></span><br><span class="line"></span><br><span class="line"><span class="meta"># 传递文件名，编码方式设置为utf-8</span></span><br><span class="line">html2text test.html utf<span class="number">-8</span></span><br></pre></td></tr></table></figure> ### 脚本中使用<code>html2text</code> 除了直接通过命令行使用<code>html2text</code>外，我们还可以在脚本中将其作为库导入。</p>
+<p>我们以以下html文本为例 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">html_content = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">&lt;span style=&quot;font-size:14px&quot;&gt;&lt;a href=&quot;http://blog.yhat.com/posts/visualize-nba-pipelines.html&quot; target=&quot;_blank&quot; style=&quot;color: #1173C7;text-decoration: underline;font-weight: bold;&quot;&gt;Data Wrangling 101: Using Python to Fetch, Manipulate &amp;amp; Visualize NBA Data&lt;/a&gt;&lt;/span&gt;&lt;br&gt;</span></span><br><span class="line"><span class="string">A tutorial using pandas and a few other packages to build a simple datapipe for getting NBA data. Even though this tutorial is done using NBA data, you don&#x27;t need to be an NBA fan to follow along. The same concepts and techniques can be applied to any project of your choosing.&lt;br&gt;</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br></pre></td></tr></table></figure> 一句话转换html文本为Markdown格式的文本： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> html2text</span><br><span class="line"><span class="built_in">print</span> html2text.html2text(html_content)</span><br></pre></td></tr></table></figure> 输出如下： <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[Data Wrangling <span class="number">101</span>: Using Python <span class="keyword">to</span> Fetch, Manipulate &amp;amp; Visualize NBA</span><br><span class="line">Data](http:<span class="comment">//blog.yhat.com/posts/visualize-nba-pipelines.html)  </span></span><br><span class="line">A tutorial using pandas <span class="keyword">and</span> a few other packages <span class="keyword">to</span> build a simple datapipe</span><br><span class="line"><span class="keyword">for</span> getting NBA data. Even though this tutorial is <span class="keyword">done</span> using NBA data, you</span><br><span class="line">don&#x27;t need <span class="keyword">to</span> be an NBA fan <span class="keyword">to</span> follow along. The same concepts <span class="keyword">and</span> techniques</span><br><span class="line">can be applied <span class="keyword">to</span> any project <span class="keyword">of</span> your choosing.  </span><br></pre></td></tr></table></figure> 另外，还可以使用上面的配置项： <figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">import</span> html<span class="number">2</span>text</span><br><span class="line"><span class="attribute">h</span> = html<span class="number">2</span>text.HTML<span class="number">2</span>Text()</span><br><span class="line"><span class="attribute">print</span> h.handle(html_content) # 输出同上</span><br></pre></td></tr></table></figure> &gt; 注意：下面仅展示使用某个配置项时的输出，不使用某个配置项时使用默认值的输出（如无特殊说明）同上。</p>
+<ul>
+<li><p><code>--ignore-emphasis</code></p>
+<ul>
+<li>指定选项--ignore-emphasis <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">h.ignore_emphasis = <span class="literal">True</span></span><br><span class="line"><span class="built_in">print</span> h.handle(<span class="string">&quot;&lt;p&gt;hello, this is &lt;em&gt;Ele&lt;/em&gt;&lt;/p&gt;&quot;</span>)</span><br></pre></td></tr></table></figure> 输出为： <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hello, <span class="keyword">this</span> <span class="keyword">is</span> Ele </span><br></pre></td></tr></table></figure></li>
+<li>不指定选项--ignore-emphasis <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">h.ignore_emphasis = <span class="literal">False</span> <span class="comment"># 默认值</span></span><br><span class="line"><span class="built_in">print</span> h.handle(<span class="string">&quot;&lt;p&gt;hello, this is &lt;em&gt;Ele&lt;/em&gt;&lt;/p&gt;&quot;</span>)</span><br></pre></td></tr></table></figure> 输出为： <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hello, <span class="keyword">this</span> <span class="keyword">is</span> _Ele_</span><br></pre></td></tr></table></figure></li>
+</ul></li>
+<li><p><code>--reference-links</code> <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">h.inline_links = <span class="literal">False</span></span><br><span class="line"><span class="built_in">print</span> h.handle(html_content)</span><br></pre></td></tr></table></figure> 输出为： <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[Data Wrangling <span class="number">101</span>: Using Python <span class="keyword">to</span> Fetch, Manipulate &amp;amp; Visualize NBA</span><br><span class="line">Data][<span class="number">16</span>]  </span><br><span class="line">A tutorial using pandas <span class="keyword">and</span> a few other packages <span class="keyword">to</span> build a simple datapipe</span><br><span class="line"><span class="keyword">for</span> getting NBA data. Even though this tutorial is <span class="keyword">done</span> using NBA data, you</span><br><span class="line">don&#x27;t need <span class="keyword">to</span> be an NBA fan <span class="keyword">to</span> follow along. The same concepts <span class="keyword">and</span> techniques</span><br><span class="line">can be applied <span class="keyword">to</span> any project <span class="keyword">of</span> your choosing.  </span><br><span class="line"></span><br><span class="line">   [<span class="number">16</span>]: http:<span class="comment">//blog.yhat.com/posts/visualize-nba-pipelines.html</span></span><br></pre></td></tr></table></figure></p></li>
+<li><p><code>--ignore-links</code> <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">h.ignore_links = <span class="literal">True</span></span><br><span class="line"><span class="built_in">print</span> h.handle(html_content)</span><br></pre></td></tr></table></figure> 输出为： <figure class="highlight vbnet"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Data Wrangling <span class="number">101</span>: <span class="keyword">Using</span> Python <span class="keyword">to</span> Fetch, Manipulate &amp;amp; Visualize NBA Data  </span><br><span class="line">A tutorial <span class="keyword">using</span> pandas <span class="built_in">and</span> a few other packages <span class="keyword">to</span> build a simple datapipe</span><br><span class="line"><span class="keyword">for</span> getting NBA data. Even though this tutorial <span class="built_in">is</span> done <span class="keyword">using</span> NBA data, you</span><br><span class="line">don<span class="comment">&#x27;t need to be an NBA fan to follow along. The same concepts and techniques</span></span><br><span class="line">can be applied <span class="keyword">to</span> any project <span class="keyword">of</span> your choosing.  </span><br></pre></td></tr></table></figure></p></li>
+<li><p><code>--protect-links</code> <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">h.protect_links = <span class="literal">True</span></span><br><span class="line"><span class="built_in">print</span> h.handle(html_content)</span><br></pre></td></tr></table></figure> 输出为： <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[Data Wrangling <span class="number">101</span>: Using Python <span class="keyword">to</span> Fetch, Manipulate &amp;amp; Visualize NBA</span><br><span class="line">Data](&lt;http:<span class="comment">//blog.yhat.com/posts/visualize-nba-pipelines.html&gt;)  </span></span><br><span class="line">A tutorial using pandas <span class="keyword">and</span> a few other packages <span class="keyword">to</span> build a simple datapipe</span><br><span class="line"><span class="keyword">for</span> getting NBA data. Even though this tutorial is <span class="keyword">done</span> using NBA data, you</span><br><span class="line">don&#x27;t need <span class="keyword">to</span> be an NBA fan <span class="keyword">to</span> follow along. The same concepts <span class="keyword">and</span> techniques</span><br><span class="line">can be applied <span class="keyword">to</span> any project <span class="keyword">of</span> your choosing.  </span><br></pre></td></tr></table></figure></p></li>
+<li><p><code>--ignore-images</code> <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">h.ignore_images = <span class="literal">True</span></span><br><span class="line"><span class="built_in">print</span> h.handle(<span class="string">&#x27;&lt;p&gt;This is a img: &lt;img src=&quot;https://my.oschina.net/img/hot3.png&quot; style=&quot;max-height: 32px; max-width: 32px;&quot; alt=&quot;hot3&quot;&gt; ending ...&lt;/p&gt;&#x27;</span>)</span><br></pre></td></tr></table></figure> 输出为： <figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">This <span class="keyword">is</span> <span class="keyword">a</span> <span class="keyword">im</span><span class="variable">g:</span>  ending ...</span><br></pre></td></tr></table></figure></p></li>
+<li><p><code>--images-to-alt</code> <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">h.images_to_alt = <span class="literal">True</span></span><br><span class="line"><span class="built_in">print</span> h.handle(<span class="string">&#x27;&lt;p&gt;This is a img: &lt;img src=&quot;https://my.oschina.net/img/hot3.png&quot; style=&quot;max-height: 32px; max-width: 32px;&quot; alt=&quot;hot3&quot;&gt; ending ...&lt;/p&gt;&#x27;</span>)</span><br></pre></td></tr></table></figure> 输出为： <figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">This <span class="keyword">is</span> <span class="keyword">a</span> <span class="keyword">im</span><span class="variable">g:</span> hot3 ending ...</span><br></pre></td></tr></table></figure></p></li>
+<li><p><code>--images-with-size</code> <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">h.images_with_size = <span class="literal">True</span></span><br><span class="line"><span class="built_in">print</span> h.handle(<span class="string">&#x27;&lt;p&gt;This is a img: &lt;img src=&quot;https://my.oschina.net/img/hot3.png&quot; height=32px width=32px alt=&quot;hot3&quot;&gt; ending ...&lt;/p&gt;&#x27;</span>)</span><br></pre></td></tr></table></figure> 输出为： <figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">This is a img: &lt;img <span class="attribute">src</span>=<span class="string">&#x27;https://my.oschina.net/img/hot3.png&#x27;</span> <span class="attribute">width</span>=<span class="string">&#x27;32px&#x27;</span></span><br><span class="line"><span class="attribute">height</span>=<span class="string">&#x27;32px&#x27;</span> <span class="attribute">alt</span>=<span class="string">&#x27;hot3&#x27;</span> /&gt; ending <span class="built_in">..</span>.</span><br></pre></td></tr></table></figure></p></li>
+<li><p><code>--body-width</code> <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">h.body_width=<span class="number">0</span></span><br><span class="line"><span class="built_in">print</span> h.handle(html_content)</span><br></pre></td></tr></table></figure> 输出为： <figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[Data Wrangling <span class="number">101</span>: Using Python <span class="keyword">to</span> Fetch, Manipulate &amp;amp; Visualize NBA Data](http:<span class="comment">//blog.yhat.com/posts/visualize-nba-pipelines.html)  </span></span><br><span class="line">A tutorial using pandas <span class="keyword">and</span> a few other packages <span class="keyword">to</span> build a simple datapipe <span class="keyword">for</span> getting NBA data. Even though this tutorial is <span class="keyword">done</span> using NBA data, you don&#x27;t need <span class="keyword">to</span> be an NBA fan <span class="keyword">to</span> follow along. The same concepts <span class="keyword">and</span> techniques can be applied <span class="keyword">to</span> any project <span class="keyword">of</span> your choosing.  </span><br></pre></td></tr></table></figure></p></li>
+<li><p><code>--mark-code</code> <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">h.mark_code=<span class="literal">True</span></span><br><span class="line"><span class="built_in">print</span> h.handle(<span class="string">&#x27;&lt;pre class=&quot;hljs css&quot;&gt;&lt;code class=&quot;hljs css&quot;&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;span class=&quot;hljs-selector-tag&quot;&gt;&lt;span class=&quot;hljs-selector-tag&quot;&gt;rpm&lt;/span&gt;&lt;/span&gt;&amp;nbsp;&lt;span class=&quot;hljs-selector-tag&quot;&gt;&lt;span class=&quot;hljs-selector-tag&quot;&gt;-Uvh&lt;/span&gt;&lt;/span&gt;&amp;nbsp;&lt;span class=&quot;hljs-selector-tag&quot;&gt;&lt;span class=&quot;hljs-selector-tag&quot;&gt;erlang-solutions-1&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;hljs-selector-class&quot;&gt;&lt;span class=&quot;hljs-selector-class&quot;&gt;.0-1&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;hljs-selector-class&quot;&gt;&lt;span class=&quot;hljs-selector-class&quot;&gt;.noarch&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;hljs-selector-class&quot;&gt;&lt;span class=&quot;hljs-selector-class&quot;&gt;.rpm&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&#x27;</span>)</span><br></pre></td></tr></table></figure> 输出为： <figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-attr">[code]</span></span><br><span class="line"></span><br><span class="line">        <span class="selector-tag">rpm</span> <span class="selector-tag">-Uvh</span> <span class="selector-tag">erlang-solutions-1</span>.0<span class="selector-tag">-1</span><span class="selector-class">.noarch</span><span class="selector-class">.rpm</span></span><br><span class="line"><span class="selector-attr">[/code]</span></span><br></pre></td></tr></table></figure></p></li>
+</ul>
+<p>通过这种方式，就可以以脚本的形式自定义HTML -&gt; MARKDOWN的自动化过程了。例子可参考<a target="_blank" rel="noopener" href="https://github.com/ictar/Gadgets/blob/master/pw2md.py">pw2md</a>，这是一个每周跑一次的python weekly转markdown的脚本。</p>
+<p>好啦，html2text就介绍到这里了。如果觉得它还不能满足你的要求，或者想添加更多的功能，可以fork并自行修改。</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E5%A5%BD%E7%89%A9%E6%8E%A8%E8%8D%90/" rel="tag"># 好物推荐</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/03/04/%E5%86%8D%E8%B0%88%E8%87%AA%E5%8A%A8%E6%89%93%E5%8D%A1%E4%B9%8B%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8F%E8%A7%88%E5%99%A8%E6%93%8D%E4%BD%9C%E5%B0%8F%E5%88%A9%E5%99%A8%EF%BC%9Asplinter/" rel="prev" title="再谈自动打卡之自动化浏览器操作小利器：splinter">
+      <i class="fa fa-chevron-left"></i> 再谈自动打卡之自动化浏览器操作小利器：splinter
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/04/15/Celery%E4%BB%8E%E5%85%A5%E9%97%A8%E5%88%B0%E6%94%BE%E5%BC%83%EF%BC%9Acelery%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F/" rel="next" title="Celery从入门到放弃：celery是什么？">
+      Celery从入门到放弃：celery是什么？ <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2017/03/18/%E5%A5%BD%E7%89%A9%E6%8E%A8%E8%8D%90%EF%BC%9A%E4%BB%8EHTML%E5%88%B0markdown%20-%20html2text/";
+    this.page.identifier = "2017/03/18/好物推荐：从HTML到markdown - html2text/";
+    this.page.title = "好物推荐|从HTML到markdown - html2text";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

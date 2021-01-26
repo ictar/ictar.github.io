@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="前面诸如快排、归并排序或者堆排等都是比较排序，下来介绍基于运算而不是比较来确定排序顺序的排序算法：计数排序、基数排序、桶排序">
+<meta property="og:type" content="article">
+<meta property="og:title" content="九大排序算法及其Python实现之线性排序">
+<meta property="og:url" content="http://ictar.github.io/2015/12/01/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E7%BA%BF%E6%80%A7%E6%97%B6%E9%97%B4%E6%8E%92%E5%BA%8F/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="前面诸如快排、归并排序或者堆排等都是比较排序，下来介绍基于运算而不是比较来确定排序顺序的排序算法：计数排序、基数排序、桶排序">
+<meta property="og:locale">
+<meta property="og:image" content="http://img.blog.csdn.net/20130730163013171?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdGVuZ3dlaXR3/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="og:image" content="http://images.cnitblog.com/blog/92063/201401/231957299298.jpg">
+<meta property="og:image" content="http://img.my.csdn.net/uploads/201207/04/1341415051_4014.jpg">
+<meta property="article:published_time" content="2015-12-01T03:04:58.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.965Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="算法">
+<meta property="article:tag" content="数据结构">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20130730163013171?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdGVuZ3dlaXR3/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+
+<link rel="canonical" href="http://ictar.github.io/2015/12/01/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E7%BA%BF%E6%80%A7%E6%97%B6%E9%97%B4%E6%8E%92%E5%BA%8F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>九大排序算法及其Python实现之线性排序 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2015/12/01/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E7%BA%BF%E6%80%A7%E6%97%B6%E9%97%B4%E6%8E%92%E5%BA%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          九大排序算法及其Python实现之线性排序
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2015-12-01 11:04:58" itemprop="dateCreated datePublished" datetime="2015-12-01T11:04:58+08:00">2015-12-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">算法与数据结构</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2015/12/01/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E7%BA%BF%E6%80%A7%E6%97%B6%E9%97%B4%E6%8E%92%E5%BA%8F/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/12/01/九大排序算法及其Python实现之线性时间排序/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+            <div class="post-description">前面诸如快排、归并排序或者堆排等都是比较排序，下来介绍基于运算而不是比较来确定排序顺序的排序算法：计数排序、基数排序、桶排序</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>输入：n个数的一个序列&lt;a1,a2,...,an&gt; (A[1..n]) 输出：输入序列的一个排序&lt;b1,b2,...,bn&gt;，满足b1≤b2≤...≤bn。</p>
+<h1 id="计数排序">计数排序</h1>
+<h2 id="思想">思想</h2>
+<p>假设n个输入元素中的每一个都是在0到k区间内的一个整数，其中k为某个整数。 对每一个输入元素x，确定小于x的元素个数，利用这一信息，就可以直接把x放到它在输出数组中的位置上了。 &gt;注:当有几个元素相同时，要略微修改此方案。</p>
+<p>参考：<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E8%AE%A1%E6%95%B0%E6%8E%92%E5%BA%8F">Wiki百科：计数排序</a> ## 实现 伪代码： <figure class="highlight inform7"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"># B<span class="comment">[1..n]</span> 存放排序的输出</span><br><span class="line"># C<span class="comment">[0..k]</span> 提供临时存储空间</span><br><span class="line">COUNTING-SORT(A, B, k)</span><br><span class="line">    let C<span class="comment">[0..k]</span> be a new array</span><br><span class="line">    for i = 0 to k # 将数组C的值置为0</span><br><span class="line">        C<span class="comment">[i]</span> = 0</span><br><span class="line">    for j = 1 to A.length</span><br><span class="line">        C<span class="comment">[A<span class="comment">[j]</span>]</span> = C<span class="comment">[A<span class="comment">[j]</span>]</span> + 1</span><br><span class="line">    # C<span class="comment">[i]</span>现在包含值为i的元素的个数</span><br><span class="line">    for i = 1 to k</span><br><span class="line">        C<span class="comment">[i]</span> = C<span class="comment">[i]</span> + C<span class="comment">[i-1]</span></span><br><span class="line">    # C<span class="comment">[i]</span>现在包含值不大于i的元素的个数</span><br><span class="line">    # 从后往前遍历原数组以排序是保证排序算法稳定性的关键</span><br><span class="line">    for j = A.length downto 1 </span><br><span class="line">        B<span class="comment">[C<span class="comment">[A<span class="comment">[j]</span>]</span>]</span> = A<span class="comment">[j]</span></span><br><span class="line">        C<span class="comment">[A<span class="comment">[j]</span>]</span> = C<span class="comment">[A<span class="comment">[j]</span>]</span> - 1</span><br></pre></td></tr></table></figure> 1. Python实现（升序） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">COUNTING_SORT_ASC</span>(<span class="params">A, B, k</span>):</span></span><br><span class="line">    C = [<span class="number">0</span> <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,k+<span class="number">1</span>)] <span class="comment"># 初始化C</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="built_in">len</span>(A)): <span class="comment"># 计数</span></span><br><span class="line">        C[A[i]] += <span class="number">1</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,k+<span class="number">1</span>):</span><br><span class="line">        C[i] = C[i]+C[i-<span class="number">1</span>] <span class="comment"># 计算最大位置</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(A)-<span class="number">1</span>,-<span class="number">1</span>,-<span class="number">1</span>): <span class="comment"># 把元素放在正确的位置上</span></span><br><span class="line">        B[C[A[i]]-<span class="number">1</span>] = A[i]</span><br><span class="line">        C[A[i]] -= <span class="number">1</span></span><br></pre></td></tr></table></figure> 2. Python实现（降序） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">COUNTING_SORT_DESC</span>(<span class="params">A, B, k</span>):</span></span><br><span class="line">    C = [<span class="number">0</span> <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,k+<span class="number">1</span>)] <span class="comment"># 初始化C</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="built_in">len</span>(A)): <span class="comment"># 计数</span></span><br><span class="line">        C[A[i]] += <span class="number">1</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(k-<span class="number">1</span>,-<span class="number">1</span>,-<span class="number">1</span>): <span class="comment"># 此处是与升序最大的不同</span></span><br><span class="line">        C[i] = C[i]+C[i+<span class="number">1</span>] <span class="comment"># 计算最大位置</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(A)-<span class="number">1</span>,-<span class="number">1</span>,-<span class="number">1</span>):</span><br><span class="line">        B[C[A[i]]-<span class="number">1</span>] = A[i]</span><br><span class="line">        C[A[i]] -= <span class="number">1</span></span><br></pre></td></tr></table></figure> ## 图片说明 <img src="http://img.blog.csdn.net/20130730163013171?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdGVuZ3dlaXR3/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" /> ## 复杂度 1. 空间复杂度：O(k+n) 2. 最差/平均/最优时间复杂度：O(k+n)</p>
+<h2 id="注意">注意</h2>
+<ol type="1">
+<li>稳定的线性时间排序</li>
+<li>常用作基数排序算法的一个子过程</li>
+<li>由于下标是从0开始的，因此在实际实现过程中，最后的排序步骤需要把下标减一</li>
+</ol>
+<h1 id="基数排序">基数排序</h1>
+<h2 id="思想-1">思想</h2>
+<p>先按最低有效位进行排序。</p>
+<p>将所有待比较数值（正整数）统一为同样的数位长度，数位较短的数前面补零。然后，从最低位开始，依次进行一次排序。这样从最低位排序一直到最高位排序完成以后，数列就变成一个有序序列。</p>
+<p>参考：<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E5%9F%BA%E6%95%B0%E6%8E%92%E5%BA%8F">Wiki百科：基数排序</a></p>
+<h2 id="实现">实现</h2>
+<p>伪代码： <figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"># 第<span class="number">1</span>位是最低位，第d位师最高位</span><br><span class="line">RADIX-<span class="constructor">SORT(A, <span class="params">d</span>)</span></span><br><span class="line">    <span class="keyword">for</span> i = <span class="number">1</span> <span class="keyword">to</span> d</span><br><span class="line">        use a stable sort <span class="keyword">to</span> sort <span class="built_in">array</span> A on digit i</span><br><span class="line"># 常用计数排序来对A中元素的i位进行排序。算法修改如下</span><br><span class="line"># k为单位数字最大值</span><br><span class="line">RADIX-<span class="constructor">SORT(A, <span class="params">d</span>, <span class="params">k</span>)</span></span><br><span class="line">    <span class="keyword">for</span> i = <span class="number">1</span> <span class="keyword">to</span> d</span><br><span class="line">        COUNTING-<span class="constructor">SORT(A, <span class="params">i</span>, <span class="params">k</span>)</span></span><br><span class="line">COUNTING-<span class="constructor">SORT(A, <span class="params">h</span>, <span class="params">k</span>)</span></span><br><span class="line">    <span class="keyword">let</span> C<span class="literal">[<span class="number">0.</span>.<span class="identifier">k</span>]</span> be a <span class="keyword">new</span> <span class="built_in">array</span></span><br><span class="line">    <span class="keyword">let</span> B<span class="literal">[<span class="number">1.</span>.<span class="identifier">n</span>]</span> be a <span class="keyword">new</span> <span class="built_in">array</span></span><br><span class="line">    <span class="keyword">for</span> i = <span class="number">0</span> <span class="keyword">to</span> k #初始化C</span><br><span class="line">        C<span class="literal">[<span class="identifier">i</span>]</span> = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> j = <span class="number">1</span> <span class="keyword">to</span> <span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>length # 计算A<span class="literal">[<span class="identifier">j</span>]</span>出现的次数，将结果保存在C<span class="literal">[A[<span class="identifier">j</span>]</span>]中</span><br><span class="line">        ivalue = (A<span class="literal">[<span class="identifier">j</span>]</span>%(<span class="number">10</span>^h))/(<span class="number">10</span>^(h-<span class="number">1</span>)) # 计算A<span class="literal">[<span class="identifier">j</span>]</span>第h位的值</span><br><span class="line">        C<span class="literal">[<span class="identifier">ivalue</span>]</span> = C<span class="literal">[<span class="identifier">ivalue</span>]</span> + <span class="number">1</span></span><br><span class="line">    <span class="keyword">for</span> i = <span class="number">1</span> <span class="keyword">to</span> k # C<span class="literal">[<span class="identifier">i</span>]</span>包含小于或等于i的元素个数</span><br><span class="line">        C<span class="literal">[<span class="identifier">i</span>]</span> = C<span class="literal">[<span class="identifier">i</span>-<span class="number">1</span>]</span></span><br><span class="line">    <span class="keyword">for</span> j = <span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>length <span class="keyword">downto</span> <span class="number">1</span></span><br><span class="line">        ivalue = (A<span class="literal">[<span class="identifier">j</span>]</span>%(<span class="number">10</span>^h))/(<span class="number">10</span>^(h-<span class="number">1</span>)) # 计算A<span class="literal">[<span class="identifier">j</span>]</span>第h位的值</span><br><span class="line">        B<span class="literal">[C[<span class="identifier">ivalue</span>]</span>] = A<span class="literal">[<span class="identifier">j</span>]</span></span><br><span class="line">        C<span class="literal">[<span class="identifier">ivalue</span>]</span> = C<span class="literal">[<span class="identifier">ivalue</span>]</span> - <span class="number">1</span></span><br><span class="line">    copy B <span class="keyword">to</span> A</span><br></pre></td></tr></table></figure> 1. Python实现（升序） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">RADIX_SORT_ASC</span>(<span class="params">A, d, k</span>):</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,d+<span class="number">1</span>):</span><br><span class="line">        COUNTING_SORT_ASC(A,i,k)</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">COUNTING_SORT_ASC</span>(<span class="params">A,h,k</span>):</span></span><br><span class="line">    B = A[:]</span><br><span class="line">    C = [<span class="number">0</span> <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,k+<span class="number">1</span>)]</span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="built_in">len</span>(A)):</span><br><span class="line">        ivalue = (A[j]%(<span class="number">10</span>**h))/(<span class="number">10</span>**(h-<span class="number">1</span>)) <span class="comment">#此处可以用lambda写个匿名函数</span></span><br><span class="line">        C[ivalue] += <span class="number">1</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,k+<span class="number">1</span>): C[i] += C[i-<span class="number">1</span>]</span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(A)-<span class="number">1</span>,-<span class="number">1</span>,-<span class="number">1</span>):</span><br><span class="line">        ivalue = (A[j]%(<span class="number">10</span>**h))/(<span class="number">10</span>**(h-<span class="number">1</span>))</span><br><span class="line">        B[C[ivalue]-<span class="number">1</span>] = A[j] <span class="comment">#下标从0开始，因此需要-1，否则会下标越界</span></span><br><span class="line">        C[ivalue] -= <span class="number">1</span></span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="built_in">len</span>(A)): A[j] = B[j]</span><br></pre></td></tr></table></figure> 2. Python实现（降序） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">RADIX_SORT_DESC</span>(<span class="params">A, d, k</span>):</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,d+<span class="number">1</span>):</span><br><span class="line">        COUNTING_SORT_DESC(A,i,k)</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">COUNTING_SORT_DESC</span>(<span class="params">A,h,k</span>):</span></span><br><span class="line">    B = A[:]</span><br><span class="line">    C = [<span class="number">0</span> <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,k+<span class="number">1</span>)]</span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="built_in">len</span>(A)):</span><br><span class="line">        ivalue = (A[j]%(<span class="number">10</span>**h))/(<span class="number">10</span>**(h-<span class="number">1</span>))</span><br><span class="line">        C[ivalue] += <span class="number">1</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(k-<span class="number">1</span>,-<span class="number">1</span>,-<span class="number">1</span>): C[i] += C[i+<span class="number">1</span>]</span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(A)-<span class="number">1</span>,-<span class="number">1</span>,-<span class="number">1</span>):</span><br><span class="line">        ivalue = (A[j]%(<span class="number">10</span>**h))/(<span class="number">10</span>**(h-<span class="number">1</span>))</span><br><span class="line">        B[C[ivalue]-<span class="number">1</span>] = A[j] <span class="comment">#下标从0开始，因此需要-1，否则会下标越界</span></span><br><span class="line">        C[ivalue] -= <span class="number">1</span></span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="built_in">len</span>(A)): A[j] = B[j]</span><br></pre></td></tr></table></figure> ## 图片说明 <img src="http://images.cnitblog.com/blog/92063/201401/231957299298.jpg" /> ## 复杂度 1. 空间复杂度：O(k+n) , n是排序元素个数，k是单位数字最大值 2. 空间复杂度：O(d*n), n是排序元素个数，d是数字位数</p>
+<h2 id="注意-1">注意</h2>
+<ol type="1">
+<li>此算法还可以用于字符串排序</li>
+</ol>
+<h1 id="桶排序">桶排序</h1>
+<h2 id="思想-2">思想</h2>
+<p>假设输入是由一个随机过程产生，该过程将元素均与、独立地分布在[0,m)区间上</p>
+<ol type="1">
+<li>将[0,m)区间划分为BUCKET_NUM个相同大小的子区间（桶）</li>
+<li>将n个输入数分别放到各个桶中</li>
+<li>对每个桶中的数进行排序</li>
+<li>遍历每个桶，按照次序把各个桶中的元素列出即可</li>
+</ol>
+<p>参考：<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E6%A1%B6%E6%8E%92%E5%BA%8F">Wiki百科：基数排序</a></p>
+<h2 id="实现-1">实现</h2>
+<p>伪代码： <figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 输入的每个元素A[i]满足0≤A[i]x&lt;1</span></span><br><span class="line"><span class="comment"># 临时数组B[0..BUCKET_NUM-1]存放链表（桶）</span></span><br><span class="line"><span class="keyword">BUCKET-SORT(A)</span></span><br><span class="line"><span class="keyword"> </span>   let <span class="keyword">B[0..BUCKET_NUM-1] </span><span class="keyword">be </span>a new array</span><br><span class="line">    for i = <span class="number">0</span> to <span class="keyword">BUCKET_NUM-1</span></span><br><span class="line"><span class="keyword"> </span>       make <span class="keyword">B[i] </span>an empty list</span><br><span class="line">    for i = <span class="number">1</span> to A.length <span class="comment"># 将输入数放到各个桶中</span></span><br><span class="line">        <span class="keyword">insert </span>A[i] into list <span class="keyword">B[int(BUCKET_NUM*A[i])]</span></span><br><span class="line"><span class="keyword"> </span>   for i = <span class="number">0</span> to <span class="keyword">BUCKET_NUM-1 </span><span class="comment"># 对每个桶进行排序</span></span><br><span class="line">        sort list <span class="keyword">B[i] </span>with <span class="keyword">insertion </span>sort</span><br><span class="line">    concatenate the lists <span class="keyword">B[0], </span><span class="keyword">B[1], </span>..., <span class="keyword">B[BUCKET_NUM-1] </span>together in <span class="keyword">order</span></span><br></pre></td></tr></table></figure> 1. Python实现（升序） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">BUCKET_NUM = <span class="number">10</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">BUCKET_SORT_ASC</span>(<span class="params">A</span>):</span></span><br><span class="line">    <span class="keyword">global</span> BUCKET_NUM</span><br><span class="line">    B = [[] <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,BUCKET_NUM)] <span class="comment"># 创建BUCKET_NUM个空桶</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="built_in">len</span>(A)): <span class="comment"># 将元素放到各自的桶中</span></span><br><span class="line">        B[<span class="built_in">int</span>(BUCKET_NUM*A[i])].append(A[i])</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,BUCKET_NUM):<span class="comment"># 对桶中的数据进行排序</span></span><br><span class="line">        <span class="comment">#INSERTION_SORT_ASC(B[i])</span></span><br><span class="line">        <span class="keyword">for</span> p <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,<span class="built_in">len</span>(B[i])):</span><br><span class="line">            key,q = B[i][p],p-<span class="number">1</span></span><br><span class="line">            <span class="keyword">while</span> q&gt;=<span class="number">0</span> <span class="keyword">and</span> B[i][q] &gt; key:</span><br><span class="line">                B[i][q+<span class="number">1</span>] = B[i][q]</span><br><span class="line">                q -=<span class="number">1</span></span><br><span class="line">            B[i][q+<span class="number">1</span>] = key</span><br><span class="line">    <span class="keyword">return</span> reduce(<span class="keyword">lambda</span> a,b:a+b,B) <span class="comment">#将桶里的数据连接在一起</span></span><br></pre></td></tr></table></figure> 2. Python实现（降序） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">BUCKET_SORT_DESC</span>(<span class="params">A</span>):</span></span><br><span class="line">    <span class="keyword">global</span> BUCKET_NUM</span><br><span class="line">    B = [[] <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,BUCKET_NUM)] <span class="comment"># 创建BUCKET_NUM个空桶</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="built_in">len</span>(A)): <span class="comment"># 将元素放到各自的桶中</span></span><br><span class="line">        B[<span class="built_in">int</span>(BUCKET_NUM*A[i])].append(A[i])</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,BUCKET_NUM):<span class="comment"># 对桶中的数据进行排序(降序)</span></span><br><span class="line">        <span class="comment">#INSERTION_SORT_DESC(B[i])</span></span><br><span class="line">        <span class="keyword">for</span> p <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,<span class="built_in">len</span>(B[i])):</span><br><span class="line">            key,q = B[i][p],p-<span class="number">1</span></span><br><span class="line">            <span class="keyword">while</span> q&gt;=<span class="number">0</span> <span class="keyword">and</span> B[i][q]&lt;key:</span><br><span class="line">                B[i][q+<span class="number">1</span>] = B[i][q]</span><br><span class="line">                q -= <span class="number">1</span></span><br><span class="line">            B[i][q+<span class="number">1</span>] = key</span><br><span class="line">    <span class="keyword">return</span> reduce(<span class="keyword">lambda</span> a,b:a+b,B[::-<span class="number">1</span>]) <span class="comment">#将桶里的数据连接在一起（从后往前）</span></span><br></pre></td></tr></table></figure> ## 图片说明 <img src="http://img.my.csdn.net/uploads/201207/04/1341415051_4014.jpg" /> ## 复杂度 1. 空间复杂度：O(n*k) 2. 最差时间复杂度：O(n^2), 平均时间复杂度：O(n+k)</p>
+<h2 id="注意-2">注意</h2>
+<p>无</p>
+<h1 id="总结">总结</h1>
+<p>稳定性(来自wiki)：稳定排序算法会让原本有相等键值的纪录维持相对次序。也就是如果一个排序算法是稳定的，当有两个相等键值的纪录R和S，且在原本的列表中R出现在S之前，在排序过的列表中R也将会是在S之前。</p>
+<table>
+<thead>
+<tr class="header">
+<th>名称</th>
+<th style="text-align: right;">稳定性</th>
+<th style="text-align: right;">时间复杂度</th>
+<th style="text-align: right;">空间复杂度</th>
+<th style="text-align: center;">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>插入排序</td>
+<td style="text-align: right;">Y</td>
+<td style="text-align: right;"><span class="math display">\[O(n^2)\]</span></td>
+<td style="text-align: right;"><span class="math display">\[O(1)\]</span></td>
+<td style="text-align: center;">（有序区，无序区）从头到尾扫描数据，把无序区第一个数据插入到有序区</td>
+</tr>
+<tr class="even">
+<td>选择排序</td>
+<td style="text-align: right;">N</td>
+<td style="text-align: right;"><span class="math display">\[O(n^2)\]</span></td>
+<td style="text-align: right;"><span class="math display">\[O(1)\]</span></td>
+<td style="text-align: center;">（有序区，无序区）从头到尾扫描数据，把无序区最小的数据插入到有序区后面</td>
+</tr>
+<tr class="odd">
+<td>冒泡排序</td>
+<td style="text-align: right;">Y</td>
+<td style="text-align: right;"><span class="math display">\[O(n^2)\]</span></td>
+<td style="text-align: right;"><span class="math display">\[O(1)\]</span></td>
+<td style="text-align: center;">（有序区，无序区）从头到尾扫描数据，无序区中从后开始扫描，不断把小的元素往前推至（通过交换）有序区后面</td>
+</tr>
+<tr class="even">
+<td>归并排序</td>
+<td style="text-align: right;">Y</td>
+<td style="text-align: right;"><span class="math display">\[O(nlogn)\]</span></td>
+<td style="text-align: right;"><span class="math display">\[O(n)+O(logn)\]</span></td>
+<td style="text-align: center;">分治法，递归将数列分成子数列，对子数列排序后合并</td>
+</tr>
+<tr class="odd">
+<td>堆排序</td>
+<td style="text-align: right;">N</td>
+<td style="text-align: right;"><span class="math display">\[O(nlogn)\]</span></td>
+<td style="text-align: right;"><span class="math display">\[O(1)\]</span></td>
+<td style="text-align: center;">（有序区，无序区）构造二叉堆，将堆顶元素插入到有序区后面，然后再对新的无序区重建堆</td>
+</tr>
+<tr class="even">
+<td>快速排序</td>
+<td style="text-align: right;">N</td>
+<td style="text-align: right;">平均：<span class="math display">\[O(nlogn)\]</span> 最坏：<span class="math display">\[O(n^2)\]</span></td>
+<td style="text-align: right;"><span class="math display">\[O(logn)\]</span>,<span class="math display">\[O(n)\]</span></td>
+<td style="text-align: center;">分治法。递归的将数列分成（小数，pivot，大数）</td>
+</tr>
+<tr class="odd">
+<td>计数排序</td>
+<td style="text-align: right;">Y</td>
+<td style="text-align: right;"><span class="math display">\[O(n+m)\]</span></td>
+<td style="text-align: right;"><span class="math display">\[O(n+m)\]</span></td>
+<td style="text-align: center;">统计小于等于该元素的元素的个数i，该元素就放在目标数组的索引i位</td>
+</tr>
+<tr class="even">
+<td>基数排序</td>
+<td style="text-align: right;">Y</td>
+<td style="text-align: right;">平均：<span class="math display">\[O(k*n)\]</span> 最坏：<span class="math display">\[O(n^2)\]</span></td>
+<td style="text-align: right;">--</td>
+<td style="text-align: center;">对元素的每一位进行单独排序，从低位开始，可以结合计数排序</td>
+</tr>
+<tr class="odd">
+<td>桶排序</td>
+<td style="text-align: right;">Y</td>
+<td style="text-align: right;"><span class="math display">\[O(n)\]</span></td>
+<td style="text-align: right;"><span class="math display">\[O(m)\]</span></td>
+<td style="text-align: center;">把每个元素放在对应的桶中，对桶中元素进行排序后合并桶</td>
+</tr>
+</tbody>
+</table>
+<p>说明： 1. 升序排序 2. k表示数值中的数位的个数 3. n表示数据规模 4. m表示数据的最大值与最小值之差</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E7%AE%97%E6%B3%95/" rel="tag"># 算法</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag"># 数据结构</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2015/12/01/%5B%E8%AF%91%5D%E6%8B%B7%E8%B4%9D-%E6%B5%85%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B7%B1%E6%8B%B7%E8%B4%9D/" rel="prev" title="译|拷贝-浅拷贝与深拷贝">
+      <i class="fa fa-chevron-left"></i> 译|拷贝-浅拷贝与深拷贝
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2015/12/01/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E7%AE%80%E5%8D%95%E6%8E%92%E5%BA%8F/" rel="next" title="九大排序算法及其Python实现之简单排序">
+      九大排序算法及其Python实现之简单排序 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%AE%A1%E6%95%B0%E6%8E%92%E5%BA%8F"><span class="nav-number">1.</span> <span class="nav-text">计数排序</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%9D%E6%83%B3"><span class="nav-number">1.1.</span> <span class="nav-text">思想</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F"><span class="nav-number">1.2.</span> <span class="nav-text">注意</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%BA%E6%95%B0%E6%8E%92%E5%BA%8F"><span class="nav-number">2.</span> <span class="nav-text">基数排序</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%9D%E6%83%B3-1"><span class="nav-number">2.1.</span> <span class="nav-text">思想</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.2.</span> <span class="nav-text">实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F-1"><span class="nav-number">2.3.</span> <span class="nav-text">注意</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%A1%B6%E6%8E%92%E5%BA%8F"><span class="nav-number">3.</span> <span class="nav-text">桶排序</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%9D%E6%83%B3-2"><span class="nav-number">3.1.</span> <span class="nav-text">思想</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0-1"><span class="nav-number">3.2.</span> <span class="nav-text">实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F-2"><span class="nav-number">3.3.</span> <span class="nav-text">注意</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2015/12/01/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E7%BA%BF%E6%80%A7%E6%97%B6%E9%97%B4%E6%8E%92%E5%BA%8F/";
+    this.page.identifier = "2015/12/01/九大排序算法及其Python实现之线性时间排序/";
+    this.page.title = "九大排序算法及其Python实现之线性排序";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

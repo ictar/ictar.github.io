@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="输入：n个数的一个序列 (A[1..n]) 输出：输入序列的一个排序，满足b1≤b2≤...≤bn。  思想 参考：Wiki百科：堆排序 ## 堆 表示堆的数组A包括两个属性：A.length给出数组元素的个数，A.heap-size表示有多少个堆元素存储在该数组中。也就是说，虽然A[1..A.length]可能都存有数据，但只有A[1..A.heap-size]中存放的是堆的有效元素。这里, 0">
+<meta property="og:type" content="article">
+<meta property="og:title" content="九大排序算法及其Python实现之堆排序">
+<meta property="og:url" content="http://ictar.github.io/2015/12/07/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E5%A0%86%E6%8E%92%E5%BA%8F/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="输入：n个数的一个序列 (A[1..n]) 输出：输入序列的一个排序，满足b1≤b2≤...≤bn。  思想 参考：Wiki百科：堆排序 ## 堆 表示堆的数组A包括两个属性：A.length给出数组元素的个数，A.heap-size表示有多少个堆元素存储在该数组中。也就是说，虽然A[1..A.length]可能都存有数据，但只有A[1..A.heap-size]中存放的是堆的有效元素。这里, 0">
+<meta property="og:locale">
+<meta property="og:image" content="http://images.cnitblog.com/blog/644588/201409/191258266122505.jpg">
+<meta property="article:published_time" content="2015-12-07T03:06:35.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.996Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="算法">
+<meta property="article:tag" content="数据结构">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://images.cnitblog.com/blog/644588/201409/191258266122505.jpg">
+
+<link rel="canonical" href="http://ictar.github.io/2015/12/07/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E5%A0%86%E6%8E%92%E5%BA%8F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>九大排序算法及其Python实现之堆排序 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2015/12/07/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E5%A0%86%E6%8E%92%E5%BA%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          九大排序算法及其Python实现之堆排序
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2015-12-07 11:06:35" itemprop="dateCreated datePublished" datetime="2015-12-07T11:06:35+08:00">2015-12-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">算法与数据结构</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2015/12/07/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E5%A0%86%E6%8E%92%E5%BA%8F/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/12/07/九大排序算法及其Python实现之堆排序/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>输入：n个数的一个序列&lt;a1,a2,...,an&gt; (A[1..n]) 输出：输入序列的一个排序&lt;b1,b2,...,bn&gt;，满足b1≤b2≤...≤bn。</p>
+<h1 id="思想">思想</h1>
+<p>参考：<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/zh/%E5%A0%86%E6%8E%92%E5%BA%8F">Wiki百科：堆排序</a> ## 堆 表示堆的数组A包括两个属性：A.length给出数组元素的个数，A.heap-size表示有多少个堆元素存储在该数组中。也就是说，虽然A[1..A.length]可能都存有数据，但只有A[1..A.heap-size]中存放的是堆的有效元素。这里, 0 ≤ A.heap-size ≤ A.length。</p>
+<p>（二叉）堆数组A是一个近似的完全二叉树，树的根结点是A[1]，这样，给定一个结点的下标i，它的父节点、左孩子和右孩子的下标： <figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="title">PARENT</span><span class="params">(i)</span></span> : return i/<span class="number">2</span> <span class="comment">// i&gt;&gt;1</span></span><br><span class="line"><span class="function"><span class="title">LEFT</span><span class="params">(i)</span></span> : return <span class="number">2</span>i <span class="comment">// i&lt;&lt;1</span></span><br><span class="line"><span class="function"><span class="title">RIGHT</span><span class="params">(i)</span></span> : return <span class="number">2</span>i+<span class="number">1</span> <span class="comment">// i&lt;&lt;1 + 1</span></span><br></pre></td></tr></table></figure> 1. 最大堆：堆的最大元素存放在根结点中。并且，在任一子树中，该子树所包含的所有结点的值都不大于该子树根结点的值。即：<code>A[PARENT(i) ≥ A[i]</code>。堆排序使用最大堆。 2. 最小堆：堆的最小元素存放在根结点中。并且，在任一子树中，该子树所包含的所有结点的值都不小于该子树根结点的值。即：<code>A[PARENT(i) ≤ A[i]</code>。最小堆常用来构造优先队列。</p>
+<p>堆中结点的高度：该结点到叶结点最长简单路径上边的数目。 堆的高度：根结点的高度。O(lgn)。其中，n为堆中元素个数。</p>
+<h1 id="实现">实现</h1>
+<p>伪代码 <figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"># 时间复杂度：<span class="constructor">O(<span class="params">lgn</span>)</span>，维护最大堆性质的关键，假设根结点为<span class="constructor">LEFT(I)</span>和<span class="constructor">RIGHT(<span class="params">i</span>)</span>的二叉树都是最大堆</span><br><span class="line"># 通过让A<span class="literal">[<span class="identifier">i</span>]</span>的值在最大堆中“逐级下降”，从而使得下标i为根结点的子树重新遵循最大堆的性质</span><br><span class="line">MAX-<span class="constructor">HEAPIFY(A, <span class="params">i</span>)</span></span><br><span class="line">    l = <span class="constructor">LEFT(<span class="params">i</span>)</span></span><br><span class="line">    r = <span class="constructor">RIGHT(<span class="params">i</span>)</span></span><br><span class="line">    # 找到i，i的左子树的根结点，i的右子树的根结点中值最大的结点</span><br><span class="line">    <span class="keyword">if</span> l &lt;= <span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>heap-size <span class="keyword">and</span> A<span class="literal">[<span class="identifier">l</span>]</span> &gt; A<span class="literal">[<span class="identifier">i</span>]</span></span><br><span class="line">        largest = l</span><br><span class="line">    <span class="keyword">else</span> largest = i</span><br><span class="line">    <span class="keyword">if</span> r &lt;= <span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>heap-size <span class="keyword">and</span> A<span class="literal">[<span class="identifier">r</span>]</span> &gt; A<span class="literal">[<span class="identifier">largest</span>]</span></span><br><span class="line">        largest = r</span><br><span class="line">    # 若值最大的结点不是i，则把最大的值跟i指定的值交换。</span><br><span class="line">    # 然后继续对原值最大的结点递归进行MAX-HEAPIFY操作</span><br><span class="line">    # 若值最大的结点就是i，说明以i为根结点的子树已是最大堆，函数结束</span><br><span class="line">    <span class="keyword">if</span> largest != i</span><br><span class="line">        exchange A<span class="literal">[<span class="identifier">i</span>]</span> <span class="keyword">with</span> A<span class="literal">[<span class="identifier">largest</span>]</span></span><br><span class="line">        MAX-<span class="constructor">HEAPIFY(A, <span class="params">largest</span>)</span></span><br><span class="line"># 线性时间复杂度，从无序的输入数据数组中构造一个最大堆</span><br><span class="line">BUILD-MAX-<span class="constructor">HEAP(A)</span></span><br><span class="line">    <span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>heap-size = <span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>length</span><br><span class="line">    <span class="keyword">for</span> i = <span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>length/<span class="number">2</span> <span class="keyword">downto</span> <span class="number">1</span> #自底向上</span><br><span class="line">        MAX-<span class="constructor">HEAPIFY(A, <span class="params">i</span>)</span></span><br><span class="line"># 时间复杂度：<span class="constructor">O(<span class="params">nlgn</span>)</span>，对一个数组进行原址排序(升序)</span><br><span class="line"><span class="constructor">HEAPSORT(A)</span></span><br><span class="line">    # 利用BUILD-MAX-HEAP将输入数组建成最大堆</span><br><span class="line">    BUILD-MAX-<span class="constructor">HEAP(A)</span> # 最大元素总是在根结点A<span class="literal">[<span class="number">1</span>]</span>中</span><br><span class="line">    <span class="keyword">for</span> i = <span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>length <span class="keyword">downto</span> <span class="number">2</span></span><br><span class="line">        exchange A<span class="literal">[<span class="number">1</span>]</span> <span class="keyword">with</span> A<span class="literal">[<span class="identifier">i</span>]</span> # 将最大元素往后放在正确的位置i上</span><br><span class="line">        <span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>heap-size = <span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>heap-size - <span class="number">1</span> # 去掉结点n</span><br><span class="line">        MAX-<span class="constructor">HEAPIFY(A, 1)</span> # 维护，以保证去掉结点n后的堆还是最大堆</span><br></pre></td></tr></table></figure> 1. Python实现（升序） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">heap_size = <span class="number">0</span></span><br><span class="line">LEFT = <span class="keyword">lambda</span> i: <span class="number">2</span>*i+<span class="number">1</span></span><br><span class="line">RIGHT = <span class="keyword">lambda</span> i: <span class="number">2</span>*i+<span class="number">2</span> </span><br><span class="line"><span class="comment"># 维护最大堆</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">HEAPIFY</span>(<span class="params">A, i</span>):</span></span><br><span class="line">    l, r = LEFT(i), RIGHT(i)</span><br><span class="line">    largest = l <span class="keyword">if</span> l &lt; heap_size <span class="keyword">and</span> A[l] &gt; A[i] <span class="keyword">else</span> i <span class="comment"># 最小堆则改为 A[l] &lt; A[i]</span></span><br><span class="line">    largest = r <span class="keyword">if</span> r &lt; heap_size <span class="keyword">and</span> A[r] &gt; A[largest] <span class="keyword">else</span> largest <span class="comment"># 最小堆则改为A[r] &lt; A[largest]</span></span><br><span class="line">    <span class="keyword">if</span> i != largest:</span><br><span class="line">        A[i], A[largest] = A[largest], A[i]</span><br><span class="line">        HEAPIFY(A,largest)</span><br><span class="line"><span class="comment"># 构建最大堆</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">BUILD_MAX_HEAP</span>(<span class="params">A</span>):</span></span><br><span class="line">    <span class="keyword">global</span> heap_size</span><br><span class="line">    heap_size = <span class="built_in">len</span>(A)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(A)//<span class="number">2</span>-<span class="number">1</span>,-<span class="number">1</span>,-<span class="number">1</span>):</span><br><span class="line">        HEAPIFY(A,i)</span><br><span class="line"><span class="comment"># 堆排序</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">HEAPSORT</span>(<span class="params">A</span>):</span></span><br><span class="line">    <span class="keyword">global</span> heap_size</span><br><span class="line">    BUILD_MAX_HEAP(A)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(A)-<span class="number">1</span>,-<span class="number">1</span>,-<span class="number">1</span>):</span><br><span class="line">        A[i], A[<span class="number">0</span>] = A[<span class="number">0</span>], A[i]</span><br><span class="line">        heap_size -= <span class="number">1</span></span><br><span class="line">        HEAPIFY(A,<span class="number">0</span>)</span><br></pre></td></tr></table></figure> 注：降序排序仅需修改HEAPIFY中的比较，维护最小堆即可。</p>
+<p>附： 维护最大堆时进行的是尾部递归，这是一种比较低效的做法。修改为循环结构如下： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">HEAPIFY</span>(<span class="params">A, i</span>):</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        l, r = LEFT(i), RIGHT(i)</span><br><span class="line">        largest = l <span class="keyword">if</span> l &lt; heap_size <span class="keyword">and</span> A[l] &gt; A[i] <span class="keyword">else</span> i</span><br><span class="line">        largest = r <span class="keyword">if</span> r &lt; heap_size <span class="keyword">and</span> A[r] &gt; A[largest] <span class="keyword">else</span> largest</span><br><span class="line">        <span class="keyword">if</span> i == largest: <span class="keyword">break</span></span><br><span class="line">        A[i], A[largest] = A[largest], A[i]</span><br><span class="line">        i = largest</span><br></pre></td></tr></table></figure> # 图片说明 <img src="http://images.cnitblog.com/blog/644588/201409/191258266122505.jpg" /> ## 复杂度 1. 空间复杂度：O(1), in-place排序 2. 最差/平均/最优时间复杂度：O(nlgn)</p>
+<h1 id="注意">注意</h1>
+<ol type="1">
+<li>维护堆的时候注意，表示左子树和右子树的下标都不能超出堆的大小。</li>
+<li>堆排序时，注意调整堆的大小。</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E7%AE%97%E6%B3%95/" rel="tag"># 算法</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag"># 数据结构</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2015/12/01/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E7%AE%80%E5%8D%95%E6%8E%92%E5%BA%8F/" rel="prev" title="九大排序算法及其Python实现之简单排序">
+      <i class="fa fa-chevron-left"></i> 九大排序算法及其Python实现之简单排序
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2015/12/08/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F/" rel="next" title="九大排序算法及其Python实现之快速排序">
+      九大排序算法及其Python实现之快速排序 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%9D%E6%83%B3"><span class="nav-number">1.</span> <span class="nav-text">思想</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.</span> <span class="nav-text">实现</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F"><span class="nav-number">3.</span> <span class="nav-text">注意</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2015/12/07/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E5%A0%86%E6%8E%92%E5%BA%8F/";
+    this.page.identifier = "2015/12/07/九大排序算法及其Python实现之堆排序/";
+    this.page.title = "九大排序算法及其Python实现之堆排序";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

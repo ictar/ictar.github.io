@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="前段时间因为生产上连接数的问题，手机被告警信息一波一波地袭击。问题的现象是，项目中每个进程都有一个全局的连接对象，一个对象对应一个socket连接。从输出日志可以看出这个对象有正常的建立连接和断开连接过程。但奇怪的是，通过netstat查看连接数，却超过了进程数，说明进程的连接对象并不是进程内全局唯一的。  于是给日志加上了线程id，再次运行发现，同一个线程（该项目使用的是多进程单线程）中对该连接">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一次抓虫引发的对python导入机制的初步认识">
+<meta property="og:url" content="http://ictar.github.io/2016/11/19/%E4%B8%80%E6%AC%A1%E6%8A%93%E8%99%AB%E5%BC%95%E5%8F%91%E7%9A%84%E5%AF%B9python%E5%AF%BC%E5%85%A5%E6%9C%BA%E5%88%B6%E7%9A%84%E5%88%9D%E6%AD%A5%E8%AE%A4%E8%AF%86/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="前段时间因为生产上连接数的问题，手机被告警信息一波一波地袭击。问题的现象是，项目中每个进程都有一个全局的连接对象，一个对象对应一个socket连接。从输出日志可以看出这个对象有正常的建立连接和断开连接过程。但奇怪的是，通过netstat查看连接数，却超过了进程数，说明进程的连接对象并不是进程内全局唯一的。  于是给日志加上了线程id，再次运行发现，同一个线程（该项目使用的是多进程单线程）中对该连接">
+<meta property="og:locale">
+<meta property="article:published_time" content="2016-11-19T14:04:03.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.949Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2016/11/19/%E4%B8%80%E6%AC%A1%E6%8A%93%E8%99%AB%E5%BC%95%E5%8F%91%E7%9A%84%E5%AF%B9python%E5%AF%BC%E5%85%A5%E6%9C%BA%E5%88%B6%E7%9A%84%E5%88%9D%E6%AD%A5%E8%AE%A4%E8%AF%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>一次抓虫引发的对python导入机制的初步认识 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2016/11/19/%E4%B8%80%E6%AC%A1%E6%8A%93%E8%99%AB%E5%BC%95%E5%8F%91%E7%9A%84%E5%AF%B9python%E5%AF%BC%E5%85%A5%E6%9C%BA%E5%88%B6%E7%9A%84%E5%88%9D%E6%AD%A5%E8%AE%A4%E8%AF%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          一次抓虫引发的对python导入机制的初步认识
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-11-19 22:04:03" itemprop="dateCreated datePublished" datetime="2016-11-19T22:04:03+08:00">2016-11-19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2016/11/19/%E4%B8%80%E6%AC%A1%E6%8A%93%E8%99%AB%E5%BC%95%E5%8F%91%E7%9A%84%E5%AF%B9python%E5%AF%BC%E5%85%A5%E6%9C%BA%E5%88%B6%E7%9A%84%E5%88%9D%E6%AD%A5%E8%AE%A4%E8%AF%86/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/11/19/一次抓虫引发的对python导入机制的初步认识/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>前段时间因为生产上连接数的问题，手机被告警信息一波一波地袭击。问题的现象是，项目中每个进程都有一个全局的连接对象，一个对象对应一个socket连接。从输出日志可以看出这个对象有正常的建立连接和断开连接过程。但奇怪的是，通过<code>netstat</code>查看连接数，却超过了进程数，说明进程的连接对象并不是进程内全局唯一的。</p>
+<p>于是给日志加上了线程id，再次运行发现，同一个线程（该项目使用的是多进程单线程）中对该连接对象进行了两次初始化，并且这两次初始化的对象id（通过内置的<code>id()</code>方法得出）不同。说明该连接对象并非进程内全局唯一的。</p>
+<p>可是这是为什么呢？？？</p>
+<p>这个连接对象是作为模块内全局对象定义的，并且被同一个模块内的函数所访问。其他模块通过导入该模块的函数来间接使用该连接对象。因此，理论上讲，导入相同的模块，使用的应该是同一个对象才对。百思不得其解的情况下，有一个疑问摆在面前 —— python，是如何处理导入的呢？</p>
+<p>为了弄清这个问题，我们来做个测试。</p>
+<p>测试验证目录树如下:</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">$ tree</span><br><span class="line">.</span><br><span class="line">├── main.py &lt;- 程序主入口</span><br><span class="line">└── test_import</span><br><span class="line">    ├── a.py</span><br><span class="line">    ├── b.py</span><br><span class="line">    ├── __init__.py</span><br><span class="line">    ├── main.py</span><br><span class="line">    ├── query</span><br><span class="line">    │   ├── client.py &lt;- 这个模块就是保存全局连接对象的模块啦</span><br><span class="line">    │   └── __init__.py</span><br><span class="line">    └── v1</span><br><span class="line">        ├── c.py</span><br><span class="line">        └── __init__.py</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>每个文件内容如下： * <code>main.py</code>：主入口 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> test_import <span class="keyword">import</span> main</span><br><span class="line"></span><br><span class="line">main.main()</span><br><span class="line"><span class="comment">#import sys</span></span><br><span class="line"><span class="comment">#print &quot;id of conn in test_import.query.client&quot;, id(sys.modules[&#x27;test_import.query.client&#x27;].__dict__[&#x27;conn&#x27;])</span></span><br><span class="line"><span class="comment">#print &quot;id of conn in query.client&quot;, id(sys.modules[&#x27;query.client&#x27;].__dict__[&#x27;conn&#x27;])</span></span><br></pre></td></tr></table></figure> * <code>test_import/a.py</code> <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> query.client <span class="keyword">import</span> get_data</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">a</span>():</span></span><br><span class="line">    <span class="built_in">print</span> <span class="string">&quot;in&quot;</span>, __file__</span><br><span class="line">    get_data()</span><br></pre></td></tr></table></figure> * <code>test_import/b.py</code> <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> query.client <span class="keyword">import</span> get_data</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">b</span>():</span></span><br><span class="line">    <span class="built_in">print</span> <span class="string">&quot;in&quot;</span>, __file__</span><br><span class="line">    get_data()</span><br></pre></td></tr></table></figure> * <code>test_import/main.py</code> <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> v1 <span class="keyword">import</span> c</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> a <span class="keyword">import</span> a</span><br><span class="line"><span class="keyword">from</span> b <span class="keyword">import</span> b</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">main</span>():</span></span><br><span class="line">    <span class="built_in">print</span> <span class="string">&quot;in&quot;</span>, __file__</span><br><span class="line">    a()</span><br><span class="line">    b()</span><br><span class="line">    c.c()</span><br></pre></td></tr></table></figure> * <code>test_import/query/client.py</code>：我们在这里创建一个模块全局变量，并且将其当成整个project的全局变量使用 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Conn</span>(<span class="params"><span class="built_in">object</span></span>):</span> <span class="keyword">pass</span></span><br><span class="line"></span><br><span class="line">conn = Conn()</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_data</span>():</span></span><br><span class="line">    <span class="built_in">print</span> <span class="string">&quot;[&#123;0&#125;] id of conn is &#123;1&#125;&quot;</span>.<span class="built_in">format</span>(__file__, <span class="built_in">id</span>(conn)) <span class="comment"># 通过conn的id来识别是否属于同一个实例</span></span><br></pre></td></tr></table></figure> * <code>test_import/v1/c.py</code> <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os, sys</span><br><span class="line">current_dir = os.path.dirname(os.path.abspath(__file__))</span><br><span class="line">sys.path.append(os.path.dirname(current_dir))</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> query.client <span class="keyword">import</span> get_data</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">c</span>():</span></span><br><span class="line">    <span class="built_in">print</span> <span class="string">&quot;in&quot;</span>, __file__</span><br><span class="line">    get_data()</span><br></pre></td></tr></table></figure> 好了，准备好测试项目之后，让我们开始研究吧～～</p>
+<p>首先，运行一下： <figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ python main.py </span><br><span class="line"><span class="keyword">in</span> /Users/ele/lab/<span class="built_in">test</span>/test_import/main.pyc</span><br><span class="line"><span class="keyword">in</span> /Users/ele/lab/<span class="built_in">test</span>/test_import/a.pyc</span><br><span class="line">[/Users/elexu/lab/<span class="built_in">test</span>/test_import/query/client.pyc] id of conn is 4327254928</span><br><span class="line"><span class="keyword">in</span> /Users/ele/lab/<span class="built_in">test</span>/test_import/b.pyc</span><br><span class="line">[/Users/ele/lab/<span class="built_in">test</span>/test_import/query/client.pyc] id of conn is 4327254928</span><br><span class="line"><span class="keyword">in</span> /Users/ele/lab/<span class="built_in">test</span>/test_import/v1/c.pyc</span><br><span class="line">[/Users/ele/lab/<span class="built_in">test</span>/test_import/query/client.pyc] id of conn is 4327254480</span><br></pre></td></tr></table></figure> 从结果可以看出，a.py和b.py中访问的是同个<code>conn</code>对象，而在c.py中访问的却是另一个<code>conn</code>对象。</p>
+<p>这里要提到一个东东 —— <code>sys.modules</code>。关于它有几点信息： 1. <code>sys.modules</code>是python标准库sys中的一个类型为<code>dict</code>的成员，包含自python启动起导入的所有模块。该字典中，键为模块名，值为模块对象。 2. 当导入一个新模块的时候，python会把它们添加到<code>sys.modules</code>中。当第二次导入时，python会在<code>sys.modules</code>中进行查找</p>
+<p>因此，为了解释我们第一次运行的结果中，a.py和b.py中访问的对象与c.py不同的原因，可以在a.py/b.py/c.py中的<code>from query.client import get_data</code>之后都加上这么一句话： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="built_in">print</span> __file__, [(k, v) <span class="keyword">for</span> k, v <span class="keyword">in</span> sys.modules.items() <span class="keyword">if</span> <span class="string">&quot;client&quot;</span> <span class="keyword">in</span> k]</span><br></pre></td></tr></table></figure> &gt; 说明：因为我们要探究的是client这个模块，因此使用<code>if "client" in k</code>来过滤掉不需要的模块信息。</p>
+<p>再次运行： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">/Users/ele/lab/test/test_import/v1/c.py [(<span class="string">&#x27;query.client&#x27;</span>, &lt;module <span class="string">&#x27;query.client&#x27;</span> <span class="keyword">from</span> <span class="string">&#x27;/Users/ele/lab/test/test_import/query/client.pyc&#x27;</span>&gt;)]</span><br><span class="line">/Users/ele/lab/test/test_import/a.py [(<span class="string">&#x27;test_import.query.client&#x27;</span>, &lt;module <span class="string">&#x27;test_import.query.client&#x27;</span> <span class="keyword">from</span> <span class="string">&#x27;/Users/ele/lab/test/test_import/query/client.pyc&#x27;</span>&gt;), (<span class="string">&#x27;query.client&#x27;</span>, &lt;module <span class="string">&#x27;query.client&#x27;</span> <span class="keyword">from</span> <span class="string">&#x27;/Users/ele/lab/test/test_import/query/client.pyc&#x27;</span>&gt;)]</span><br><span class="line">/Users/ele/lab/test/test_import/b.py [(<span class="string">&#x27;test_import.query.client&#x27;</span>, &lt;module <span class="string">&#x27;test_import.query.client&#x27;</span> <span class="keyword">from</span> <span class="string">&#x27;/Users/ele/lab/test/test_import/query/client.pyc&#x27;</span>&gt;), (<span class="string">&#x27;query.client&#x27;</span>, &lt;module <span class="string">&#x27;query.client&#x27;</span> <span class="keyword">from</span> <span class="string">&#x27;/Users/ele/lab/test/test_import/query/client.pyc&#x27;</span>&gt;)]</span><br><span class="line">……</span><br></pre></td></tr></table></figure> 在c.py中，涉及到client到模块信息只有'query.client'，而a.py和b.py却多了'test_import.query.client'。</p>
+<p>对这个结果进行推论：python导入了两个模块，'query.client'和'test_import.query.client'。虽然这两个模块实际上使用到是同一份源代码（即client.py），但是由于模块名不同，因此python将它们二者当成两个完全不一样到模块处理。在导入过程中，这两个模块fen b分别初始化了一次<code>conn</code>对象。c.py是从'query.client'导入的，而a.py和b.py是从'test_import.query.client'导入，所以a.py和b.py中访问的<code>conn</code>对象才与c.py不同。</p>
+<p>取消main.py中最后两行注释语句，看看结果是否如我们所推断的那样: <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">in /Users/elexu/lab/test/test_import/main.pyc</span><br><span class="line">in /Users/elexu/lab/test/test_import/a.pyc</span><br><span class="line">[/Users/elexu/lab/test/test_import/query/client.pyc] id of conn is 4533709840</span><br><span class="line">in /Users/elexu/lab/test/test_import/b.pyc</span><br><span class="line">[/Users/elexu/lab/test/test_import/query/client.pyc] id of conn is 4533709840</span><br><span class="line">in /Users/elexu/lab/test/test_import/v1/c.pyc</span><br><span class="line">[/Users/elexu/lab/test/test_import/query/client.pyc] id of conn is 4533709392</span><br><span class="line">id of conn in test_import.query.client 4533709840</span><br><span class="line">id of conn in query.client 4533709392</span><br></pre></td></tr></table></figure> Bingo！！！</p>
+<p>接下来有第二个疑问。代码层面，a.py/b.py/c.py使用的都是相同的导入代码：<code>from query.client import get_data</code>。因此，为什么导入模块名会不同呢？对于该问题，我们可以从python的模块导入路径切入。</p>
+<p>再次，在a.py/b.py/c.py中的<code>from query.client import get_data</code>之前加入以下语句： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="built_in">print</span> __file__, <span class="built_in">filter</span>(<span class="keyword">lambda</span> p: <span class="string">&quot;test&quot;</span> <span class="keyword">in</span> p, sys.path)</span><br></pre></td></tr></table></figure> &gt; 说明：为了避免打印出一堆无关的路径，使用filter()进行了过滤</p>
+<p>再次运行下： <figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">/Users/ele/lab/<span class="built_in">test</span>/test_import/v1/c.py [<span class="string">&#x27;/Users/ele/lab/test&#x27;</span>, <span class="string">&#x27;/Users/ele/lab/test/test_import&#x27;</span>]</span><br><span class="line">……</span><br><span class="line">/Users/ele/lab/<span class="built_in">test</span>/test_import/a.py [<span class="string">&#x27;/Users/ele/lab/test&#x27;</span>, <span class="string">&#x27;/Users/ele/lab/test/test_import&#x27;</span>]</span><br><span class="line">……</span><br><span class="line">/Users/ele/lab/<span class="built_in">test</span>/test_import/b.py [<span class="string">&#x27;/Users/ele/lab/test&#x27;</span>, <span class="string">&#x27;/Users/ele/lab/test/test_import&#x27;</span>]</span><br><span class="line">……</span><br></pre></td></tr></table></figure> 发现在a.py/b.py/c.py中，与我们的测试目录相关的路径都是一样的。</p>
+<p>看来，只能逐个击破了。</p>
+<p>将c.py中的下面两行代码注释掉： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">current_dir = os.path.dirname(os.path.abspath(__file__))</span><br><span class="line">sys.path.append(os.path.dirname(current_dir))</span><br></pre></td></tr></table></figure> 运行之后会得到<code>ImportError: No module named query.client</code>这样的错误。这说明了，c.py中的<code>query.client</code>是从<code>/Users/ele/lab/test/test_import</code>中导入的。</p>
+<p>现在，来看看a.py和b.py。将test_import.main中涉及到c.py到内容注释掉，然后运行。此时sys.path中已经没有了<code>/Users/ele/lab/test/test_import</code>这一项，但是a.py和b.py仍然可以正常导入。说明，a.py和b.py中的<code>from query.client import get_data()</code>并非从<code>/Users/ele/lab/test/test_import</code>这个路径上搜索导入的。</p>
+<p>现在我们来总结解释下。</p>
+<p>python在a.py/b.py和c.py中运行到<code>from query.client import get_data()</code>这条语句的时候，由于搜索路径不同，因此导入生成到模块名不同，这近一步导致了python讲它们当成两个完全独立到模块进行处理。</p>
+<p>修改方法也很简单。只需将c.py中的<code>from query.client import get_data</code>修改成<code>from test_import.query.client import get_data</code>即可。</p>
+<p>运行验证下：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">in</span> /Users/ele/lab/<span class="built_in">test</span>/test_import/main.pyc</span><br><span class="line"><span class="keyword">in</span> /Users/ele/lab/<span class="built_in">test</span>/test_import/a.pyc</span><br><span class="line">[/Users/ele/lab/<span class="built_in">test</span>/test_import/query/client.pyc] id of conn is 4373236432</span><br><span class="line"><span class="keyword">in</span> /Users/ele/lab/<span class="built_in">test</span>/test_import/b.pyc</span><br><span class="line">[/Users/ele/lab/<span class="built_in">test</span>/test_import/query/client.pyc] id of conn is 4373236432</span><br><span class="line"><span class="keyword">in</span> /Users/ele/lab/<span class="built_in">test</span>/test_import/v1/c.py</span><br><span class="line">[/Users/ele/lab/<span class="built_in">test</span>/test_import/query/client.pyc] id of conn is 4373236432</span><br></pre></td></tr></table></figure>
+<p>o(<sup>▽</sup>)o</p>
+<h2 id="碎碎念">碎碎念</h2>
+<p>python这个磨人的小妖精～～</p>
+<h2 id="扩展阅读">扩展阅读</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://blog.mimvp.com/2015/01/python-import-mechanism-details/">Python import 机制详解</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.diveintopython.net/file_handling/more_on_modules.html">Using sys.modules</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2016/10/31/%E5%8D%81%E6%9C%88%E7%A7%8B%E9%A3%8E%E6%89%AB%E8%90%BD%E5%8F%B6%EF%BC%8C%E5%95%83%E7%9D%80%E6%96%87%E6%A1%A3%E5%86%99%E4%BB%A3%E7%A0%81/" rel="prev" title="十月秋风扫落叶，啃着文档写代码">
+      <i class="fa fa-chevron-left"></i> 十月秋风扫落叶，啃着文档写代码
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/01/27/%E5%8E%BB%E5%90%A7%E5%8E%BB%E5%90%A7%EF%BC%8C2016/" rel="next" title="去吧去吧，2016">
+      去吧去吧，2016 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5"><span class="nav-number">1.</span> <span class="nav-text">碎碎念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A9%E5%B1%95%E9%98%85%E8%AF%BB"><span class="nav-number">2.</span> <span class="nav-text">扩展阅读</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2016/11/19/%E4%B8%80%E6%AC%A1%E6%8A%93%E8%99%AB%E5%BC%95%E5%8F%91%E7%9A%84%E5%AF%B9python%E5%AF%BC%E5%85%A5%E6%9C%BA%E5%88%B6%E7%9A%84%E5%88%9D%E6%AD%A5%E8%AE%A4%E8%AF%86/";
+    this.page.identifier = "2016/11/19/一次抓虫引发的对python导入机制的初步认识/";
+    this.page.title = "一次抓虫引发的对python导入机制的初步认识";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

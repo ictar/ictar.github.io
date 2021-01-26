@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="去年Ele练手弄了一个repo，玩了几个网站的登录和打卡功能之后就把这个小东东扔到香蕉派上，一并加入cron套餐。之后就没再理之。  小东西好好地跑了几个月，之后的某一天登上去看日志，发现好几个网站的自动登录和打卡都error了，懵逼之下跑到那些个网站上一看，哎呀，改版变规则什么的，就是辣么任性&#x2F;(ㄒoㄒ)&#x2F;~~  所以只能重写了。但是重写并非分分钟的事情（过程见[Python]沪江部落自动登录打">
+<meta property="og:type" content="article">
+<meta property="og:title" content="再谈自动打卡之自动化浏览器操作小利器：splinter">
+<meta property="og:url" content="http://ictar.github.io/2017/03/04/%E5%86%8D%E8%B0%88%E8%87%AA%E5%8A%A8%E6%89%93%E5%8D%A1%E4%B9%8B%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8F%E8%A7%88%E5%99%A8%E6%93%8D%E4%BD%9C%E5%B0%8F%E5%88%A9%E5%99%A8%EF%BC%9Asplinter/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="去年Ele练手弄了一个repo，玩了几个网站的登录和打卡功能之后就把这个小东东扔到香蕉派上，一并加入cron套餐。之后就没再理之。  小东西好好地跑了几个月，之后的某一天登上去看日志，发现好几个网站的自动登录和打卡都error了，懵逼之下跑到那些个网站上一看，哎呀，改版变规则什么的，就是辣么任性&#x2F;(ㄒoㄒ)&#x2F;~~  所以只能重写了。但是重写并非分分钟的事情（过程见[Python]沪江部落自动登录打">
+<meta property="og:locale">
+<meta property="og:image" content="http://ictar.github.io/img/login_inspect_20170307.png">
+<meta property="og:image" content="http://ictar.github.io/img/2017-03-08_100223.jpg">
+<meta property="article:published_time" content="2017-03-04T07:25:43.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.931Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="自动化">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://ictar.github.io/img/login_inspect_20170307.png">
+
+<link rel="canonical" href="http://ictar.github.io/2017/03/04/%E5%86%8D%E8%B0%88%E8%87%AA%E5%8A%A8%E6%89%93%E5%8D%A1%E4%B9%8B%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8F%E8%A7%88%E5%99%A8%E6%93%8D%E4%BD%9C%E5%B0%8F%E5%88%A9%E5%99%A8%EF%BC%9Asplinter/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>再谈自动打卡之自动化浏览器操作小利器：splinter | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2017/03/04/%E5%86%8D%E8%B0%88%E8%87%AA%E5%8A%A8%E6%89%93%E5%8D%A1%E4%B9%8B%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8F%E8%A7%88%E5%99%A8%E6%93%8D%E4%BD%9C%E5%B0%8F%E5%88%A9%E5%99%A8%EF%BC%9Asplinter/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          再谈自动打卡之自动化浏览器操作小利器：splinter
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-03-04 15:25:43" itemprop="dateCreated datePublished" datetime="2017-03-04T15:25:43+08:00">2017-03-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2017/03/04/%E5%86%8D%E8%B0%88%E8%87%AA%E5%8A%A8%E6%89%93%E5%8D%A1%E4%B9%8B%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8F%E8%A7%88%E5%99%A8%E6%93%8D%E4%BD%9C%E5%B0%8F%E5%88%A9%E5%99%A8%EF%BC%9Asplinter/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2017/03/04/再谈自动打卡之自动化浏览器操作小利器：splinter/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>去年Ele练手弄了一个<a target="_blank" rel="noopener" href="https://github.com/ictar/daka">repo</a>，玩了几个网站的登录和打卡功能之后就把这个小东东扔到香蕉派上，一并加入cron套餐。之后就没再理之。</p>
+<p>小东西好好地跑了几个月，之后的某一天登上去看日志，发现好几个网站的自动登录和打卡都error了，懵逼之下跑到那些个网站上一看，哎呀，改版变规则什么的，就是辣么任性/(ㄒoㄒ)/~~</p>
+<p>所以只能重写了。但是重写并非分分钟的事情（过程见<a href="/2015/09/26/%5BPython%5D沪江部落自动登录打卡/">[Python]沪江部落自动登录打卡</a>)，懒癌犯了的Ele就暂时这样LET IT GO了。</p>
+<p>之后这个repo居然陆陆续续有人star，这引发了Ele的羞耻心，毕竟，坑人是不对的不对的不对的！！！又后来，懒惰的Ele看到了selenium，再然后又看到了splinter，正如干柴遇上了烈火（貌似有什么不对的东西混进来了O__O "…）</p>
+<p>此为前因。</p>
+<p><a target="_blank" rel="noopener" href="https://splinter.readthedocs.io/en/latest/">splinter</a>是Python系用来测试web应用的一个工具，允许你自动化浏览器操作，例如访问URL，与页面元素进行交互等。</p>
+<p>因此，我们可以用它来模拟登陆过程（输入用户名密码，点击登陆）和打卡（直接访问URL或者点击打卡按钮）过程，而后面的JavaScript等一系列点击响应事件则交给splinter处理，而无需像之前那样操心网络层面与服务器端是如何交互的。</p>
+<blockquote>
+<p>为了和前面手解登录和打卡作对比，此次仍然以沪江部落为例</p>
+</blockquote>
+<h3 id="准备">准备</h3>
+<ol type="1">
+<li>使用pip安装splinter包： <figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip <span class="keyword">install</span> splinter</span><br></pre></td></tr></table></figure></li>
+<li>浏览器准备</li>
+</ol>
+<ul>
+<li>如果使用firefox，则需要下载<a target="_blank" rel="noopener" href="https://github.com/mozilla/geckodriver/releases">geckodriver</a>，并将其解压到PATH可以找到的目录中。否则，运行时会出现错误：<code>Selenium.common.exceptions.WebDriverException: Message: 'geckodriver' executable needs to be in PATH.</code></li>
+<li>如果使用chrome，则除了要安装chrome浏览器外，还需要下载<a target="_blank" rel="noopener" href="https://sites.google.com/a/chromium.org/chromedriver/downloads">chromedriver</a>并解压。我们这里以chrome为例，将chromedriver解压缩到<code>/Users/elexu/Downloads</code>下。</li>
+</ul>
+<p>准备好了，我们先来讲讲如何模拟登陆</p>
+<h3 id="登陆">登陆</h3>
+<p>我们先来看看一般手动登录过程。</p>
+<p>从浏览器访问<code>http://www.hjenglish.com/</code>，可以看到右上角有个<strong>登录</strong>按钮。点击<strong>登录</strong>按钮后，在弹出的登录框里填入正确的用户名密码，点击绿色的登录按钮。等待片刻即可登录成功。</p>
+<p>现在，我们来看看，如何使用splinter来实现这一过程。</p>
+<p>首先，我们要初始化一个Browser实例： <figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> splinter <span class="keyword">import</span> Browser</span><br><span class="line">b = Browser(driver_name = <span class="string">&quot;chrome&quot;</span>, executable_path = <span class="string">&quot;/Users/elexu/Downloads/chromedriver&quot;</span>)</span><br></pre></td></tr></table></figure> 此时，我们可以看到一个新的chrome窗口弹出。接下来，我们需要访问沪江部落，然后让登录框弹出。</p>
+<p>打开chrome的开发者工具，审查<strong>登录</strong>按钮。</p>
+<p><img src="/img/login_inspect_20170307.png" /></p>
+<p>为了让登录框弹出，我们需要定位到这个元素，然后点击一下。splinter提供了多种查找元素的方法，例如，css, xpath, tag, id, name等。我们现在来看看如何根据上面的图来找到这个登录按钮，并完成点击操作：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 访问网站</span></span><br><span class="line">b.visit(<span class="string">&quot;http://www.hjenglish.com/&quot;</span>)</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line">time.sleep(<span class="number">3</span>)</span><br><span class="line">b.find_by_xpath(<span class="string">&#x27;//*[@id=&quot;passport_userinfo&quot;]/li[1]/a[1]&#x27;</span>).first.click()</span><br><span class="line">time.sleep(<span class="number">3</span>)</span><br></pre></td></tr></table></figure>
+<p>这里有几点说明： - 这里需要sleep一段时间，使得页面可以完全加载完毕，否则有可能在查找元素的时候，想查找的元素还未加载出来，从而导致查找不到元素。同理，点击完后，也要有一定的时间供给页面加载 - 使用Browser实例哪一个find_by_xxx方法就看元素如何是如何写的。像上面用下标定位出来的，万一页面元素发生了变动，就会失效了。如果元素可以直接通过name/id来定位，首选find_by_name和find_by_id - find_by_xpath方法返回的是一个<code>splinter.element_list.ElementList</code>实例。我们可以直接在这个实例上调用<code>click</code>方法进行点击，也可以像上面代码那样，找到定位到的第一个元素，再调用<code>click</code>方法。</p>
+<p>现在，从浏览器上可以看到，登录框已经弹出来了。接下来就是依葫芦画瓢找到用户名密码所在的输入框，填充值，然后点击登录按钮。 <figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">b.fill(<span class="string">&quot;username&quot;</span>, <span class="string">&quot;ele&quot;</span>)</span><br><span class="line">b.fill(<span class="string">&quot;password&quot;</span>, <span class="string">&quot;xxxxxx&quot;</span>)</span><br><span class="line">b.find_by_xpath(<span class="string">&#x27;//*[@id=&quot;hp-login-normal&quot;]/button&#x27;</span>).click()</span><br></pre></td></tr></table></figure> Browser()实例的<code>fill(name, value)</code>方法的作用是用参数<code>value</code>的内容填充由<code>name</code>标识的域。运行上面代码，我们可以在打开的浏览器上看到，用户名密码输入框中迅速地填充了我们指定的值，然后在click操作后，成功登录。一切都跟我们手工登录过程一毛一样。</p>
+<h3 id="打卡">打卡</h3>
+<p>打开部落个人home页面，然后审查右上角的打卡按钮 <img src="/img/2017-03-08_100223.jpg" /></p>
+<p>我们要做的很简单，只要点击这个按钮即可</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">bulo_home = <span class="string">&quot;http://bulo.hujiang.com/home&quot;</span></span><br><span class="line">b.visit(bulo_home)</span><br><span class="line">time.sleep(<span class="number">3</span>)</span><br><span class="line"><span class="keyword">if</span> b.is_element_present_by_id(<span class="string">&quot;btn_card_do&quot;</span>):</span><br><span class="line">    <span class="comment">#b.execute_script(&quot;$(btn_card_do).attr(&#x27;style&#x27;,&#x27;z-index:99999;display:block;position:absolute;&#x27;)&quot;)</span></span><br><span class="line">    b.find_by_id(<span class="string">&quot;btn_card_do&quot;</span>).first.click()</span><br></pre></td></tr></table></figure>
+<p>代码很直观，但是有几点说明： - 供给页面加载时间还是需要的，这里我们选择了3s。其实可以不用那么长，这个可以自己调整 - Browser()实例也提供了多种is_element_present_by_xxx方法，可以来检测当前页面是否存在某个元素。这里我们需要检测下页面是否有打卡按钮，如果没有，就不用点了。</p>
+<p>运行一下，程序抛异常： <figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">ElementNotVisibleException:</span> <span class="attr">Message:</span> element not visible</span><br></pre></td></tr></table></figure> 跑到页面上一看，才发现打卡按钮被大大的div遮住了。因此，我们需要通过一些手段将button展示出来。比方说修改元素的css。Browser()实例提供了execute_script()方法，可以用来执行javascript代码。将上面注释掉的那行代码的注释取消掉，再运行一下就发现OK了。</p>
+<p>这是一种方法。当然，我们还可以利用<a href="/2015/09/26/%5BPython%5D沪江部落自动登录打卡/">[Python]沪江部落自动登录打卡</a>中找到的url，直接访问，进行打卡 <figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> random</span><br><span class="line">SIGN_URL = <span class="string">&quot;http://bulo.hujiang.com/app/api/ajax_take_card.ashx?%.17f&quot;</span>%random.random()</span><br><span class="line">b.visit(SIGN_URL)</span><br></pre></td></tr></table></figure> ### 碎碎念 先来说说这种方法的优点。</p>
+<p>通过splinter，实现模拟人与浏览器的互动，写代码的人完全就不用管底层是怎么跟对端服务器进行交互的。通过splinter封装的API，基本可以满足所需的浏览器操作。简直就是懒人常备小利器。</p>
+<p>另外，很多时候，网站变更是隐藏在背后的，大多数让用户无感知。因此，不管底层逻辑怎么变更，只要打开看到的页面没有变动，这一套自动登录打卡便行之有效。免去了代码的频繁变更以适应新的网站逻辑。</p>
+<p>于是，懒惰的Ele分分钟就把<a target="_blank" rel="noopener" href="https://github.com/ictar/daka">daka</a>全部迁成splinter实现了~</p>
+<p>当然，这种方法知其然而不知其所以然，一点都不geek。另外，对那些想要通过了解机制来学到点什么的小伙伴来说，最好还是跟自己死磕一下，老老实实抓包看代码吧。</p>
+<h3 id="参考">参考</h3>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://splinter.readthedocs.io/en/latest/">splinter官方文档</a></li>
+<li><a href="/2015/09/26/%5BPython%5D沪江部落自动登录打卡/">[Python]沪江部落自动登录打卡</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/" rel="tag"># 自动化</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/02/27/uwsgi%E4%BB%A3%E7%A0%81%E5%B0%8F%E6%9C%AD-gracefully-reload%E4%B9%8B%E4%BB%8E%E5%81%9C%E6%AD%A2%E8%AF%B4%E8%B5%B7/" rel="prev" title="uwsgi代码小札|gracefully reload之从停止说起">
+      <i class="fa fa-chevron-left"></i> uwsgi代码小札|gracefully reload之从停止说起
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/03/18/%E5%A5%BD%E7%89%A9%E6%8E%A8%E8%8D%90%EF%BC%9A%E4%BB%8EHTML%E5%88%B0markdown%20-%20html2text/" rel="next" title="好物推荐|从HTML到markdown - html2text">
+      好物推荐|从HTML到markdown - html2text <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%86%E5%A4%87"><span class="nav-number">1.</span> <span class="nav-text">准备</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%99%BB%E9%99%86"><span class="nav-number">2.</span> <span class="nav-text">登陆</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%93%E5%8D%A1"><span class="nav-number">3.</span> <span class="nav-text">打卡</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">4.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2017/03/04/%E5%86%8D%E8%B0%88%E8%87%AA%E5%8A%A8%E6%89%93%E5%8D%A1%E4%B9%8B%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8F%E8%A7%88%E5%99%A8%E6%93%8D%E4%BD%9C%E5%B0%8F%E5%88%A9%E5%99%A8%EF%BC%9Asplinter/";
+    this.page.identifier = "2017/03/04/再谈自动打卡之自动化浏览器操作小利器：splinter/";
+    this.page.title = "再谈自动打卡之自动化浏览器操作小利器：splinter";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

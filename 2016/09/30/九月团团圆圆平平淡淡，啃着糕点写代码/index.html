@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="因为罗胖子的推荐，加之碰巧能拿到实体书，因此这个月有幸看了吴军老师的智能时代。机器学习和数据科学在python weekly总是占有不少的分量。这在侧面也看出了机器学习和数据科学（也可以说是书中提到的智能）在当下确实不容小觑。好吧，我不知道我会不会是书里的那2%，也许有一天时代的发展使得西乔漫画中的那只cat成为可能，那个时候，除了写代码，我还能做什么呢？或许在这之前，把自己的尾巴拖得尽可能长点，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="九月团团圆圆平平淡淡，啃着糕点写代码">
+<meta property="og:url" content="http://ictar.github.io/2016/09/30/%E4%B9%9D%E6%9C%88%E5%9B%A2%E5%9B%A2%E5%9C%86%E5%9C%86%E5%B9%B3%E5%B9%B3%E6%B7%A1%E6%B7%A1%EF%BC%8C%E5%95%83%E7%9D%80%E7%B3%95%E7%82%B9%E5%86%99%E4%BB%A3%E7%A0%81/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="因为罗胖子的推荐，加之碰巧能拿到实体书，因此这个月有幸看了吴军老师的智能时代。机器学习和数据科学在python weekly总是占有不少的分量。这在侧面也看出了机器学习和数据科学（也可以说是书中提到的智能）在当下确实不容小觑。好吧，我不知道我会不会是书里的那2%，也许有一天时代的发展使得西乔漫画中的那只cat成为可能，那个时候，除了写代码，我还能做什么呢？或许在这之前，把自己的尾巴拖得尽可能长点，">
+<meta property="og:locale">
+<meta property="article:published_time" content="2016-09-30T13:25:43.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.998Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Ele在思考">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2016/09/30/%E4%B9%9D%E6%9C%88%E5%9B%A2%E5%9B%A2%E5%9C%86%E5%9C%86%E5%B9%B3%E5%B9%B3%E6%B7%A1%E6%B7%A1%EF%BC%8C%E5%95%83%E7%9D%80%E7%B3%95%E7%82%B9%E5%86%99%E4%BB%A3%E7%A0%81/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>九月团团圆圆平平淡淡，啃着糕点写代码 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2016/09/30/%E4%B9%9D%E6%9C%88%E5%9B%A2%E5%9B%A2%E5%9C%86%E5%9C%86%E5%B9%B3%E5%B9%B3%E6%B7%A1%E6%B7%A1%EF%BC%8C%E5%95%83%E7%9D%80%E7%B3%95%E7%82%B9%E5%86%99%E4%BB%A3%E7%A0%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          九月团团圆圆平平淡淡，啃着糕点写代码
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-09-30 21:25:43" itemprop="dateCreated datePublished" datetime="2016-09-30T21:25:43+08:00">2016-09-30</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BF%99%E5%B0%B1%E6%98%AF%E7%94%9F%E6%B4%BB/" itemprop="url" rel="index"><span itemprop="name">这就是生活</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2016/09/30/%E4%B9%9D%E6%9C%88%E5%9B%A2%E5%9B%A2%E5%9C%86%E5%9C%86%E5%B9%B3%E5%B9%B3%E6%B7%A1%E6%B7%A1%EF%BC%8C%E5%95%83%E7%9D%80%E7%B3%95%E7%82%B9%E5%86%99%E4%BB%A3%E7%A0%81/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/09/30/九月团团圆圆平平淡淡，啃着糕点写代码/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>因为罗胖子的推荐，加之碰巧能拿到实体书，因此这个月有幸看了吴军老师的<a target="_blank" rel="noopener" href="https://book.douban.com/subject/26838557/">智能时代</a>。机器学习和数据科学在python weekly总是占有不少的分量。这在侧面也看出了机器学习和数据科学（也可以说是书中提到的智能）在当下确实不容小觑。好吧，我不知道我会不会是书里的那2%，也许有一天时代的发展使得西乔漫画中的那只cat成为可能，那个时候，除了写代码，我还能做什么呢？或许在这之前，把自己的尾巴拖得尽可能长点，会是另一种自救之道？</p>
+<p>这个月最大的成就，应该是看完了<a target="_blank" rel="noopener" href="https://book.douban.com/subject/26581184/">Docker源码分析</a>这本书了。书写得很浅显，作者考虑到了我这种go零基础的受众，算得上手把手的教你看代码了。我没用过docker，嗯，但是，此书之后，我想docker也不会让我太迷惑了。这本书算是我老老实实从头到尾看完的一本技术书（也许是因为它薄？）。我总是很贪心，mark了一堆想看的书，然而常常看到某处，就看不下去。浮躁也好，那时的状态不对也罢。这种问题，是我看书，特别是技术书，需要克服的最大的障碍了。</p>
+<p>最近翻pw总是很任性。有时候一句话，英文的意思我懂，但是转成中文却觉得甚是别扭。有时，我都觉得自己没法好好讲话了。之前求的是尽量保存作者的原字原意，因为好些领域其实我也不懂，故而担心弄错了误人子弟那么多不好。现在任性了。看到一句老长老长的话，用中文逐字逐句打不出来，那么久闭上眼睛，想想怎么意译。意达为主，尽量字达。</p>
+<p>想想自新工作以来，看的东西不少，但都是浅浅而过，会用（copy and paste from StackOverflow），顶多算得上知道，连熟悉都够不上。也就是说，技能树开得不少，但大多是到此一游。这在出问题的时候，就看出其局限性了（不过感觉这是个悖论，如果没有出问题这个机缘，又怎么让你有动力更进一步呢？）。所以要说到这个月我工作的重点之一，就是各种优化~ 抓包、debug之类的个中滋味不提也罢。再算算今年也快完了，因此觉得自己应该收收心。那么，收心从温故而知新开始吧，温故的话，那就看源码好啦O(∩_∩)O~</p>
+<p>于是乎，有了下面的十月计划~</p>
+<ul>
+<li>GO （跟同事要了<a target="_blank" rel="noopener" href="https://book.douban.com/subject/11577300/">Go语言编程</a>）</li>
+<li>uwsgi源码阅读</li>
+<li>准备做几个小东西
+<ol type="1">
+<li>今年生日的时候，朋友送了我一个香蕉派的camera module。一直放着不知道该用来做什么。最近短期记忆有点问题，时常出门了会突然想到自己家的门有没有锁（我觉得我一定不是一个人！！），所以，嗯……</li>
+<li>Android教程看不下去了（除了因为手机没法做测试机以及电脑问题，真的不是因为懒癌犯了吗？！！），所以觉得应该开始做个小app来激发下我的热情（不过听说微信上了个小程序……anyway~）</li>
+</ol></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Ele%E5%9C%A8%E6%80%9D%E8%80%83/" rel="tag"># Ele在思考</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2016/09/28/%E4%B8%80%E6%9E%9A%E5%BF%83%E8%B7%B3%E7%9A%84%E6%97%85%E7%A8%8B%20%E2%80%94%20pika%E5%BF%83%E8%B7%B3%E6%9C%BA%E5%88%B6/" rel="prev" title="一枚心跳的旅程 — pika心跳机制">
+      <i class="fa fa-chevron-left"></i> 一枚心跳的旅程 — pika心跳机制
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2016/10/23/uwsgi%E4%BB%A3%E7%A0%81%E5%B0%8F%E6%9C%AD-%E4%BF%A1%E5%8F%B7%E4%B8%8Esignal-c/" rel="next" title="uwsgi代码小札|信号与signal.c">
+      uwsgi代码小札|信号与signal.c <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2016/09/30/%E4%B9%9D%E6%9C%88%E5%9B%A2%E5%9B%A2%E5%9C%86%E5%9C%86%E5%B9%B3%E5%B9%B3%E6%B7%A1%E6%B7%A1%EF%BC%8C%E5%95%83%E7%9D%80%E7%B3%95%E7%82%B9%E5%86%99%E4%BB%A3%E7%A0%81/";
+    this.page.identifier = "2016/09/30/九月团团圆圆平平淡淡，啃着糕点写代码/";
+    this.page.title = "九月团团圆圆平平淡淡，啃着糕点写代码";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

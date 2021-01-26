@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="原文：An Overview of Go&#39;s Tooling     偶尔会有人问我，“为什么你会喜欢用 Go 呢？” 在我的回答中，有一个我经常提到的原因，那就是和 Go 一起存在的那些好用的工具，并且它们是作为 go 命令的一部分存在的。其中有一些工具我每天都在用，例如 go fmt 和 go build。而其他像 go tool pprof 这样的工具，则只在解决特定问题的时候会用到。但是无">
+<meta property="og:type" content="article">
+<meta property="og:title" content="译|Go 的工具箱综述">
+<meta property="og:url" content="http://ictar.github.io/2019/05/14/an-overview-of-go-tooling/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="原文：An Overview of Go&#39;s Tooling     偶尔会有人问我，“为什么你会喜欢用 Go 呢？” 在我的回答中，有一个我经常提到的原因，那就是和 Go 一起存在的那些好用的工具，并且它们是作为 go 命令的一部分存在的。其中有一些工具我每天都在用，例如 go fmt 和 go build。而其他像 go tool pprof 这样的工具，则只在解决特定问题的时候会用到。但是无">
+<meta property="og:locale">
+<meta property="og:image" content="https://www.alexedwards.net/static/images/tooling-1.png">
+<meta property="og:image" content="https://www.alexedwards.net/static/images/tooling-2.png">
+<meta property="og:image" content="https://www.alexedwards.net/static/images/tooling-3.png">
+<meta property="og:image" content="https://www.alexedwards.net/static/images/tooling-4.png">
+<meta property="og:image" content="https://www.alexedwards.net/static/images/tooling-5.png">
+<meta property="og:image" content="https://www.alexedwards.net/static/images/tooling-6.png">
+<meta property="og:image" content="https://www.alexedwards.net/static/images/tooling-7.png">
+<meta property="article:published_time" content="2019-05-14T12:31:01.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:41.011Z">
+<meta property="article:author" content="Ele">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.alexedwards.net/static/images/tooling-1.png">
+
+<link rel="canonical" href="http://ictar.github.io/2019/05/14/an-overview-of-go-tooling/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>译|Go 的工具箱综述 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2019/05/14/an-overview-of-go-tooling/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          译|Go 的工具箱综述
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-05-14 20:31:01" itemprop="dateCreated datePublished" datetime="2019-05-14T20:31:01+08:00">2019-05-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:41" itemprop="dateModified" datetime="2020-12-25T16:20:41+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2019/05/14/an-overview-of-go-tooling/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/05/14/an-overview-of-go-tooling/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>原文：<a target="_blank" rel="noopener" href="https://www.alexedwards.net/blog/an-overview-of-go-tooling">An Overview of Go's Tooling</a></p>
+<hr />
+<p>偶尔会有人问我，<em>“为什么你会喜欢用 Go 呢？”</em> 在我的回答中，有一个我经常提到的原因，那就是和 Go 一起存在的那些好用的工具，并且它们是作为 <code>go</code> 命令的一部分存在的。其中有一些工具我每天都在用，例如 <code>go fmt</code> 和 <code>go build</code>。而其他像 <code>go tool pprof</code> 这样的工具，则只在解决特定问题的时候会用到。但是无论如何，我很感激它们，让我的项目管理和维护变得更加容易。</p>
+<p>在这篇文章中，我希望说明一些我认为最有用的工具的背景和使用场景。更重要的是，解释清楚可以如何将其用于典型项目的工作流程中。如果你刚接触 Go，那么，我希望这篇文章可以给你一个良好的开始。</p>
+<p>或者，如果你已经使用 Go 一段时间了，那么你可能已经对这些东西很熟悉了，但是，我希望你仍旧可以从本文中发现一个从前不知道的命令或者标志 : )</p>
+<p>本文基于 Go 1.12，并且假设你的项目已经 <a target="_blank" rel="noopener" href="https://github.com/golang/go/wiki/Modules#quick-start">启用了 modules</a>。</p>
+<h2 id="安装工具">安装工具</h2>
+<p>在这篇文章中，我将主要关注作为 <code>go</code> 命令一部分的工具。但是，我还会提到那些不属于标准的 Go 1.12 版本的工具。</p>
+<p>要在使用 Go 1.12 的情况下安装这些工具，首先，你需要确保当前位置_不在_启用 module 的目录下（通常，我会切到 <code>/tmp</code>）。然后，你就可以使用 <code>GO111MODULE=on go get</code> 命令来安装工具了。例如：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ cd /tmp</span><br><span class="line">$ GO111MODULE=on go get golang.org<span class="regexp">/x/</span>tools<span class="regexp">/cmd/</span>stress</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>上面的操作将会下载相关的包和依赖项，构建可执行文件，然后将其添加到你的 <code>GOBIN</code> 目录下。如果没有显式设置 <code>GOBIN</code> 目录，那么，可执行文件将会被添加到 <code>GOPATH/bin</code> 目录下。无论何种方式，都应该保证系统路径中有相应的目录。</p>
+<p>注意：这个过程有点笨重，希望在未来的 Go 版本中有所改进。<a target="_blank" rel="noopener" href="https://github.com/golang/go/issues/30515">Issue 30515</a> 正在跟踪关于这件事的讨论。</p>
+<h2 id="查看环境信息">查看环境信息</h2>
+<p>可以使用 <code>go env</code> 工具来展示当前 Go 操作环境的信息。当你正在使用不熟悉的机器的时候，这个命令尤为有用。</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">$ go env</span><br><span class="line">GOARCH=<span class="string">&quot;amd64&quot;</span></span><br><span class="line">GOBIN=<span class="string">&quot;&quot;</span></span><br><span class="line">GOCACHE=<span class="string">&quot;/home/alex/.cache/go-build&quot;</span></span><br><span class="line">GOEXE=<span class="string">&quot;&quot;</span></span><br><span class="line">GOFLAGS=<span class="string">&quot;&quot;</span></span><br><span class="line">GOHOSTARCH=<span class="string">&quot;amd64&quot;</span></span><br><span class="line">GOHOSTOS=<span class="string">&quot;linux&quot;</span></span><br><span class="line">GOOS=<span class="string">&quot;linux&quot;</span></span><br><span class="line">GOPATH=<span class="string">&quot;/home/alex/go&quot;</span></span><br><span class="line">GOPROXY=<span class="string">&quot;&quot;</span></span><br><span class="line">GORACE=<span class="string">&quot;&quot;</span></span><br><span class="line">GOROOT=<span class="string">&quot;/usr/local/go&quot;</span></span><br><span class="line">GOTMPDIR=<span class="string">&quot;&quot;</span></span><br><span class="line">GOTOOLDIR=<span class="string">&quot;/usr/local/go/pkg/tool/linux_amd64&quot;</span></span><br><span class="line">GCCGO=<span class="string">&quot;gccgo&quot;</span></span><br><span class="line">CC=<span class="string">&quot;gcc&quot;</span></span><br><span class="line">CXX=<span class="string">&quot;g++&quot;</span></span><br><span class="line">CGO_ENABLED=<span class="string">&quot;1&quot;</span></span><br><span class="line">GOMOD=<span class="string">&quot;&quot;</span></span><br><span class="line">CGO_CFLAGS=<span class="string">&quot;-g -O2&quot;</span></span><br><span class="line">CGO_CPPFLAGS=<span class="string">&quot;&quot;</span></span><br><span class="line">CGO_CXXFLAGS=<span class="string">&quot;-g -O2&quot;</span></span><br><span class="line">CGO_FFLAGS=<span class="string">&quot;-g -O2&quot;</span></span><br><span class="line">CGO_LDFLAGS=<span class="string">&quot;-g -O2&quot;</span></span><br><span class="line">PKG_CONFIG=<span class="string">&quot;pkg-config&quot;</span></span><br><span class="line">GOGCCFLAGS=<span class="string">&quot;-fPIC -m64 -pthread -fmessage-length=0 -fdebug-prefix-map=/tmp/go-build245740092=/tmp/go-build -gno-record-gcc-switches&quot;</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>如果你对特定值感兴趣，那么可以将其作为参数传给 <code>go env</code>。例如：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ go env GOPATH GOOS GOARCH</span><br><span class="line"><span class="regexp">/home/</span>alex/go</span><br><span class="line">linux</span><br><span class="line">amd64</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>想要显示所有 <code>go env</code> 变量和值的文档，可以运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> go <span class="built_in">help</span> environment</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="开发">开发</h2>
+<h3 id="运行代码">运行代码</h3>
+<p>开发过程中，<code>go run</code> 工具是一种试用代码的便捷方式。它其实是一个快捷方式，用于一步编译代码，在 <code>/tmp</code> 目录下创建可执行的二进制文件，然后运行该二进制文件。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ go <span class="keyword">run</span><span class="bash"> .          <span class="comment"># Run the package in the current directory</span></span></span><br><span class="line">$ go <span class="keyword">run</span><span class="bash"> ./cmd/foo  <span class="comment"># Run the package in the ./cmd/foo directory</span></span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>注意：从 Go 1.11 起，你可以像上面一样，将 <a target="_blank" rel="noopener" href="https://golang.org/doc/go1.11#run">一个包的路径</a> 传给 <code>go run</code>。这意味着，不再需要使用像 <code>go run *.go</code> 通配符扩展这样的变通方式，就能运行多个文件了。我超爱这项改进！</p>
+<h3 id="获取依赖项">获取依赖项</h3>
+<p>假设<a target="_blank" rel="noopener" href="https://github.com/golang/go/wiki/Modules#quick-start">启用了 modules</a>，那么，当使用 <code>go run</code>（或者与此有关的 <code>go test</code> 或者 <code>go build</code>）时，任何外部依赖将会自动（递归）地下载，以满足代码中的 <code>import</code> 语句。默认情况下，会下载依赖项的最新标志版本。如果没有可用的标志版本，则会下载最新提交的。</p>
+<p>如果事先知道需要特定版本的依赖项（而不是 Go 默认会获取的那个版本），那么可以在使用 <code>go get</code> 的时候带上相关的版本号或者提交哈希值。例如：</p>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="keyword">go</span> <span class="built_in">get</span> github.<span class="keyword">com</span>/foo/bar@v1.<span class="number">2.3</span></span><br><span class="line">$ <span class="keyword">go</span> <span class="built_in">get</span> github.<span class="keyword">com</span>/foo/bar@<span class="number">8</span>e1b8d3</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>如果提取的依赖项带有 <code>go.mod</code> 文件，那么，<em>它的依赖项_将不会被列入_你的</em> <code>go.mod</code> 文件中。相反，如果你在下载的依赖项没有 <code>go.mod</code> 文件，那么，它的依赖项_将_被列入_你的_ <code>go.mod</code> 文件中，并且在其之下会有一个 <code>// indirect</code> 注释。</p>
+<p>这意味着，你的 <code>go.mod</code> 文件不一定会在一个地方显示项目的所有依赖项。相反，可以像这样使用 <code>go list</code> 工具来查看所有依赖项：</p>
+<figure class="highlight gams"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">$</span> go list -m <span class="keyword">all</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>有时，你可能会想知道_为什么它会是一个依赖项？_此时，可以使用 <code>go mod why</code> 命令来解惑。这个命令将显示从主模块中的包到给定依赖项的最短路径。例如：</p>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ go mod why -m golang.org<span class="regexp">/x/</span>sys</span><br><span class="line"># golang.org<span class="regexp">/x/</span>sys</span><br><span class="line">github.com<span class="regexp">/alexedwards/</span>argon2id</span><br><span class="line">golang.org<span class="regexp">/x/</span>crypto/argon2</span><br><span class="line">golang.org<span class="regexp">/x/</span>sys/cpu</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>注意：<code>go mod why</code> 命令将返回大多数（并非所有）依赖项之所以为依赖的原因。<a target="_blank" rel="noopener" href="https://github.com/golang/go/issues/27900">Issue 27900</a> 正在跟踪此问题。</p>
+<p>如果你对分析或者可视化应用的依赖项感兴趣，那么，你可能会想看看 <code>go mod graph</code> 工具。<a target="_blank" rel="noopener" href="https://github.com/go-modules-by-example/index/tree/master/018_go_list_mod_graph_why">这里</a> 有一个很棒的生成可视化的教程和示例代码。</p>
+<p>最后，下载下来的依赖项会保存在位于 <code>GOPATH/pkg/mod</code> 的_模块缓存_中。如果需要清除模块缓存，那么可以使用 <code>go clean</code> 工具。但是请注意：这个工具将会移除机器上_所有项目_的已下载依赖项。</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>go clean -modcache</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="重构代码">重构代码</h3>
+<p>可能你熟悉使用 <code>gofmt</code> 工具来自动格式化代码。但是，这个工具也支持_重写规则_，这样，就可以用它来重构代码了。我会证明给你看。</p>
+<p>假设你有以下代码，然后你想将 <code>foo</code> 变量修改为 <code>Foo</code> 以便于将其导出。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> foo <span class="keyword">int</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">bar</span><span class="params">()</span></span> &#123;</span><br><span class="line">    foo = <span class="number">1</span></span><br><span class="line">	fmt.Println(<span class="string">&quot;foo&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>为了达到这个目的，可以这样使用 <code>gofmt</code> ：带上 <code>-r</code> 标志来实现一条重写规则，带上 <code>-d</code> 标志来显示变更的差异，并且带上 <code>-w</code> 标志来_就地_进行变更。就像这样：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ gofmt -d -w -r <span class="string">&#x27;foo -&gt; Foo&#x27;</span> .</span><br><span class="line">-<span class="keyword">var</span> foo <span class="keyword">int</span></span><br><span class="line">+<span class="keyword">var</span> Foo <span class="keyword">int</span></span><br><span class="line"></span><br><span class="line"> <span class="function"><span class="keyword">func</span> <span class="title">bar</span><span class="params">()</span></span> &#123;</span><br><span class="line">-	foo = <span class="number">1</span></span><br><span class="line">+	Foo = <span class="number">1</span></span><br><span class="line"> 	fmt.Println(<span class="string">&quot;foo&quot;</span>)</span><br><span class="line"> &#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>注意到了吗？这是不是比查找替换更智能？ <code>foo</code> 变量已经更改，但是 <code>fmt.Println()</code> 语句中的 <code>"foo"</code> 字符串则保持不变。另外需要注意的是，<code>gofmt</code> 命令是以递归的方式工作的，因此，上面这条命令将操作当前目录和子目录中的所有 <code>*.go</code> 文件。</p>
+<p>如果想要使用此功能，我推荐首先_不带_ <code>-w</code> 标志运行重写规则，然后先检查差异，以确保对代码所做的修改正如你所愿。</p>
+<p>我们来看个稍微复杂点的例子。假设你想要更新代码以使用新的 Go 1.12 <a target="_blank" rel="noopener" href="https://golang.org/pkg/strings/#ReplaceAll">strings.ReplaceAll()</a> 的函数来替代 <a target="_blank" rel="noopener" href="https://golang.org/pkg/strings/#Replace">strings.Replace()</a>。要进行更改，可以这样运行：</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ gofmt -w -r &#x27;strings.<span class="constructor">Replace(<span class="params">a</span>, <span class="params">b</span>, <span class="params">c</span>, -1)</span> -&gt; strings.<span class="constructor">ReplaceAll(<span class="params">a</span>, <span class="params">b</span>, <span class="params">c</span>)</span>&#x27; .</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>在重写规则里，单个小写字母会被用作匹配任意表达式的通配符，而这些表达式将会在替换过程中被替换。</p>
+<h3 id="查看-go-文档">查看 Go 文档</h3>
+<p>你可以通过在终端使用 <code>go doc</code> 工具，查看标准库包的文档。我经常在开发的时候使用这个工具来快速检查某些东西，例如某个特定函数的名字或者函数签名。我发现，这比浏览<a target="_blank" rel="noopener" href="https://golang.org/pkg">基于 web 的文档</a> 更快，并且总是可以离线使用。</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ go doc strings            # <span class="keyword">View</span> simplified documentation <span class="keyword">for</span> the strings package</span><br><span class="line">$ go doc -<span class="keyword">all</span> strings       # <span class="keyword">View</span> <span class="keyword">full</span> documentation <span class="keyword">for</span> the strings package</span><br><span class="line">$ go doc strings.Replace    # <span class="keyword">View</span> documentation <span class="keyword">for</span> the strings.Replace <span class="keyword">function</span></span><br><span class="line">$ go doc <span class="keyword">sql</span>.DB             # <span class="keyword">View</span> documentation <span class="keyword">for</span> the <span class="keyword">database</span>/<span class="keyword">sql</span>.DB <span class="keyword">type</span></span><br><span class="line">$ go doc <span class="keyword">sql</span>.DB.Query       # <span class="keyword">View</span> documentation <span class="keyword">for</span> the <span class="keyword">database</span>/<span class="keyword">sql</span>.DB.Query <span class="keyword">method</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>还可以使用 <code>-src</code> 标志来展示相关的 Go 源代码。例如：</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>go doc -src strings.Replace   <span class="comment"># View the source code for the strings.Replace function</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="测试">测试</h2>
+<h3 id="运行测试">运行测试</h3>
+<p>可以像这样，使用 <code>go test</code> 工具来运行项目中的测试：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> go <span class="built_in">test</span> .          <span class="comment"># Run all tests in the current directory</span></span></span><br><span class="line"><span class="meta">$</span><span class="bash"> go <span class="built_in">test</span> ./...      <span class="comment"># Run all tests in the current directory and sub-directories</span></span></span><br><span class="line"><span class="meta">$</span><span class="bash"> go <span class="built_in">test</span> ./foo/bar  <span class="comment"># Run all tests in the ./foo/bar directory</span></span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>通常，我会在启用 Go 的<a target="_blank" rel="noopener" href="https://golang.org/doc/articles/race_detector.html">竞争检测器</a> 的情况下运行测试。这有助于帮助我找出在实际使用的过程中可能会出现的_一些_数据竞争。就像这样：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> go <span class="built_in">test</span> -race ./...</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>必须注意的是，启用竞争检测器将会增加测试的总体运行时间。所以，如果经常在 TDD 工作流程中运行测试，那么，你可能更愿意只在进行预提交测试的时候使用竞争检测器。</p>
+<p>从 1.10 开始，Go 会<a target="_blank" rel="noopener" href="https://golang.org/doc/go1.10#test">缓存包级别的测试结果</a>。如果在两次测试运行期间都没有发生改变，并且在使用 <code>go test</code> 时带了相同的可缓存标志，那么，就会展示缓存的测试结果，并且旁边会有一个 <code>"(cached)"</code>。对于大型代码库，这大大加速了测试运行时间。如果要强制运行所有测试（并避免缓存），那么，可以是有 <code>-count=1</code> 标志，或者通过使用 <code>go clean</code> 工具来清除所有缓存的测试结果。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> go <span class="built_in">test</span> -count=1 ./...    <span class="comment"># Bypass the test cache when running tests</span></span></span><br><span class="line"><span class="meta">$</span><span class="bash"> go clean -testcache       <span class="comment"># Delete all cached test results</span></span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>注意：缓存的测试结果与缓存的构建结果一并存储在 <code>GOCACHE</code> 目录下。如果不确定它在你机器上的哪个位置，可以运行 <code>go env GOCACHE</code> 来检查。</p>
+<p>可以通过使用 <code>-run</code> 标志来限制 <code>go test</code> 运行特定的测试（和自测试）。这个标志的参数是一个正则表达式，只有名字匹配到这个正则表达式的用例才会运行。我喜欢将它与 <code>-v</code> 标志（启用详细模式）结合使用，这样，就会显示运行中的测试和子测试的名字。这个一种很有用的方式，它确保了我没有写错这个正则表达式，并且期待运行的测试实际上确实在运行！</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ go test -v -<span class="keyword">run</span><span class="bash">=^TestFooBar$ .          <span class="comment"># Run the test with the exact name TestFooBar</span></span></span><br><span class="line">$ go test -v -<span class="keyword">run</span><span class="bash">=^TestFoo .              <span class="comment"># Run tests whose names start with TestFoo</span></span></span><br><span class="line">$ go test -v -<span class="keyword">run</span><span class="bash">=^TestFooBar$/^Baz$ .    <span class="comment"># Run the Baz subtest of the TestFooBar test only</span></span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>值得注意的其他几个标志是 <code>-short</code>（用来<a target="_blank" rel="noopener" href="https://golang.org/pkg/testing/#hdr-Skipping">跳过长时间运行的测试</a>）和 <code>-failfast</code>（在碰到第一个失败后会停止进一步的测试）。注意，<code>-failfast</code> 将不会缓存测试结果。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> go <span class="built_in">test</span> -short ./...      <span class="comment"># Skip long running tests</span></span></span><br><span class="line"><span class="meta">$</span><span class="bash"> go <span class="built_in">test</span> -failfast ./...   <span class="comment"># Don&#x27;t run further tests after a failure.</span></span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="分析测试覆盖率">分析测试覆盖率</h3>
+<p>你可以在运行测试的时候，通过使用 <code>-cover</code> 标志来启用覆盖率分析。这将会输出每一个包的测试所覆盖的代码百分比，类似于：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ go test -cover ./...</span><br><span class="line">ok  	github.com<span class="regexp">/alexedwards/</span>argon2id	<span class="number">0.467</span>s	coverage: <span class="number">78.6</span>% of statements</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>你还可以使用 <code>-coverprofile</code> 标志来生成一份_覆盖程序剖析文件_，然后像这样使用 <code>go tool cover -html</code> 命令，在 web 浏览器中查看：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ go test <span class="attribute">-coverprofile</span>=/tmp/profile.out ./<span class="built_in">..</span>.</span><br><span class="line">$ go<span class="built_in"> tool </span>cover <span class="attribute">-html</span>=/tmp/profile.out</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><img src="https://www.alexedwards.net/static/images/tooling-1.png" /></p>
+<p>这将为你提供所有测试文件的可导航列表，其中，测试覆盖到的代码显示为绿色，而没被覆盖到的则显示为红色。</p>
+<p>如果想更进一步，可以设置 <code>-covermode=count</code> 标志，让覆盖程序剖析文件记录测试期间每个语句被执行的确切_次数_。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ go test <span class="attribute">-covermode</span>=count <span class="attribute">-coverprofile</span>=/tmp/profile.out ./<span class="built_in">..</span>.</span><br><span class="line">$ go<span class="built_in"> tool </span>cover <span class="attribute">-html</span>=/tmp/profile.out</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>在浏览器中查看时，执行得更频繁的语句会以更饱和的绿色阴影显示，类似于：</p>
+<p><img src="https://www.alexedwards.net/static/images/tooling-2.png" /></p>
+<p>注意：如果测试中使用了 <code>t.Parallel()</code> 命令，那么，应该使用标志 <code>-covermode=atomic</code> 来替代 <code>-covermode=count</code>，以确保准确计数。</p>
+<p>最后，如果没有可供查看覆盖剖析文件的 web 浏览器，那么，可以在终端使用如下命令，按函数或者方法，查看测试测试覆盖率的细分信息：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ go tool cover -<span class="keyword">func</span>=<span class="regexp">/tmp/</span>profile.out</span><br><span class="line">github.com<span class="regexp">/alexedwards/</span>argon2id/argon2id.go:<span class="number">77</span>:		CreateHash		<span class="number">87.5</span>%</span><br><span class="line">github.com<span class="regexp">/alexedwards/</span>argon2id/argon2id.go:<span class="number">96</span>:		ComparePasswordAndHash	<span class="number">85.7</span>%</span><br><span class="line">...</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="压力测试">压力测试</h3>
+<p>可以使用 <code>go test -count</code> 命令来连续多次运行一个测试。这在想要检查偶发或者间歇性失败的时候很有用。例如：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go test <span class="attribute">-run</span>=^TestFooBar$ <span class="attribute">-count</span>=500 .</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>在这个例子中，<code>TestFooBar</code> 测试将连续重复 500 次。但是，必须注意的是，测试将_串行_重复（即使它包含了 <code>t.Parallel()</code> 指令）。所以，如果你的测试在做一些相对较慢的事情，例如与数据库、硬盘或者互联网进行一次交互，那么，运行大量测试可能需要相当长的一段时间。</p>
+<p>在这种情况下，你也许希望使用 <a href="golang.org/x/tools/cmd/stress"><code>stress</code></a> 工具来以_并行_的方式多次执行相同的用例。可以像这样安装它：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ cd /tmp</span><br><span class="line">$ GO111MODULE=on go get golang.org<span class="regexp">/x/</span>tools<span class="regexp">/cmd/</span>stress</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>使用 <code>stress</code> 工具，首先需要为想要测试的特定包编译_测试二进制文件_。这可以使用 <code>go test -c</code> 命令来完成。例如，在当前目录下的包创建一个测试二进制文件：</p>
+<figure class="highlight arcade"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go test -c -o=<span class="regexp">/tmp/</span>foo.test .</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>在这个例子中，测试二进制文件将会输出为 <code>/tmp/foo.test</code>。稍后，你就可以像这样，使用 <code>stress</code> 工具来为这个测试二进制文件执行特定的测试了：</p>
+<figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ stress -p=4 /tmp/foo.<span class="keyword">test</span> -<span class="keyword">test</span>.<span class="keyword">run</span>=^TestFooBar$</span><br><span class="line">60 runs <span class="keyword">so</span> far, 0 failures</span><br><span class="line">120 runs <span class="keyword">so</span> far, 0 failures</span><br><span class="line">...</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>注意：在上面的例子中，我用了 <code>-p</code> 标志来限制 <code>stress</code> 使用的并行进程的个数为 4。如果不带这个标志，该工具默认会使用个数为 <code>runtime.NumCPU()</code> 的进程。</p>
+<h3 id="测试所有依赖">测试所有依赖</h3>
+<p>在为发布或者部署可执行文件，或者是公开分发代码之前，你可能会想要运行 <code>go test all</code> 命令：</p>
+<figure class="highlight gams"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">$</span> go test <span class="keyword">all</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>这个命令将会对模块中的所有包和所有依赖项运行测试（包括测试_测试依赖_以及必要的_标准库包_）。并且它能够帮助验证所使用的依赖项的确切版本是否彼此兼容。这可能需要运行相当长的时间，但是，结果会得到缓存，因此，未来任何后续测试应该都会运行得比较快。如果需要的话，还可以使用 <code>go test -short all</code>，跳过任何长时间运行的测试。</p>
+<h2 id="预提交检查">预提交检查</h2>
+<h3 id="格式化代码">格式化代码</h3>
+<p>Go 提供了两种工具来根据 Go 约定自动格式化代码：<code>gofmt</code> 和 <code>go fmt</code>。使用这些工具有助于让你的文件的项目中的代码保持一致。另外，如果在提交代码之前使用这些工具，那么就有助于在检查文件版本间差异的时候减少噪音。</p>
+<p>我喜欢在使用 <code>gofmt</code> 工具的时候带以下标志：</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>gofmt -w -s -d foo.go  <span class="comment"># 格式化 foo.go 文件</span></span><br><span class="line"><span class="variable">$ </span>gofmt -w -s -d .       <span class="comment"># 递归格式化当前目录和子目录下的所有文件</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>在这些命令中，<code>-w</code> 标志指示工具就地重写文件；<code>-s</code> 标志指示工具在可能的情况下<a target="_blank" rel="noopener" href="https://golang.org/cmd/gofmt/#hdr-The_simplify_command">简化</a>代码；而 <code>-d</code> 标志指示工具输出改动的差异（因为我很好奇更改了啥）。如果你只是想要看看改动了哪些文件而不是具体差异，那么，可以将 <code>-d</code> 标志改为 <code>-l</code>。</p>
+<p>注意：<code>gofmt</code> 命令以递归的方式工作。如果你给它传递一个目录，例如 <code>.</code> 或者 <code>./cmd/foo</code>，那么，它只会格式化这个目录下的所有 <code>.go</code> 文件。</p>
+<p>另一个格式化工具 <code>go fmt</code> 是对 <code>gofmt</code> 的一个封装，它基本上等同于对指定的文件或者目录调用了 <code>gofmt -l -w</code>。你可以像这样使用它：</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>go fmt ./...</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="执行静态分析">执行静态分析</h3>
+<p><code>go vet</code> 工具会对你的代码进行静态分析，然后对_可能_出现（编译器可能无法获取）的代码错误进行示警。像是无法访问的代码、不必要的赋值和错误格式的构建标记等问题。可以像这样使用它：</p>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="keyword">go</span> vet foo.<span class="keyword">go</span>     # Vet the foo.<span class="keyword">go</span> <span class="keyword">file</span></span><br><span class="line">$ <span class="keyword">go</span> vet .          # Vet <span class="keyword">all</span> <span class="keyword">files</span> in the current directory</span><br><span class="line">$ <span class="keyword">go</span> vet ./...      # Vet <span class="keyword">all</span> <span class="keyword">files</span> in the current directory <span class="built_in">and</span> sub-directories</span><br><span class="line">$ <span class="keyword">go</span> vet ./foo/bar  # Vet <span class="keyword">all</span> <span class="keyword">files</span> in the ./foo/bar directory</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>在背后，<code>go vet</code> 会运行一系列不同的分析器（<a target="_blank" rel="noopener" href="https://golang.org/cmd/vet/">列在这里</a>）。你可以根据具体情况禁用特定的分析器。例如，你可以这样禁用 <code>composite</code> 分析器：</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>go vet -composites=<span class="keyword">false</span> ./...</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><a target="_blank" rel="noopener" href="https://godoc.org/golang.org/x/tools">golang.org/x/tools</a> 中有一些实验分析器，或许你会想要试一试：<a target="_blank" rel="noopener" href="https://godoc.org/golang.org/x/tools/go/analysis/passes/nilness/cmd/nilness">nilness</a>（检查冗余或者不可能为 nil 的比较）和 <a target="_blank" rel="noopener" href="https://godoc.org/golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow">shadow</a>（检查可能意外会出现的变量遮蔽）。如果想要使用它们，那么需要单独安装和运行这些工具。例如，要安装 <code>nilness</code> 工具，可以这样运行：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ cd /tmp</span><br><span class="line">$ GO111MODULE=on go get golang.org<span class="regexp">/x/</span>tools<span class="regexp">/go/</span>analysis<span class="regexp">/passes/</span>nilness<span class="regexp">/cmd/</span>nilness</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>然后，就可以像这样使用它：</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go vet -vettool=<span class="constructor">$(<span class="params">which</span> <span class="params">nilness</span>)</span> ./...</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>注意：当使用了 <code>-vettool</code> 标志，<code>go vet</code> 将_只会_运行指定的分析器，这意味着将不会运行所有其他 <code>go vet</code> 分析器。</p>
+<p>作为旁注，从 Go 1.10 开始，在运行任何测试之前，<code>go test</code> 工具将自动执行一个小的高可信的 <code>go vet</code> 测试子集。你可以在运行测试的时候关掉这种行为，就像这样：</p>
+<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go <span class="keyword">test</span> -vet=<span class="keyword">off</span> ./...</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="linting-code">Linting Code</h3>
+<p>可以使用 <code>golint</code> 工具来识别代码中的_样式错误_。和 <code>go vet</code> 不一样，它不关系代码的_正确性_，而是帮助你将代码与 <a target="_blank" rel="noopener" href="https://golang.org/doc/effective_go.html">Effective Go</a> 和 Go <a target="_blank" rel="noopener" href="https://golang.org/wiki/CodeReviewComments">CodeReviewComments</a> 中的样式约定对齐。</p>
+<p>这个工具并不是标准库的一部分，因此，需要像这样安装它：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ cd /tmp</span><br><span class="line">$ <span class="attribute">GO111MODULE</span>=on go <span class="builtin-name">get</span> golang.org/x/lint/golint</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>然后，就可以像下面一样运行它了：</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>golint foo.go     <span class="comment"># Lint the foo.go file</span></span><br><span class="line"><span class="variable">$ </span>golint .          <span class="comment"># Lint all files in the current directory</span></span><br><span class="line"><span class="variable">$ </span>golint ./...      <span class="comment"># Lint all files in the current directory and sub-directories</span></span><br><span class="line"><span class="variable">$ </span>golint ./foo/bar  <span class="comment"># Lint all files in the ./foo/bar directory</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="整理和验证依赖关系">整理和验证依赖关系</h3>
+<p>在提交代码任意改动之前，我建议你运行以下两个命令来整理和验证依赖项：</p>
+<figure class="highlight gams"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">$</span> go <span class="built_in">mod</span> tidy</span><br><span class="line"><span class="symbol">$</span> go <span class="built_in">mod</span> verify</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><code>go mod tidy</code> 命令将会修剪 <code>go.mod</code> 和 <code>go.sum</code> 文件中未使用的依赖项，然后更新文件，以包含用于所有可能的构建标签/操作系统/架构组合的依赖项（注意：<code>go run</code>、<code>go test</code>、<code>go build</code> 等都是“懒惰的”，它们只会获取当前构建标签/操作系统/架构所需的包）。在每次提交前运行这个命令，会让你更容易在查看版本控制历史时，确定哪些代码更改负责添加或者删除哪些依赖项。</p>
+<p>我还推荐使用 <code>go mod verify</code> 命令来检查计算机上的依赖项自下载后没有被意外（或者故意）更改，并且它们匹配 <code>go.sum</code> 文件中的加密哈希值。运行此命令有助于确保所使用的依赖项确确实实是你所期望的，并且以后对该提交的任何构建都能重现。</p>
+<h2 id="构建和部署">构建和部署</h2>
+<h3 id="构建可执行文件">构建可执行文件</h3>
+<p>你可以使用 <code>go build</code> 工具来编译 <code>main</code> 包，并创建一个可执行的二进制文件。通常，我会将其与 <code>-o</code> 标志结合使用，明确设置输出目录和二进制文件的名字，就像这样：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ go build -o=<span class="regexp">/tmp/</span>foo .            <span class="comment"># 在当前目录下编译包</span></span><br><span class="line">$ go build -o=<span class="regexp">/tmp/</span>foo .<span class="regexp">/cmd/</span>foo    <span class="comment"># 在 ./cmd/foo 目录下编译包</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>在这些示例中，<code>go build</code> 将会_编译_特定的包（和任何依赖包），然后调用_链接器_来生成一个可执行的二进制文件，并将其输出到 <code>/tmp/foo</code>。</p>
+<p>值得注意的是，从 Go 1.10 开始，<code>go build</code> 工具会将构建输出缓存到_<a target="_blank" rel="noopener" href="https://golang.org/cmd/go/#hdr-Build_and_test_caching">构建缓存</a>_中。这缓存的输出将在未来的构建中的适当时机重新使用。这就可以显著加快整体的构建时间。这种新的缓存行为意味着，“相比 <code>go build</code>，宁可 <code>go install</code>” 的“<a target="_blank" rel="noopener" href="https://peter.bourgon.org/go-best-practices-2016/#build-and-deploy">古训</a>”不再适用。</p>
+<p>如果不确定构建缓存位于何处，那么可以运行 <code>go env GOCACHE</code> 命令来检查：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ go env GOCACHE</span><br><span class="line"><span class="regexp">/home/</span>alex<span class="regexp">/.cache/g</span>o-build</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>使用构建缓存时需要<a target="_blank" rel="noopener" href="https://golang.org/pkg/cmd/go/internal/help/">特别注意</a>：它并不会检查使用 <code>cgo</code> 导入的 C 库的改动。因此，如果你的代码通过 <code>cgo</code> 来导入一个 C 库，并且自上次构建后又对其进行了更改，那么需要使用 <code>-a</code> 标志来强制所有的包重新构建。或者，可以使用 <code>go clean</code> 来清除缓存：</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>go build -a -o=<span class="regexp">/tmp/foo</span> .     <span class="comment"># 强制重新构建所有包</span></span><br><span class="line"><span class="variable">$ </span>go clean -cache               <span class="comment"># 清除构建缓存</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>注意：运行 <code>go clean -cache</code> 将也会删除缓存的测试结果。</p>
+<p>如果你对 <code>go build</code> 的幕后操作感兴趣，那么可能会想要使用以下命令：</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>go list -deps . | sort -u     <span class="comment"># 列出所有用来构建可执行文件的包</span></span><br><span class="line"><span class="variable">$ </span>go build -a -x -o=<span class="regexp">/tmp/foo</span> .  <span class="comment"># 重构所有东西，并且显示所运行的命令</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>最后，如果在非 <code>main</code> 包上运行 <code>go build</code> 命令，那么将会在临时位置编译这个包，并且结果将会被存储在构建缓存中。不会生成任何可执行文件。</p>
+<h3 id="交叉编译">交叉编译</h3>
+<p>这是我最喜欢的 Go 功能之一。</p>
+<p>默认情况下，<code>go build</code> 将会输出一个适用于当前操作系统和架构的二进制文件。但它也支持交叉编译，这样，你就可以生成适合在不同机器上使用的二进制文件了。如果你在一个操作系统上开发，却在另一个操作系统上部署，那么这特别有用。</p>
+<p>可以分别设置 <code>GOOS</code> 和 <code>GOARCH</code> 环境变量来指定希望为何种操作系统和架构创建二进制文件。例如：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="attribute">GOOS</span>=linux <span class="attribute">GOARCH</span>=amd64 go build <span class="attribute">-o</span>=/tmp/linux_amd64/foo .</span><br><span class="line">$ <span class="attribute">GOOS</span>=windows <span class="attribute">GOARCH</span>=amd64 go build <span class="attribute">-o</span>=/tmp/windows_amd64/foo.exe .</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>要查看所有支持的操作系统和架构组合列表，可以运行 <code>go tool dist list</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ go tool dist list</span><br><span class="line">aix&#x2F;ppc64</span><br><span class="line">android&#x2F;386</span><br><span class="line">android&#x2F;amd64</span><br><span class="line">android&#x2F;arm</span><br><span class="line">android&#x2F;arm64</span><br><span class="line">darwin&#x2F;386</span><br><span class="line">darwin&#x2F;amd64</span><br><span class="line">...</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>提示：可以使用 Go 的交叉编译来<a target="_blank" rel="noopener" href="https://github.com/golang/go/wiki/WebAssembly">创建 WebAssembly 二进制文件</a>。</p>
+<p>有关交叉编译的更深入的信息，推荐阅读<a target="_blank" rel="noopener" href="https://rakyll.org/cross-compilation/">这篇优秀的博文</a>。</p>
+<h3 id="使用编译器和链接器标志">使用编译器和链接器标志</h3>
+<p>在构建自己的可执行文件时，可以使用 <code>-gcflags</code> 标志来更改编译器的行为，并查看执行的详细信息。可以通过运行以下命令，查看可用编译器标志的完整列表：</p>
+<figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">go</span> tool <span class="built_in">compile</span> -help</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>其中一个你可能会感兴趣的标志是 <code>-m</code>，带上了这个标志会触发打印编译期间所进行的优化决策。可以这样使用它：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go build -gcflags=<span class="string">&quot;-m -m&quot;</span> -o=<span class="regexp">/tmp/</span>foo . <span class="comment"># 输出优化决策信息</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>在上面的例子中，我用了 <code>-m</code> 标志两次，表示我想要打印量级深度的决策信息。你可以通过使用一次来获得简单点的输出。</p>
+<p>此外，从 Go 1.10 开始，编译器标志只适用于传给 <code>go build</code> 的指定包，在上面的例子中就是当前目录下的包（由 <code>.</code> 表示）。如果你想打印所有包的优化决策（包括依赖项），那么可以用这个命令替代：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go build <span class="attribute">-gcflags</span>=<span class="string">&quot;all=-m&quot;</span> <span class="attribute">-o</span>=/tmp/foo .</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>从 Go 1.11 开始，你应该会发现比之前<a target="_blank" rel="noopener" href="https://golang.org/doc/go1.11#debugging">更容易调试优化过的二进制文件</a>了。然而，如果有需要的话，仍然可以使用标志 <code>-N</code> 来禁用优化，使用 <code>-l</code> 来禁用内联。例如：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go build -gcflags=<span class="string">&quot;all=-N -l&quot;</span> -o=<span class="regexp">/tmp/</span>foo .  <span class="comment"># 禁用优化和内联</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>可以运行以下命令来查看可用的链接器标志列表：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> go tool link -<span class="built_in">help</span></span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>其中，可能最有名的就是 <code>-X</code> 标志了，它允许你将一个（字符串）值“烧入”应用里指定的变量。这通常用于<a target="_blank" rel="noopener" href="https://blog.alexellis.io/inject-build-time-vars-golang/">添加版本号或者提交哈希</a>。例如：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go build <span class="attribute">-ldflags</span>=<span class="string">&quot;-X main.version=1.2.3&quot;</span> <span class="attribute">-o</span>=/tmp/foo .</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>更多关于 <code>-X</code> 标志和示例代码的信息，请参阅<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/11354518/golang-application-auto-build-versioning">这个 StackOverflow 问题</a> 和本文以及<a target="_blank" rel="noopener" href="https://blog.alexellis.io/inject-build-time-vars-golang/">这篇文章</a>。</p>
+<p>你可能还有兴趣使用 <code>-s</code> 和 <code>-w</code> 标志来删除二进制文件中的调试信息。这通常会让生成的二进制文件减少 25% 的大小。例如：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go build -ldflags=<span class="string">&quot;-s -w&quot;</span> -o=<span class="regexp">/tmp/</span>foo .  <span class="comment"># 删除二进制文件中的调试信息</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>注意：如果需要优化二进制文件大小，那么或许会想要使用 <a target="_blank" rel="noopener" href="https://upx.github.io/">upx</a> 来压缩它。更多信息，请参阅<a target="_blank" rel="noopener" href="https://blog.filippo.io/shrink-your-go-binaries-with-this-one-weird-trick/">这篇文章</a>。</p>
+<h2 id="诊断问题和优化">诊断问题和优化</h2>
+<h3 id="运行和比较基准">运行和比较基准</h3>
+<p>Go 的一个很好的功能是，它让你可以轻松对代码进行基准测试。如果你不熟悉编写基准的一般过程，那么，<a target="_blank" rel="noopener" href="https://dave.cheney.net/2013/06/30/how-to-write-benchmarks-in-go">这里</a>和<a target="_blank" rel="noopener" href="https://dave.cheney.net/2013/06/30/how-to-write-benchmarks-in-go">这这里</a>有不错的指南。</p>
+<p>要运行基准测试，你需要使用 <code>go test</code> 工具，并且将 <code>-bench</code> 标志设置为一个可以匹配你想要执行的基准测试的正则表达式。例如：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ go test <span class="attribute">-bench</span>=. ./<span class="built_in">..</span>.                        # 运行所有基准测试和基本测试</span><br><span class="line">$ go test <span class="attribute">-run</span>=^$ <span class="attribute">-bench</span>=. ./<span class="built_in">..</span>.                # 运行所有基准测试（不运行基本测试）</span><br><span class="line">$ go test <span class="attribute">-run</span>=^$ <span class="attribute">-bench</span>=^BenchmarkFoo$ ./<span class="built_in">..</span>.   # 只运行 BenchmarkFoo 这个基准测试（不运行基本测试）</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>我几乎总用 <code>-benchmem</code> 标志来运行基准测试，这会强制输出内存分配统计信息。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$  go test <span class="attribute">-bench</span>=. -benchmem ./<span class="built_in">..</span>.</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>默认情况下，每个基准测试都会运行至少一秒，并且只运行一次。可以使用 <code>-benchtime</code> 和 <code>-count</code> 标志来更改此行为。</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ go test <span class="attribute">-bench</span>=. <span class="attribute">-benchtime</span>=5s ./<span class="built_in">..</span>.       # 每个基准测试至少运行 5 秒</span><br><span class="line">$ go test <span class="attribute">-bench</span>=. <span class="attribute">-benchtime</span>=500x ./<span class="built_in">..</span>.     # 每个基准测试运行 500 次迭代</span><br><span class="line">$ go test <span class="attribute">-bench</span>=. <span class="attribute">-count</span>=3 ./<span class="built_in">..</span>.            # 每个基准测试重复 3 次</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>如果进行基准测试的代码使用了并发，那么，可以使用 <code>-cpu</code> 标志来查看更改 <code>GOMAXPROCS</code> 值对性能产生的影响（实际上，是可以同时执行 Go 代码的 OS 线程数）。例如，将 <code>GOMAXPROCS</code> 设置为 1，4 和 8，运行基准测试：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go test <span class="attribute">-bench</span>=. <span class="attribute">-cpu</span>=1,4,8 ./<span class="built_in">..</span>.</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>要比较基准测试之间的变动，你可能需要使用 <a target="_blank" rel="noopener" href="https://godoc.org/golang.org/x/tools/cmd/benchcmp">benchcmp</a> 工具。这个工具不属于标准的 <code>go</code> 命令，所以需要像这样安装它：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ cd /tmp</span><br><span class="line">$ GO111MODULE=on go get golang.org<span class="regexp">/x/</span>tools<span class="regexp">/cmd/</span>benchcmp</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>然后，可以像这样使用它：</p>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">$ go test -run=^$ -bench=. -benchmem .<span class="regexp">/... &gt; /</span>tmp/old.txt</span><br><span class="line"># make changes</span><br><span class="line">$ go test -run=^$ -bench=. -benchmem .<span class="regexp">/... &gt; /</span>tmp/<span class="keyword">new</span>.txt</span><br><span class="line">$ benchcmp <span class="regexp">/tmp/</span>old.txt <span class="regexp">/tmp/</span><span class="keyword">new</span>.txt</span><br><span class="line">benchmark              old ns<span class="regexp">/op     new ns/</span>op     delta</span><br><span class="line">BenchmarkExample-<span class="number">8</span>     <span class="number">21234</span>         <span class="number">5510</span>          -<span class="number">74.05</span>%</span><br><span class="line"></span><br><span class="line">benchmark              old allocs     <span class="keyword">new</span> allocs     delta</span><br><span class="line">BenchmarkExample-<span class="number">8</span>     <span class="number">17</span>             <span class="number">11</span>             -<span class="number">35.29</span>%</span><br><span class="line"></span><br><span class="line">benchmark              old bytes     <span class="keyword">new</span> bytes     delta</span><br><span class="line">BenchmarkExample-<span class="number">8</span>     <span class="number">8240</span>          <span class="number">3808</span>          -<span class="number">53.79</span>%</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="分析和跟踪">分析和跟踪</h3>
+<p>Go 可以让你创建关于 CPU 使用、内存使用、goroutine 阻塞和互斥锁争用的诊断性_程序剖析文件_。你可以使用它们来深入挖掘应用，以确切了解应用是如何使用（或者等待）资源的。</p>
+<p>有三种生成程序剖析文件的方法：</p>
+<ul>
+<li>如果是 web 应用，那么可以导入 <a target="_blank" rel="noopener" href="https://golang.org/pkg/net/http/pprof/"><code>net/http/pprof</code></a> 包。这个操作将向 <code>http.DefaultServeMux</code> 注册一些处理函数。这样，你就可以为运行中的应用生成并下载程序剖析文件了。<a target="_blank" rel="noopener" href="https://artem.krylysov.com/blog/2017/03/13/profiling-and-optimizing-go-web-applications/">这篇文章</a> 对其进行了很好的解释，并且提供了一些示例代码。</li>
+<li>对于其他类型的应用，则可以使用 <code>pprof.StartCPUProfile()</code> 和 <code>pprof.WriteHeapProfile()</code> 函数来生成运行中的程序剖析文件。<a target="_blank" rel="noopener" href="https://golang.org/pkg/runtime/pprof/"><code>runtime/pprof</code></a> 文档中有一些示例代码可供参考。</li>
+<li>或者，你可以在运行基准测试或者基础测试的时候生成程序剖析文件，只需像这样使用各种 <code>-***profile</code> 标志即可：</li>
+</ul>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ go test <span class="attribute">-run</span>=^$ <span class="attribute">-bench</span>=^BenchmarkFoo$ <span class="attribute">-cpuprofile</span>=/tmp/cpuprofile.out .</span><br><span class="line">$ go test <span class="attribute">-run</span>=^$ <span class="attribute">-bench</span>=^BenchmarkFoo$ <span class="attribute">-memprofile</span>=/tmp/memprofile.out .</span><br><span class="line">$ go test <span class="attribute">-run</span>=^$ <span class="attribute">-bench</span>=^BenchmarkFoo$ <span class="attribute">-blockprofile</span>=/tmp/blockprofile.out .</span><br><span class="line">$ go test <span class="attribute">-run</span>=^$ <span class="attribute">-bench</span>=^BenchmarkFoo$ <span class="attribute">-mutexprofile</span>=/tmp/mutexprofile.out .</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>注意：运行基准测试或者基础测试的时候使用 <code>-***profile</code> 标志，当前目录下会生成一个测试二进制文件。如果你想将其输出到另一个地方，那么应该使用 <code>-o</code> 标志，就像这样：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go test <span class="attribute">-run</span>=^$ <span class="attribute">-bench</span>=^BenchmarkFoo$ <span class="attribute">-o</span>=/tmp/foo.test <span class="attribute">-cpuprofile</span>=/tmp/cpuprofile.out .</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>无论使用何种方式来生成程序剖析文件，当启用了程序剖析，Go 程序每秒将停止大约 100 次，并在停止的时刻创建程序快照。根据这些 <em>样本</em> 生成一份_程序剖析文件_，然后就可以使用 <code>pprof</code> 文件进行分析了。</p>
+<p>我最喜欢的检查剖析文件的方式是，使用 <code>go tool pprof -http</code> 命令来将其在 web 浏览器中打开。例如：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go<span class="built_in"> tool </span>pprof <span class="attribute">-http</span>=:5000 /tmp/cpuprofile.out</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><img src="https://www.alexedwards.net/static/images/tooling-3.png" /></p>
+<p>这个操作将会默认显示一个_图表_，展示了应用在采样情况下的执行树。这让你可以快速了解任何资源的使用“热点”。在上面的图中，我们可以看到，CPU 使用率方面的热点是来源于 <code>ioutil.ReadFile()</code> 的两个系统调用。</p>
+<p>你还可以导航到剖析文件的其他_视图_，包括函数和源代码的最高使用情况。</p>
+<p><img src="https://www.alexedwards.net/static/images/tooling-4.png" /></p>
+<p>如果信息量太大，那么，或许你会想要使用 <code>--nodefraction</code> 标志，忽略小于样本一定百分比的节点。例如，要忽略那些少于样本 10% 的节点，可以这样运行 <code>pprof</code>：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go<span class="built_in"> tool </span>pprof <span class="attribute">--nodefraction</span>=0.1 <span class="attribute">-http</span>=:5000 /tmp/cpuprofile.out</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p><img src="https://www.alexedwards.net/static/images/tooling-5.png" /></p>
+<p>这会让生成的图不那么“嘈杂”。此时，如果<a target="_blank" rel="noopener" href="https://www.alexedwards.net/static/images/tooling-5b.svg">放大这张屏幕截图</a>，那么就可以更清楚地看到并了解 CPU 使用热点在哪里。</p>
+<p>分析和优化资源使用是一项大但是细微的主题，而这里我只涉及皮毛。如果你对此感兴趣，并想了解更多，那么建议你阅读以下文章：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://artem.krylysov.com/blog/2017/03/13/profiling-and-optimizing-go-web-applications/">分析和优化 Go web 应用</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/golang/go/wiki/Performance">调试 Go 程序中的性能问题</a></li>
+<li><a target="_blank" rel="noopener" href="https://medium.com/@hackintoshrao/daily-code-optimization-using-benchmarks-and-profiling-in-golang-gophercon-india-2016-talk-874c8b4dc3c5">使用基准测试和程序剖析进行日常代码优化</a></li>
+<li><a target="_blank" rel="noopener" href="https://jvns.ca/blog/2017/09/24/profiling-go-with-pprof/">使用 pprof 分析 Go 程序</a></li>
+</ul>
+<p>另一个可以用来协助诊断问题的工具是_运行时执行跟踪器_。它可以让你了解 Go 是如何创建和调度 goroutine 运行的，垃圾收集器何时运行，以及关于阻塞系统调用/网络/sync 操作的信息。</p>
+<p>同样的，你也可以从基础测试和基准测试中生成跟踪文件，或者使用 <code>net/http/pprof</code> 来创建并下载应用的跟踪文件。然后，就可以使用 <code>go tool trace</code>，像这样在 web 浏览器中查看输出了：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ go test <span class="attribute">-run</span>=^$ <span class="attribute">-bench</span>=^BenchmarkFoo$ <span class="attribute">-trace</span>=/tmp/trace.out .</span><br><span class="line">$ go<span class="built_in"> tool </span>trace /tmp/trace.out</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>重要提示：目前，只能在 Chrome 或者 Chromium 中查看。</p>
+<p><img src="https://www.alexedwards.net/static/images/tooling-6.png" /></p>
+<p>关于 Go 的执行跟踪器以及如何解释输出的更多信息，请看 <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=mmqDlbWk_XA">Rhys Hiltner 的 dotGo 2016 演讲</a> 和这篇<a target="_blank" rel="noopener" href="https://making.pusher.com/go-tool-trace/">优秀的博客</a>。</p>
+<h3 id="检查竞争条件">检查竞争条件</h3>
+<p>我前面谈过使用 <code>go test -race</code>，在测试过程中启用 Go 的竞争检测器。但是，你也可以在构建可执行文件的过程中，为运行中的程序启用它，就像这样：</p>
+<figure class="highlight arcade"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go build -race -o=<span class="regexp">/tmp/</span>foo .</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>非常值得注意的是，启用了竞争检测器的二进制文件将比正常情况下使用更多的 CPU 和内存。因此，在正常情况下，构建用于生产环境的二进制文件时，不应该使用 <code>-race</code> 标志。</p>
+<p>但是，你可能希望在服务器池中的某台服务器上面部署启用了竞争检测器的二进制文件。或者用它来跟踪可疑的竞争条件，方法是使用负载测试工具，对启用了竞争检测器的二进制文件并发施压。</p>
+<p>默认情况下，在二进制文件运行过程中，如果检测到了竞争，那么会对 <code>stderr</code> 写入一条日志。如果必要，你可以通过使用 <code>GORACE</code> 环境变量来改变这种行为。例如，要运行位于 <code>/tmp/foo</code> 的二进制文件，并将竞争日志写到 <code>/tmp/race.&lt;pid&gt;</code>，则可以这样：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ GORACE=<span class="string">&quot;log_path=/tmp/race&quot;</span> <span class="regexp">/tmp/</span>foo</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="管理依赖关系">管理依赖关系</h2>
+<p>可以使用 <code>go list</code> 工具来检查指定的依赖项是否有更新版本，如下所示：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ go list -m -u github.com<span class="regexp">/alecthomas/</span>chroma</span><br><span class="line">github.com<span class="regexp">/alecthomas/</span>chroma v0.<span class="number">6.2</span> [v0.<span class="number">6.3</span>]</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>这将输出当前使用的依赖项的名字和版本，如果存在较新的版本，那么后面会跟着方括号 <code>[]</code>，里面是最新的版本。还可以使用 <code>go list</code> 来检查所有依赖项（和子依赖项）的更新。如下所示：</p>
+<figure class="highlight gams"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">$</span> go list -m -u <span class="keyword">all</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>可以升级（或者降级）一个依赖项至最新的版本，只需像这样在 <code>go get</code> 命令后指定发布标记或者提交哈希即可：</p>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="keyword">go</span> <span class="built_in">get</span> github.<span class="keyword">com</span>/foo/bar@latest</span><br><span class="line">$ <span class="keyword">go</span> <span class="built_in">get</span> github.<span class="keyword">com</span>/foo/bar@v1.<span class="number">2.3</span></span><br><span class="line">$ <span class="keyword">go</span> <span class="built_in">get</span> github.<span class="keyword">com</span>/foo/bar@<span class="number">7</span>e0369f</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>如果你正在更新的依赖项带有 <code>go.mod</code> 文件，那么，根据这份 <code>go.mod</code> 文件的信息，如果有需要的话，还将下载_子依赖项_的更新。如果使用 <code>go get -u</code> 标志，那么将忽略 <code>go.mod</code> 文件的内容，然后所有子依赖项将会被升级至最新的次要或者补丁版本（即使 <code>go.mod</code> 指定了不同的版本。）。</p>
+<p>升级或者降级任何依赖项后，最好整理你的 mod 文件。可能你还会希望运行所有包的测试，从而检查兼容性。就像这样：</p>
+<figure class="highlight gams"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">$</span> go <span class="built_in">mod</span> tidy</span><br><span class="line"><span class="symbol">$</span> go test <span class="keyword">all</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>有时，你可能想使用本地版本的依赖项（例如，在上游合并补丁之前，需要使用本地分支）。为此，可以使用 <code>go mod edit</code> 命令，将 <code>go.mod</code> 文件中的依赖项替代为本地版本。例如：</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go mod edit -replace=github.com<span class="regexp">/alexedwards/</span>argon2id=<span class="regexp">/home/</span>alex<span class="regexp">/code/</span>argon2id</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>这将像这样为你的 <code>go.mod</code> 文件添加一个_替代规则_。然后。未来的 <code>go run</code> 和 <code>go build</code> 等操作将会使用本地版本。</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="regexp">//</span>File: go.mod</span><br><span class="line">    module alexedwards.net/example</span><br><span class="line">    </span><br><span class="line">    go <span class="number">1.12</span></span><br><span class="line">    </span><br><span class="line">    require github.com<span class="regexp">/alexedwards/</span>argon2id v0.<span class="number">0.0</span>-<span class="number">20190109181859</span>-<span class="number">24206601</span>af6c</span><br><span class="line">    </span><br><span class="line">    replace github.com<span class="regexp">/alexedwards/</span>argon2id =&gt; <span class="regexp">/home/</span>alex<span class="regexp">/Projects/</span>playground/argon2id</span><br><span class="line">    </span><br></pre></td></tr></table></figure>
+<p>一旦不需要本地版本了，就可以用下面这个命令来移除替换规则：</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ go mod <span class="builtin-name">edit</span> <span class="attribute">-dropreplace</span>=github.com/alexedwards/argon2id</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>可以使用<a target="_blank" rel="noopener" href="https://github.com/golang/go/wiki/Modules#can-i-work-entirely-outside-of-vcs-on-my-local-filesystem">同样的技巧</a>来导入_只_存在于你自己文件系统上的包。如果你同时处理开发中的多个模块，其中一个模块依赖另一个模块，那么这将会很有用。</p>
+<p>注意：如果不想使用 <code>go mod edit</code> 命令，可以手动编辑 <code>go.mod</code> 文件来进行修改。无论哪种方式都能行得通。</p>
+<h2 id="升级到新版本">升级到新版本</h2>
+<p><code>go fix</code> 文件最初于 2011 年发布（当时对于 Go 的 API 仍有定期修改），用以帮助用户自动更新旧代码至与 Go 的新版本兼容。从此，Go 的<a target="_blank" rel="noopener" href="https://golang.org/doc/go1compat">兼容性承诺</a>意味着，如果你从一个 Go 1.x 版本升级至更新的 1.x 版本，那么将一切正常，故而通常没有必要使用 <code>go fix</code>。</p>
+<p>但是，它确实处理了一些非常具体的问题。可以运行 <code>go tool fix -help</code> 来查看这些问题的摘要。如果你决定升级之后想要或者需要运行 <code>go fix</code>，那么应该运行以下命令，然后在提交前检查更改的差异。</p>
+<figure class="highlight maxima"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">go</span> <span class="built_in">fix</span> ./...</span><br></pre></td></tr></table></figure>
+<h2 id="报告错误">报告错误</h2>
+<p>如果你确信找到了 Go 的标注库、工具或者文档中未报告的错误，那么可以使用 <code>go bug</code> 命令来创建一个新的 Github issue。</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>go bug</span><br></pre></td></tr></table></figure>
+<p>这个命令将会打开一个浏览器窗口，其中打开了 issue 页面，并且与填充了系统信息和报告模板。</p>
+<h2 id="备忘">备忘</h2>
+<p><em>2019-04-19 更新：<span class="citation" data-cites="FedirFR">[@FedirFR]</span>(https://twitter.com/FedirFR) 根据这篇文章制作了一份备忘。你可以<a target="_blank" rel="noopener" href="https://github.com/fedir/go-tooling-cheat-sheet/blob/master/go-tooling-cheat-sheet.pdf">在这里下载</a>.</em></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/fedir/go-tooling-cheat-sheet/blob/master/go-tooling-cheat-sheet.pdf"><img src="https://www.alexedwards.net/static/images/tooling-7.png" /></a></p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/02/25/trans-a-visual-guide-to-golang-memory-allocator-from-ground-up/" rel="prev" title="译|从零开始的 Go 内存分配器可视化指南（golang）">
+      <i class="fa fa-chevron-left"></i> 译|从零开始的 Go 内存分配器可视化指南（golang）
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/05/15/golang-json-custom-marshal-unmarshal/" rel="next" title="Golang/JSON | DisallowUnknownFields 和自定义结构的序列化方法">
+      Golang/JSON | DisallowUnknownFields 和自定义结构的序列化方法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E5%B7%A5%E5%85%B7"><span class="nav-number">1.</span> <span class="nav-text">安装工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E7%8E%AF%E5%A2%83%E4%BF%A1%E6%81%AF"><span class="nav-number">2.</span> <span class="nav-text">查看环境信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E5%8F%91"><span class="nav-number">3.</span> <span class="nav-text">开发</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E4%BB%A3%E7%A0%81"><span class="nav-number">3.1.</span> <span class="nav-text">运行代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96%E4%BE%9D%E8%B5%96%E9%A1%B9"><span class="nav-number">3.2.</span> <span class="nav-text">获取依赖项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%87%8D%E6%9E%84%E4%BB%A3%E7%A0%81"><span class="nav-number">3.3.</span> <span class="nav-text">重构代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B-go-%E6%96%87%E6%A1%A3"><span class="nav-number">3.4.</span> <span class="nav-text">查看 Go 文档</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95"><span class="nav-number">4.</span> <span class="nav-text">测试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E6%B5%8B%E8%AF%95"><span class="nav-number">4.1.</span> <span class="nav-text">运行测试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%9E%90%E6%B5%8B%E8%AF%95%E8%A6%86%E7%9B%96%E7%8E%87"><span class="nav-number">4.2.</span> <span class="nav-text">分析测试覆盖率</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95"><span class="nav-number">4.3.</span> <span class="nav-text">压力测试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E6%89%80%E6%9C%89%E4%BE%9D%E8%B5%96"><span class="nav-number">4.4.</span> <span class="nav-text">测试所有依赖</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%84%E6%8F%90%E4%BA%A4%E6%A3%80%E6%9F%A5"><span class="nav-number">5.</span> <span class="nav-text">预提交检查</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%BC%E5%BC%8F%E5%8C%96%E4%BB%A3%E7%A0%81"><span class="nav-number">5.1.</span> <span class="nav-text">格式化代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%A7%E8%A1%8C%E9%9D%99%E6%80%81%E5%88%86%E6%9E%90"><span class="nav-number">5.2.</span> <span class="nav-text">执行静态分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#linting-code"><span class="nav-number">5.3.</span> <span class="nav-text">Linting Code</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B4%E7%90%86%E5%92%8C%E9%AA%8C%E8%AF%81%E4%BE%9D%E8%B5%96%E5%85%B3%E7%B3%BB"><span class="nav-number">5.4.</span> <span class="nav-text">整理和验证依赖关系</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%84%E5%BB%BA%E5%92%8C%E9%83%A8%E7%BD%B2"><span class="nav-number">6.</span> <span class="nav-text">构建和部署</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9E%84%E5%BB%BA%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6"><span class="nav-number">6.1.</span> <span class="nav-text">构建可执行文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%A4%E5%8F%89%E7%BC%96%E8%AF%91"><span class="nav-number">6.2.</span> <span class="nav-text">交叉编译</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E7%BC%96%E8%AF%91%E5%99%A8%E5%92%8C%E9%93%BE%E6%8E%A5%E5%99%A8%E6%A0%87%E5%BF%97"><span class="nav-number">6.3.</span> <span class="nav-text">使用编译器和链接器标志</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%8A%E6%96%AD%E9%97%AE%E9%A2%98%E5%92%8C%E4%BC%98%E5%8C%96"><span class="nav-number">7.</span> <span class="nav-text">诊断问题和优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E5%92%8C%E6%AF%94%E8%BE%83%E5%9F%BA%E5%87%86"><span class="nav-number">7.1.</span> <span class="nav-text">运行和比较基准</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%9E%90%E5%92%8C%E8%B7%9F%E8%B8%AA"><span class="nav-number">7.2.</span> <span class="nav-text">分析和跟踪</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A3%80%E6%9F%A5%E7%AB%9E%E4%BA%89%E6%9D%A1%E4%BB%B6"><span class="nav-number">7.3.</span> <span class="nav-text">检查竞争条件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%A1%E7%90%86%E4%BE%9D%E8%B5%96%E5%85%B3%E7%B3%BB"><span class="nav-number">8.</span> <span class="nav-text">管理依赖关系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%87%E7%BA%A7%E5%88%B0%E6%96%B0%E7%89%88%E6%9C%AC"><span class="nav-number">9.</span> <span class="nav-text">升级到新版本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%A5%E5%91%8A%E9%94%99%E8%AF%AF"><span class="nav-number">10.</span> <span class="nav-text">报告错误</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%87%E5%BF%98"><span class="nav-number">11.</span> <span class="nav-text">备忘</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2019/05/14/an-overview-of-go-tooling/";
+    this.page.identifier = "2019/05/14/an-overview-of-go-tooling/";
+    this.page.title = "译|Go 的工具箱综述";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="基于Ansible 1.9.6。Github  概述 ansible是ansible用于实现ad-hoc的命令行工具。而ansible位于ansible&#x2F;bin&#x2F;下。  开箱了 主流程：__mian__  1. 新建Cli()实例， 命名为cli  2. 调用cli.parse()解析命令行参数及其值  3. 调用cli.run进行某项操作。←_←这个是核心  4. 解析并展示结果。对返回结果中的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="发生了什么|Ansible之命令ansible开箱指南">
+<meta property="og:url" content="http://ictar.github.io/2016/07/14/%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F-Ansible%E4%B9%8B%E5%91%BD%E4%BB%A4ansible%E5%BC%80%E7%AE%B1%E6%8C%87%E5%8D%97/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="基于Ansible 1.9.6。Github  概述 ansible是ansible用于实现ad-hoc的命令行工具。而ansible位于ansible&#x2F;bin&#x2F;下。  开箱了 主流程：__mian__  1. 新建Cli()实例， 命名为cli  2. 调用cli.parse()解析命令行参数及其值  3. 调用cli.run进行某项操作。←_←这个是核心  4. 解析并展示结果。对返回结果中的">
+<meta property="og:locale">
+<meta property="article:published_time" content="2016-07-14T13:21:12.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:41.004Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="读代码">
+<meta property="article:tag" content="自动化">
+<meta property="article:tag" content="Ansible">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2016/07/14/%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F-Ansible%E4%B9%8B%E5%91%BD%E4%BB%A4ansible%E5%BC%80%E7%AE%B1%E6%8C%87%E5%8D%97/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>发生了什么|Ansible之命令ansible开箱指南 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2016/07/14/%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F-Ansible%E4%B9%8B%E5%91%BD%E4%BB%A4ansible%E5%BC%80%E7%AE%B1%E6%8C%87%E5%8D%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          发生了什么|Ansible之命令ansible开箱指南
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-07-14 21:21:12" itemprop="dateCreated datePublished" datetime="2016-07-14T21:21:12+08:00">2016-07-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:41" itemprop="dateModified" datetime="2020-12-25T16:20:41+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/DevOps/" itemprop="url" rel="index"><span itemprop="name">DevOps</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2016/07/14/%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F-Ansible%E4%B9%8B%E5%91%BD%E4%BB%A4ansible%E5%BC%80%E7%AE%B1%E6%8C%87%E5%8D%97/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/07/14/发生了什么？-Ansible之命令ansible开箱指南/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>基于Ansible 1.9.6。<a target="_blank" rel="noopener" href="https://github.com/ansible/ansible/tree/stable-1.9">Github</a></p>
+</blockquote>
+<h1 id="概述">概述</h1>
+<p><code>ansible</code>是ansible用于实现ad-hoc的命令行工具。而<code>ansible</code>位于<code>ansible/bin/</code>下。</p>
+<h1 id="开箱了">开箱了</h1>
+<h2 id="主流程__mian__">主流程：<code>__mian__</code></h2>
+<ol type="1">
+<li>新建Cli()实例， 命名为<code>cli</code></li>
+<li>调用<code>cli.parse()</code>解析命令行参数及其值</li>
+<li>调用<code>cli.run</code>进行某项操作。←_←这个是核心</li>
+<li>解析并展示结果。对返回结果中的<code>results['contacted']</code>的每一项，若有<code>failed</code>值或者，<code>rc</code>键值不为0，表示该操作失败；若<code>results['dark']</code>不为空，则表示执行该操作的主机有问题，死掉之类的。</li>
+</ol>
+<h2 id="一窥cli类">一窥<code>Cli</code>类</h2>
+<blockquote>
+<p>该类定义于<code>ansible/bin/ansible</code>中</p>
+</blockquote>
+<h3 id="初始化">初始化</h3>
+<ol type="1">
+<li>声明两个属性：
+<ul>
+<li><code>stats</code>：类型为<code>ansible.callbacks.AggregateStats</code>。该类型主要用于对<code>ansible.runner.Runner.run</code>的返回结果进行统计（这个有机会会提到）。但是实际上，在<code>ansible</code>这个命令中，并未用到。</li>
+<li><code>callbacks</code>：类型为<code>ansible.callbacks.CliRunnerCallbacks</code>。该类型专门用于ansible这个cli。主要作用是<code>ansible.runner.Runner.run</code>运行后各种返回状态的处理操作（这个有机会也会提到）</li>
+</ul></li>
+<li>一项操作 检查配置文件中的<code>bin_ansible_callbacks</code>项或者环境变量<code>ANSIBLE_LOAD_CALLBACK_PLUGINS</code>是否为<code>True</code>。是则调用<code>ansible.callbacks.load_callback_plugins</code>来加载回调插件</li>
+</ol>
+<h3 id="解析命令行参数及其值parse">解析命令行参数及其值：<code>parse()</code></h3>
+<blockquote>
+<p>使用包<code>optparse</code></p>
+</blockquote>
+<ol type="1">
+<li><p>创建一个基本的选项解析器：（以下备忘及凑字数）</p>
+<blockquote>
+<p>说明：下面所说的<code>constants</code>指的是<code>ansible.constants</code></p>
+</blockquote>
+<ul>
+<li><code>-v</code>/<code>--verbose</code>：冗余模式（-vvv 打印更多信息；-vvvv 启用连接调试），默认值：False</li>
+<li><code>-f</code>/<code>--forks</code>：指定并行处理数，默认值：由<code>constants.DEFAULT_FORKS</code>指定</li>
+<li><code>-i</code>/<code>--inventory-file</code>：指定inventory主机文件，默认值：由<code>constants.DEFAULT_HOST_LIST</code>指定</li>
+<li><code>-e</code>/<code>--extra-vars</code>：设置额外的变量，格式为key=value或者YAML/JSON，默认值：[]</li>
+<li><code>-u</code>/<code>--user</code>：指定连接的用户，默认值：由<code>constants.DEFAULT_REMOTE_USER</code>指定</li>
+<li><code>-k</code>/<code>--ask-pass</code>：询问SSH密码，默认值：False</li>
+<li><code>--private-key</code>：使用该文件来验证连接，默认值：由<code>constants.DEFAULT_PRIVATE_KEY_FILE</code>指定</li>
+<li><code>--ask-vault-pass</code>：询问vault密码，默认值：False</li>
+<li><code>--vault-password-file</code>：vault密码文件，默认值：由<code>constants.DEFAULT_VAULT_PASSWORD_FILE</code>指定</li>
+<li><code>--list-hosts</code>：输出匹配主机列表；不执行任何其他操作</li>
+<li><code>-M</code>/<code>--module-path</code>：指定module库的路径（可多个），默认值：None</li>
+<li><code>-l</code>/<code>--limit</code>：进一步用额外的pattern限制所选的主机，默认值：由<code>constants.DEFAULT_SUBSET</code>指定</li>
+<li><code>-T</code>/<code>--timeout</code>：覆盖SSH超时时间，以秒为单位，默认值：由<code>constants.DEFAULT_TIMEOUT</code>指定</li>
+<li><code>-o</code>/<code>--one-line</code>：精简输出</li>
+<li><code>-t</code>/<code>--tree</code>：将输出保存到该目录中，默认值：None</li>
+<li><code>-K</code>/<code>--ask-sudo-pass</code>：询问sudo密码（已弃用，使用become），默认值：由<code>constants.DEFAULT_ASK_SUDO_PASS</code>指定</li>
+<li><code>--ask-su-pass</code>：询问su密码（已弃用，使用become），默认值：由<code>constants.DEFAULT_ASK_SU_PASS</code>指定</li>
+<li><code>-s</code>/<code>--sudo</code>：使用sudo（无密码）运行操作（已弃用，使用become），默认值：由<code>constants.DEFAULT_SUDO</code>指定</li>
+<li><code>-U</code>/<code>--sudo-user</code>：所需sudo用户（已弃用，使用become），默认值：root、</li>
+<li><code>-S</code>/<code>--su</code>：使用su（无密码）运行操作（已弃用，使用become），默认值：由<code>constants.DEFAULT_SU</code>指定</li>
+<li><code>-R</code>/<code>--su-user</code>：所需su用户（已弃用，使用become），默认值：None</li>
+<li><code>-b</code>/<code>--become</code>：使用become运行操作（无密码），默认值：由<code>constants.DEFAULT_BECOME</code>指定</li>
+<li><code>--become-method</code>：所使用的升级特权的方法，可选值由<code>constants.DEFAULT_BECOME_METHOD</code>和<code>constants.BECOME_METHODS</code>指定，默认值：由<code>constants.DEFAULT_BECOME_METHOD</code>指定</li>
+<li><code>--become-user</code>：使用该用户运行操作，默认值：由<code>constants.DEFAULT_BECOME_USER</code>指定</li>
+<li><code>--ask-become-pass</code>：询问升级特权的密码，默认值：False</li>
+<li><code>-c</code>/<code>--connection</code>：使用的连接类型，默认值：由<code>constants.DEFAULT_TRANSPORT</code>指定</li>
+<li><code>-P</code>/<code>--poll</code>：如果使用<code>-B</code>选项，则用该选项设置poll间隔，默认值：由<code>constants.DEFAULT_POLL_INTERVAL</code>指定</li>
+<li><code>-B</code>/<code>--background</code>：异步运行，在X秒后失败，默认值：0</li>
+<li><code>-C</code>/<code>--check</code>：不进行任何改动；而是用来预测可能会发生的一些改动，默认值：False</li>
+</ul></li>
+<li><p>添加额外的命令行参数</p>
+<ul>
+<li><code>-a</code>/<code>--args</code>：模块参数</li>
+<li><code>-m</code>/<code>--module-name</code>：模块名</li>
+</ul></li>
+<li><p>返回解析出来的选项和参数值</p></li>
+</ol>
+<h3 id="运行操作runoptions-args">运行操作：<code>run(options, args)</code></h3>
+<blockquote>
+<p>这里的两个参数就是<code>parse()</code>返回的两个值</p>
+</blockquote>
+<ol type="1">
+<li>做准备
+<ul>
+<li>若选项<code>-c</code>/<code>--connection</code>为"local"，表明是在本地运行，因此<code>ask_pass</code>不用设置。</li>
+<li>进行一系列的密码prompt工作，以获得<code>sshpass</code>/<code>becomepass</code>/<code>vault_pass</code>这三个分别用于登录到远程主机的密码/在远程主机上切换用户所需的密码/加密的文件密码</li>
+<li>需要的情况下，从文件中读取<code>vault_pass</code></li>
+<li>调用<code>ansible.utils.parse_extra_vars</code>来解析额外的变量（即通过<code>-e</code>/<code>--extra-vars</code>传过来的变量）</li>
+<li>使用<code>-i</code>/<code>--inventory-file</code>传过来的inventory文件路径与上面得到的<code>vault_pass</code>来初始化<code>ansible.inventory.Inventory</code>实例</li>
+<li>使用<code>-l</code>/<code>--limit</code>来缩小inventory中主机的范围</li>
+</ul></li>
+<li>除了实际做点什么……
+<ul>
+<li>检查实际操作的主机数，若为0，则输出提示，退出程序</li>
+<li>设置了<code>--list-hosts</code>，则直接将所有要操作的主机都列出来，然后还是退出程序</li>
+<li>（特殊判定）<code>-m</code>/<code>--module-name</code>参数值为command或者shell，并且参数<code>-a</code>/<code>--args</code>无值，则输出提示，退出程序</li>
+<li>若设置了<code>-t</code>/<code>--tree</code>，则确保指定的目录存在且可写，为日志输出做准备</li>
+</ul></li>
+<li>核心的核心：<code>ansible.runner.Runner</code>
+<ul>
+<li>实例化一个<code>ansible.runner.Runner</code>对象runner</li>
+<li>如果设置了<code>-B</code>/<code>--background</code>，表示异步运行，并在设置的值那么多时间后超时。此时，使用<code>runner.run_async()</code>，异步运行操作</li>
+<li>否则，使用<code>runner.run()</code>直接运行。</li>
+</ul></li>
+</ol>
+<h1 id="总结一下">总结一下</h1>
+<p>ansible命令其实只是提供了一条直接到<code>ansible.runner.Runner</code>的路。后面等提到ansible-playbook的时候就可以看到，整个ansible工具的核心其实就在于<code>ansible.runner.Runner</code>。OK，鉴于ansible命令相对比较简单，一次执行实现一项操作，因此开箱到此为止。</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E8%AF%BB%E4%BB%A3%E7%A0%81/" rel="tag"># 读代码</a>
+              <a href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/" rel="tag"># 自动化</a>
+              <a href="/tags/Ansible/" rel="tag"># Ansible</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2016/06/24/%E5%85%AD%E6%9C%88%E8%89%B3%E6%97%A5%E5%A4%8F%E6%84%88%E6%98%BE%EF%BC%8C%E5%90%B9%E7%9D%80%E9%A3%8E%E6%89%87%E5%86%99%E4%BB%A3%E7%A0%81/" rel="prev" title="六月艳日夏愈显，吹着风扇写代码">
+      <i class="fa fa-chevron-left"></i> 六月艳日夏愈显，吹着风扇写代码
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2016/07/26/%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F-Ansible%E4%B9%8B%E6%95%85%E4%BA%8B%E7%9A%84%E6%94%BE%E6%98%A0%E5%AE%A4%EF%BC%9Aansible-playbook/" rel="next" title="发生了什么|Ansible之故事的放映室：ansible-playbook">
+      发生了什么|Ansible之故事的放映室：ansible-playbook <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BC%80%E7%AE%B1%E4%BA%86"><span class="nav-number">2.</span> <span class="nav-text">开箱了</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E6%B5%81%E7%A8%8B__mian__"><span class="nav-number">2.1.</span> <span class="nav-text">主流程：__mian__</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E7%AA%A5cli%E7%B1%BB"><span class="nav-number">2.2.</span> <span class="nav-text">一窥Cli类</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">2.2.1.</span> <span class="nav-text">初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E6%9E%90%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%8F%82%E6%95%B0%E5%8F%8A%E5%85%B6%E5%80%BCparse"><span class="nav-number">2.2.2.</span> <span class="nav-text">解析命令行参数及其值：parse()</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E6%93%8D%E4%BD%9Crunoptions-args"><span class="nav-number">2.2.3.</span> <span class="nav-text">运行操作：run(options, args)</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93%E4%B8%80%E4%B8%8B"><span class="nav-number">3.</span> <span class="nav-text">总结一下</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2016/07/14/%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F-Ansible%E4%B9%8B%E5%91%BD%E4%BB%A4ansible%E5%BC%80%E7%AE%B1%E6%8C%87%E5%8D%97/";
+    this.page.identifier = "2016/07/14/发生了什么？-Ansible之命令ansible开箱指南/";
+    this.page.title = "发生了什么|Ansible之命令ansible开箱指南";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

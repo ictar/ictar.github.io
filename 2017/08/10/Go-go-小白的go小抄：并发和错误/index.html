@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="并发 并发编程是一个很大的主题，这里之提一些Go特有的重点 #### 通过通信共享 共享值通过channel进行传递。在任意给定的时间内，只有一个goroutine可以访问到该值。在设计上，不会出现数据竞争。即  不通过共享内存通信，相反，通过通信来共享内存  还可以再过些。例如，也许最好将一个mutext放在一个整型变量附近来实现引用计数。但是，作为高级方法，使用channel来控制访问，会使得">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go, go|小白的go小抄：并发和错误">
+<meta property="og:url" content="http://ictar.github.io/2017/08/10/Go-go-%E5%B0%8F%E7%99%BD%E7%9A%84go%E5%B0%8F%E6%8A%84%EF%BC%9A%E5%B9%B6%E5%8F%91%E5%92%8C%E9%94%99%E8%AF%AF/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="并发 并发编程是一个很大的主题，这里之提一些Go特有的重点 #### 通过通信共享 共享值通过channel进行传递。在任意给定的时间内，只有一个goroutine可以访问到该值。在设计上，不会出现数据竞争。即  不通过共享内存通信，相反，通过通信来共享内存  还可以再过些。例如，也许最好将一个mutext放在一个整型变量附近来实现引用计数。但是，作为高级方法，使用channel来控制访问，会使得">
+<meta property="og:locale">
+<meta property="article:published_time" content="2017-08-10T12:28:59.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.935Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="HelloWorld">
+<meta property="article:tag" content="Golang">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2017/08/10/Go-go-%E5%B0%8F%E7%99%BD%E7%9A%84go%E5%B0%8F%E6%8A%84%EF%BC%9A%E5%B9%B6%E5%8F%91%E5%92%8C%E9%94%99%E8%AF%AF/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>Go, go|小白的go小抄：并发和错误 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2017/08/10/Go-go-%E5%B0%8F%E7%99%BD%E7%9A%84go%E5%B0%8F%E6%8A%84%EF%BC%9A%E5%B9%B6%E5%8F%91%E5%92%8C%E9%94%99%E8%AF%AF/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Go, go|小白的go小抄：并发和错误
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-08-10 20:28:59" itemprop="dateCreated datePublished" datetime="2017-08-10T20:28:59+08:00">2017-08-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2017/08/10/Go-go-%E5%B0%8F%E7%99%BD%E7%9A%84go%E5%B0%8F%E6%8A%84%EF%BC%9A%E5%B9%B6%E5%8F%91%E5%92%8C%E9%94%99%E8%AF%AF/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2017/08/10/Go-go-小白的go小抄：并发和错误/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="并发">并发</h3>
+<p>并发编程是一个很大的主题，这里之提一些Go特有的重点 #### 通过通信共享 共享值通过<code>channel</code>进行传递。在任意给定的时间内，只有一个goroutine可以访问到该值。在设计上，不会出现数据竞争。即</p>
+<pre><code>不通过共享内存通信，相反，通过通信来共享内存</code></pre>
+<p>还可以再过些。例如，也许最好将一个<code>mutext</code>放在一个整型变量附近来实现引用计数。但是，作为高级方法，使用<code>channel</code>来控制访问，会使得编写清晰正确的程序更容易。</p>
+<p>关于这样一个模型，想象一下：有一个在单CPU上运行的典型的单线程程序。它无需同步原语。现在，运行另一个这样的实例，它也无需同步。然后，让这两个实例进行通信。如果这样的通信是同步器，那么仍然无需其他同步。例如，Unix的管道就完美契合这个模型。虽然，Go的并发方法起源于Hoare的CSP模型，但是它也可以被看成Unix管道的一种类型安全的泛化。</p>
+<h4 id="goroutine">goroutine</h4>
+<p>一个goroutine有一个简单的模型：它是一个与其他goroutine在相同的地址空间内并发地执行的函数。</p>
+<p>它轻量，仅仅消耗栈空间的分配。</p>
+<p>goroutine多路复用到多个OS线程，因此，如果一个goroutine阻塞了（例如等待I/O），那么，其他goroutine会继续运行。其设计隐藏了许多线程创建和管理的复杂的东西。</p>
+<p>在一个方法或者函数调用前面加上前缀<code>go</code>，从而使得该调用在一个新的goroutine内运行。当调用完成的时候，这个goroutine会悄悄地退出。 <figure class="highlight arcade"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go list.<span class="built_in">Sort</span>() <span class="comment">// 并发运行list.Sort。不等待</span></span><br></pre></td></tr></table></figure> 在goroutine调用中，一个函数字面量可以很方便： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Do</span><span class="params">(message <span class="keyword">string</span>)</span></span> &#123;</span><br><span class="line">    <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span>&#123;</span><br><span class="line">        fmt.Println(message)</span><br><span class="line">    &#125;() <span class="comment">// 注意这里的括号：必须调用这个函数！！</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 在Go中，函数字面量是闭包：这种实现确保被函数引用的变量只要有用，就是存活着的。</p>
+<h4 id="channel">channel</h4>
+<p><code>channel</code>是用<code>make</code>来分配的，结果值指向一个底层的数据结构。如果给<code>make</code>提供了第二个参数，那么这个参数是<code>channel</code>的缓存大小。默认值是0，表示一个不缓存/同步channel <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cj := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>) <span class="comment">// 不缓存的整型channel</span></span><br><span class="line">cj := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, <span class="number">0</span>) <span class="comment">// 不缓存的整型channel</span></span><br><span class="line">cs := <span class="built_in">make</span>(<span class="keyword">chan</span> *os.File, <span class="number">100</span>) <span class="comment">// 指向File的缓存channel</span></span><br></pre></td></tr></table></figure> 不缓存的channel将通信（值交换）与同步结合在一起，保证两个计算（goroutine）处于已知状态。</p>
+<p>一个channel能让启动的goroutine等待某些工作的完成。例如： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>) <span class="comment">// 分配一个channel（不缓存）</span></span><br><span class="line"><span class="comment">// 在goroutine中开始排序。当排序完成后，给channel发信号</span></span><br><span class="line"><span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">    list.Sort()</span><br><span class="line">    c &lt;- <span class="number">1</span> <span class="comment">// 发送一个信号，值无所谓</span></span><br><span class="line">&#125;</span><br><span class="line">doSomethingForAWhile()</span><br><span class="line">&lt;- c <span class="comment">// 等待排序完成。丢弃接收到的值</span></span><br></pre></td></tr></table></figure> channel的接收者往往在收到数据之前处于阻塞状态。而对于发送者： 1. 如果channel是不缓存的，那么，发送者会一直阻塞，直到接收者接收到所发送的值。 2. 如果channel具有缓存，那么，发送者会一直阻塞，直到发送值已经拷贝到缓存中了；如果缓存满了，那么意味着，发送者会一直等待，直到某接收者收到了一个值。</p>
+<p>一个带缓存的channel可以被当成一个信号量使用，例如用来限制生产量。在下面这个例子中，过来的请求被传递给<code>handle</code>。<code>handle</code>会发送一个值给某个<code>channel</code>，处理请求，然后从这个<code>channel</code>接收一个值，从而为下一个消费者准备好“信号量”。这个<code>channel</code>的缓存容量限制了对<code>process</code>同步调用的次数。 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> sem = <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, MaxOutstanding)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">handle</span><span class="params">(r *Request)</span></span> &#123;</span><br><span class="line">    sem &lt;- <span class="number">1</span> <span class="comment">// 等待活跃队列耗尽（这样才能执行下一行代码）</span></span><br><span class="line">    process(r) <span class="comment">// 大概也许可能会耗时较长</span></span><br><span class="line">    sem &lt;- <span class="comment">// 完成；下一个请求可以开始运行了。</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 一旦MaxOutstanding个handle正在执行process，</span></span><br><span class="line"><span class="comment">// 其他handle将会阻塞在往已满的channel缓存中发送数据，</span></span><br><span class="line"><span class="comment">// 直到MaxOutstanding个handle中的一个handle完成，然后从缓存中接收数据。</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Serve</span><span class="params">(queue <span class="keyword">chan</span> *Request)</span></span> &#123;</span><br><span class="line">    <span class="keyword">for</span> &#123;</span><br><span class="line">        req := &lt;- queue</span><br><span class="line">        <span class="keyword">go</span> handle(req) <span class="comment">// 不等待handle结束</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 这里有一个问题：<code>Serve</code>为每个过来的请求都创建一个新的goroutine。结果是，如果请求来得太快，那么程序将会消耗无限的资源。我们可以让<code>Serve</code>为goroutine的创建设置门槛： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Serve</span><span class="params">(queue <span class="keyword">chan</span> *Request)</span></span> &#123;</span><br><span class="line">    <span class="keyword">for</span> req := <span class="keyword">range</span> queue &#123;</span><br><span class="line">        sem &lt;- <span class="number">1</span></span><br><span class="line">        <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">(req *Request)</span></span>&#123;</span><br><span class="line">            process(req)</span><br><span class="line">            &lt;- sem</span><br><span class="line">        &#125;(req)</span><br><span class="line">        <span class="comment">// 这里，我们不能直接在goroutine中使用req（这样的话，req变量将会在所有goroutine之间共享）</span></span><br><span class="line">        <span class="comment">// 而是将其作为一个参数传给goroutine的函数调用，从而确保对于每个goroutine而言，req都是唯一的。</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 好了，让我们回到编写server的一般性问题上来。比较好的管理资源的另一个方法是，启动固定数量的<code>handle</code> goroutine，让它们都从请求channel中读取请求： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">handle</span><span class="params">(queue <span class="keyword">chan</span> *Request)</span></span> &#123;</span><br><span class="line">    <span class="keyword">for</span> r := <span class="keyword">range</span> queue &#123; <span class="comment">// 阻塞在接收请求中。</span></span><br><span class="line">        process(r)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Serve</span><span class="params">(clientRequests <span class="keyword">chan</span> *Request)</span></span> &#123;</span><br><span class="line">    <span class="comment">// 启动处理器</span></span><br><span class="line">    <span class="comment">// 这里，goroutine的数量（MaxOutstanding个）限制了对process的并发调用数。</span></span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; MaxOutstanding; i++ &#123;</span><br><span class="line">        <span class="keyword">go</span> handle(clientRequests)</span><br><span class="line">    &#125;</span><br><span class="line">    &lt;- quit <span class="comment">// 等待退出</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> #### channel的channel Go中的一个最重要的特性之一是，channel属于第一类值，它可以像其他第一类值一样，被分配和传递。对此特性的常见使用场景是实现安全并行的多路分解。</p>
+<p>在前面一小节的例子中，<code>handle</code>是一个请求处理器，但是我们并没有定义它处理的请求类型。如果请求类型包含了一个用以回复的channel，那么，每个客户端就可以为其回复提供自己的路径了。我们可以将请求类型定义如下： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Request <span class="keyword">struct</span> &#123;</span><br><span class="line">    args        []<span class="keyword">int</span></span><br><span class="line">    f           <span class="function"><span class="keyword">func</span><span class="params">([]<span class="keyword">int</span>)</span> <span class="title">int</span> // <span class="title">f</span><span class="params">(args)</span></span></span><br><span class="line">    resultChan  <span class="keyword">chan</span> <span class="keyword">int</span> <span class="comment">// 接收结果</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 这样，我们的客户端就可以这样写了： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">sum</span><span class="params">(a []<span class="keyword">int</span>)</span> <span class="params">(s <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">    <span class="keyword">for</span> _, v := <span class="keyword">range</span> a &#123;</span><br><span class="line">        s += v</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">request := &amp;Request&#123;[]<span class="keyword">int</span>&#123;<span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>&#125;, sum, <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)&#125;</span><br><span class="line"><span class="comment">// 发送请求</span></span><br><span class="line">clientRequests &lt;- request</span><br><span class="line"><span class="comment">// 等待响应</span></span><br><span class="line">fmt.Printf(<span class="string">&quot;answer: %d\n&quot;</span>, &lt;-request.resultChan)</span><br></pre></td></tr></table></figure> 而对应的服务器端实现只需要修改<code>handle</code>函数： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">handle</span><span class="params">(queue <span class="keyword">chan</span> *Request)</span></span> &#123;</span><br><span class="line">    <span class="keyword">for</span> req := <span class="keyword">range</span> queue &#123;</span><br><span class="line">        req.resultChan &lt;- req.f(req.args)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> #### 并行 如果某个任务可以分成几个可以独立执行的块，那么这个任务就可以被并行处理，当每个块完成的时候，借助channel来发送信号。</p>
+<p>以下面为例： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Vector []<span class="keyword">float64</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 将操作应用到v[i], v[i+1], .., v[n-1]</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(v Vector)</span> <span class="title">DoSome</span><span class="params">(i, n <span class="keyword">int</span>, u Vector, c <span class="keyword">chan</span> <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">    <span class="keyword">for</span> ; i &lt; n; i++ &#123;</span><br><span class="line">        v[i] += u.Op(v[i])</span><br><span class="line">    &#125;</span><br><span class="line">    c &lt;- <span class="number">1</span> <span class="comment">// 发送信号表明完成</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 我们在循环里独立加载每个部分，一个占一个CPU。它们可以以任意顺序完成，但是，这没关系。我们仅仅是在启动所有goroutine后，通过耗尽channel来计算完成信号。 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// CPU核数</span></span><br><span class="line"><span class="keyword">const</span> numCPU = <span class="number">4</span></span><br><span class="line"><span class="comment">// 这里可以使用runtime.NumCPU()来返回当前机器的硬件CPU核数，从而取得硬编码</span></span><br><span class="line"><span class="comment">// 还可以使用runtime.GOMAXPROCS，它报告（或设置）一个Go程序可以同时运行的用户指定核数。默认为runtime.NumCPU()</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(v Vector)</span> <span class="title">DoAll</span><span class="params">(u Vector)</span></span> &#123;</span><br><span class="line">    c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, numCPU)</span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; numCPU; i++ &#123;</span><br><span class="line">        <span class="keyword">go</span> v.DoSome(i*<span class="built_in">len</span>(v)/numCPU, (i+<span class="number">1</span>)*<span class="built_in">len</span>(v)/numCPU, u, c)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 耗尽channel</span></span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; numCPU; i++ &#123;</span><br><span class="line">        &lt;- c <span class="comment">// 等待任务完成</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 全部完成啦</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> &gt; <strong>注意</strong>：Go是一个并发语言，不是一个并行语言。并不是所有的并行问题都适合Go的模型的。</p>
+<h3 id="错误">错误</h3>
+<p>Go的多值返回使得返回一个详细的错误描述和正常的返回值成为可能。 一般来说，错误的类型为<code>error</code>，这是一个简单的内置接口： <figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">type <span class="builtin-name">error</span><span class="built_in"> interface </span>&#123;</span><br><span class="line">	<span class="builtin-name">Error</span>() string</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 我们可以随意实现这个接口，使其变成一个更丰富的模型，这样，除了错误之外，还可以提供一些上下文信息。例如： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> PathError <span class="keyword">struct</span> &#123;</span><br><span class="line">	Op <span class="keyword">string</span></span><br><span class="line">	Path <span class="keyword">string</span></span><br><span class="line">	Err error</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e *PathError)</span> <span class="title">Error</span><span class="params">()</span> <span class="title">string</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> e.Op + <span class="string">&quot; &quot;</span> + e.Path + <span class="string">&quot;: &quot;</span> + e.Err.Error()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 当可行时，错误字符串应该标识其来源，例如，带一个命名产生该错误的操作或者包的前缀。</p>
+<p>关心准确错误细节的调用者可以使用类型选择或者类型断言来查找特定的错误和准确的细节。例如： <figure class="highlight sas"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">file</span>, err = os.<span class="meta">Create</span>(<span class="meta">filename</span>)</span><br><span class="line"><span class="meta">if</span> err == nil &#123;</span><br><span class="line">	<span class="meta">return</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">if</span> e, ok := err.(<span class="comment">*os.PathError);</span> ok <span class="variable">&amp;&amp;</span> e.Err == syscall.ENOSPC &#123;</span><br><span class="line">	// <span class="meta">do</span> something</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> #### panic 向调用者报告错误的常见方式是将错误作为一个额外的返回值返回。但是，如果该错误是不可修复的呢？此时程序往往会无法运行下去。</p>
+<p>出于这个原因，内置函数<code>panic</code>实际上创建了一个运行时错误，这个错误将会停止程序。该函数接收一个任意类型的参数（通常是一个字符串），这个参数会在程序挂掉的时候被打印出来。这也是一种暗示某些不可能的事情发生了的方式，例如存在死循环。</p>
+<p>对于真实的库函数来说，应该避免<code>panic</code>。如果错误可以被掩盖或解决，那么相比把整个程序搞挂而言，让程序继续运行会更好些。一个可能的反例是在初始化期间：如果库真的没法设置自己，那么panic是合理的。 <figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">var <span class="keyword">user</span> <span class="title">= os</span>.Getenv(<span class="string">&quot;USER&quot;</span>)</span><br><span class="line"></span><br><span class="line">func init()&#123;</span><br><span class="line">	if <span class="keyword">user</span> <span class="title">== &quot;&quot; &#123;</span></span><br><span class="line"><span class="title">		panic</span>(<span class="string">&quot;no value for $USER&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> #### recover 当<code>panic</code>被调用的时候（包括运行时错误的隐式调用），会立即停止当前函数的执行，然后开始沿着goroutine的堆栈展开往上退，找到被defer的函数并运行。如果退到了该goroutine栈的顶层，那么，程序就挂掉了。</p>
+<p>但是，我们可以使用内置的<code>recover</code>来重新获得此goroutine的控制权，然后恢复正常的执行。</p>
+<p>对<code>recover</code>的调用停止堆栈展开，然后返回传给<code>panic</code>的参数。由于在堆栈展开过长中唯一运行的代码位于被defer的函数内，所以，<code>recover</code>只有在被defer的函数内才有用。</p>
+<p><code>recover</code>的应用之一是在不会杀死其他正在执行的goroutine的情况下，关闭服务器内一个失败的goroutine。 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">server</span><span class="params">(workChan &lt;-<span class="keyword">chan</span> *Work)</span></span> &#123;</span><br><span class="line">    <span class="keyword">for</span> work := <span class="keyword">range</span> workChan &#123;</span><br><span class="line">        <span class="keyword">go</span> safelyDo(work)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">safelyDo</span><span class="params">(work *Work)</span></span> &#123;</span><br><span class="line">    <span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">if</span> err := <span class="built_in">recover</span>(); err != <span class="literal">nil</span> &#123;</span><br><span class="line">            log.Println(<span class="string">&quot;work failed:&quot;</span>, err)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;()</span><br><span class="line">    do(work) <span class="comment">// 因为用了recover,所以这个函数可以通过调用panic来干净地摆脱任何困境。</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 除非直接从一个被defer的函数内调用，否则<code>recover</code>总是返回<code>nil</code>。因此，被defer的代码可以正常地调用使用了<code>panic</code>和<code>recover</code>的库程序。</p>
+<h3 id="参考">参考</h3>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://golang.org/doc/effective_go.html">Effective Go</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/HelloWorld/" rel="tag"># HelloWorld</a>
+              <a href="/tags/Golang/" rel="tag"># Golang</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/08/08/Go-go-%E5%B0%8F%E7%99%BD%E7%9A%84go%E5%B0%8F%E6%8A%84%EF%BC%9A%E7%A9%BA%E7%99%BD%E7%AC%A6%E5%92%8C%E5%B5%8C%E5%85%A5/" rel="prev" title="Go, go|小白的go小抄：空白符和嵌入">
+      <i class="fa fa-chevron-left"></i> Go, go|小白的go小抄：空白符和嵌入
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/08/17/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%BD%BF%E7%94%A8golang%E8%BF%9E%E6%8E%A5%E6%B1%A0%E9%81%87%E5%88%B0%E7%9A%84%E5%9D%91/" rel="next" title="记一次使用golang连接池遇到的坑">
+      记一次使用golang连接池遇到的坑 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B9%B6%E5%8F%91"><span class="nav-number">1.</span> <span class="nav-text">并发</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#goroutine"><span class="nav-number">1.1.</span> <span class="nav-text">goroutine</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#channel"><span class="nav-number">1.2.</span> <span class="nav-text">channel</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%94%99%E8%AF%AF"><span class="nav-number">2.</span> <span class="nav-text">错误</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">3.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2017/08/10/Go-go-%E5%B0%8F%E7%99%BD%E7%9A%84go%E5%B0%8F%E6%8A%84%EF%BC%9A%E5%B9%B6%E5%8F%91%E5%92%8C%E9%94%99%E8%AF%AF/";
+    this.page.identifier = "2017/08/10/Go-go-小白的go小抄：并发和错误/";
+    this.page.title = "Go, go|小白的go小抄：并发和错误";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

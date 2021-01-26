@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="年终惯例是做年度总结，而恰好每年年初都会给自己定一个读书目标。以前总是达标之后心情愉悦便没有然后了，今年突发奇想，想看看过去的一年里，自己都读了什么书，以便有的放矢地安排下一年的读书目标。  需求有了，接下来则是要获取数据了。凑巧我有个习惯，每看一本书会在豆瓣上标记一下。因此，我在豆瓣上的已读清单就是最好的原数据。  创建爬虫 对于爬虫工具的选择，以方便为主，所以我选了scrapy。  安装好 s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="我的年度读书报告生成攻略：第一部分">
+<meta property="og:url" content="http://ictar.github.io/2018/12/26/how_to_generate_annual_read_report_part1/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="年终惯例是做年度总结，而恰好每年年初都会给自己定一个读书目标。以前总是达标之后心情愉悦便没有然后了，今年突发奇想，想看看过去的一年里，自己都读了什么书，以便有的放矢地安排下一年的读书目标。  需求有了，接下来则是要获取数据了。凑巧我有个习惯，每看一本书会在豆瓣上标记一下。因此，我在豆瓣上的已读清单就是最好的原数据。  创建爬虫 对于爬虫工具的选择，以方便为主，所以我选了scrapy。  安装好 s">
+<meta property="og:locale">
+<meta property="og:image" content="http://ictar.github.io/img/20181224-223022.jpg">
+<meta property="og:image" content="http://ictar.github.io/img/20181226-204925.jpg">
+<meta property="article:published_time" content="2018-12-26T13:23:32.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.946Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="爬虫">
+<meta property="article:tag" content="scrapy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://ictar.github.io/img/20181224-223022.jpg">
+
+<link rel="canonical" href="http://ictar.github.io/2018/12/26/how_to_generate_annual_read_report_part1/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>我的年度读书报告生成攻略：第一部分 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2018/12/26/how_to_generate_annual_read_report_part1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          我的年度读书报告生成攻略：第一部分
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2018-12-26 21:23:32" itemprop="dateCreated datePublished" datetime="2018-12-26T21:23:32+08:00">2018-12-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2018/12/26/how_to_generate_annual_read_report_part1/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/12/26/how_to_generate_annual_read_report_part1/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>年终惯例是做年度总结，而恰好每年年初都会给自己定一个读书目标。以前总是达标之后心情愉悦便没有然后了，今年突发奇想，想看看过去的一年里，自己都读了什么书，以便有的放矢地安排下一年的读书目标。</p>
+<p>需求有了，接下来则是要获取数据了。凑巧我有个习惯，每看一本书会在豆瓣上标记一下。因此，我在豆瓣上的已读清单就是最好的原数据。</p>
+<h2 id="创建爬虫">创建爬虫</h2>
+<p>对于爬虫工具的选择，以方便为主，所以我选了<a target="_blank" rel="noopener" href="https://scrapy.org/">scrapy</a>。</p>
+<p>安装好 scrapy 后，创建一个名为 book 的项目： <figure class="highlight ebnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">scrapy startproject book</span></span><br></pre></td></tr></table></figure> ## 获取已读图书列表</p>
+<p>登陆豆瓣后，找到页面“我读过的书”，就可以看到已阅图书列表了。该页面的 URL 有以下模式： <figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https:<span class="regexp">//</span>book.douban.com<span class="regexp">/people/</span>&#123;豆瓣id&#125;/collect</span><br></pre></td></tr></table></figure> 首先，我们需要确定下这个页面是否需要登陆才能访问（如果不是的话，还得模拟豆瓣登陆）。确定方法很简单：记录下该页面的 url，退出登陆，然后尝试访问该 url。如果能够正常访问的话，说明某个用户的已读图书列表是公开的。</p>
+<p>经过确认，这个页面确实是公开的，这样，我们就不需要进行模拟登陆了。（虽然省去了这一步，但是不知道豆瓣的产品经理是如何考量的，为什么要把用户这个比较私密的属性赤裸裸地暴露在阳光虾呢？）</p>
+<p>接下来，借助 chrome 的开发者工具，观察下每一个图书项的组成部分： <img src="/img/20181224-223022.jpg" /></p>
+<p>可以发现几点（以下用 xpath 表示法）： * 每一个图书项：<code>//li[@class="subject-item"</code> * 图书名称：<code>div[@class="info"]/h2/a/@title</code> * 图书详情页 url：<code>div[@class="info"]/h2/a/@href</code> * 出版信息：<code>div[@class="info"]/div[@class="pub"]/text()</code> * 评价信息：<code>div[@class="info"]/div[@class="short-note"]/div[1]/span[1]/@class</code> * 读完的日期：<code>div[@class="info"]/div[@class="short-note"]/div[1]/span[@class="date"]/text()</code> * 标签信息：<code>div[@class="info"]/div[@class="short-note"]/div[1]/span[@class="tags"]/text()</code> * 评价信息：<code>div[@class="info"]/div[@class="short-note"]/p[@class="comment"]/text()</code> * 以及下一页：<code>//span[@class="next"]/a/@href</code></p>
+<p>因此，我们可以在 <code>book/items.py</code> 中定义我们所需要的属性：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BookItem</span>(<span class="params">scrapy.Item</span>):</span></span><br><span class="line">    name = scrapy.Field()</span><br><span class="line">    url = scrapy.Field()</span><br><span class="line">    pub = scrapy.Field()</span><br><span class="line">    rating = scrapy.Field()</span><br><span class="line">    readDate = scrapy.Field()</span><br><span class="line">    tags = scrapy.Field()</span><br><span class="line">    comment = scrapy.Field()</span><br></pre></td></tr></table></figure>
+<p>然后在 <code>book/spiders</code> 目录下创建一个爬虫文件 <code>collect_spider.py</code>。</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CollectSpider</span>(<span class="params">scrapy.Spider</span>):</span></span><br><span class="line">    name = <span class="string">&quot;collect&quot;</span> <span class="comment"># 将爬虫命名为 collect</span></span><br><span class="line">    allowed_domains = [<span class="string">&quot;douban.com&quot;</span>]</span><br><span class="line">    start_urls = [</span><br><span class="line">        <span class="comment"># 设置起始爬取页面为已阅读书列表首页</span></span><br><span class="line">        <span class="comment"># 这里我把豆瓣 id 信息隐去了，使用时按需替换</span></span><br><span class="line">        <span class="string">&quot;https://book.douban.com/people/******/collect&quot;</span></span><br><span class="line">    ]</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">parse</span>(<span class="params">self, response</span>):</span></span><br><span class="line">        <span class="keyword">for</span> subItem <span class="keyword">in</span> response.xpath(<span class="string">&#x27;//li[@class=&quot;subject-item&quot;]&#x27;</span>):</span><br><span class="line">            <span class="comment"># 对于每一个图书项进行操作</span></span><br><span class="line">            item = BookItem()</span><br><span class="line">            item[<span class="string">&#x27;name&#x27;</span>] = <span class="string">&quot;&quot;</span>.join(subItem.xpath(<span class="string">&#x27;div[@class=&quot;info&quot;]/h2/a/@title&#x27;</span>).extract()).strip()</span><br><span class="line">            item[<span class="string">&#x27;url&#x27;</span>] = subItem.xpath(<span class="string">&#x27;div[@class=&quot;info&quot;]/h2/a/@href&#x27;</span>).extract_first(default=<span class="string">&quot;Missing&quot;</span>)</span><br><span class="line">            item[<span class="string">&#x27;pub&#x27;</span>] = <span class="string">&quot;&quot;</span>.join(subItem.xpath(<span class="string">&#x27;div[@class=&quot;info&quot;]/div[@class=&quot;pub&quot;]/text()&#x27;</span>).extract()).strip()</span><br><span class="line">            item[<span class="string">&#x27;rating&#x27;</span>] = subItem.xpath(<span class="string">&#x27;div[@class=&quot;info&quot;]/div[@class=&quot;short-note&quot;]/div[1]/span[1]/@class&#x27;</span>).extract_first(default=<span class="string">&quot;Missing&quot;</span>).strip()</span><br><span class="line">            item[<span class="string">&#x27;readDate&#x27;</span>] = subItem.xpath(<span class="string">&#x27;div[@class=&quot;info&quot;]/div[@class=&quot;short-note&quot;]/div[1]/span[@class=&quot;date&quot;]/text()&#x27;</span>).extract_first(default=<span class="string">&quot;Missing&quot;</span>)</span><br><span class="line">            item[<span class="string">&#x27;tags&#x27;</span>] = <span class="string">&quot;&quot;</span>.join(subItem.xpath(<span class="string">&#x27;div[@class=&quot;info&quot;]/div[@class=&quot;short-note&quot;]/div[1]/span[@class=&quot;tags&quot;]/text()&#x27;</span>).extract())</span><br><span class="line">            item[<span class="string">&#x27;comment&#x27;</span>] = <span class="string">&quot;&quot;</span>.join(subItem.xpath(<span class="string">&#x27;div[@class=&quot;info&quot;]/div[@class=&quot;short-note&quot;]/p[@class=&quot;comment&quot;]/text()&#x27;</span>).extract()).strip()</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">yield</span> item</span><br><span class="line">        <span class="comment"># 获取下一页地址</span></span><br><span class="line">        next_page = response.xpath(<span class="string">&#x27;//span[@class=&quot;next&quot;]/a/@href&#x27;</span>)</span><br><span class="line">        <span class="keyword">if</span> next_page: <span class="comment"># 如果存在的话，爬取下一页</span></span><br><span class="line">            url = response.urljoin(next_page[<span class="number">0</span>].extract())</span><br><span class="line">            print(<span class="string">&quot;next: &quot;</span>, url)</span><br><span class="line">            <span class="keyword">yield</span> scrapy.Request(url, callback=self.parse)</span><br></pre></td></tr></table></figure>
+<p>之后可以运行下看看爬取结果： <figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>scrapy crawl collect -o items.json</span><br></pre></td></tr></table></figure> &gt; 注意： &gt; 如果爬取过程遇到豆瓣返回 403 的错误，那么需要修改 <code>book/settings.py</code> 中的 USER_AGENT 为配置项 <code>USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'</code></p>
+<h2 id="获取书籍更多的出版信息">获取书籍更多的出版信息</h2>
+<p>为了获得更多的出版信息（如 ISBN），我们需要爬取每个图书的详情页。详情页的 url 我们在上一个步骤就已经可以获得了。</p>
+<p>在 <code>book/items.py</code> 中添加详情定义：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BookItem</span>(<span class="params">scrapy.Item</span>):</span></span><br><span class="line">    ....</span><br><span class="line">    isbn = scrapy.Field()</span><br><span class="line">    morePub = scrapy.Field()</span><br></pre></td></tr></table></figure>
+<p>分析页面代码后修改 <code>collect_spider.py</code>：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">parse</span>(<span class="params">self, response</span>):</span></span><br><span class="line">    <span class="keyword">for</span> subItem <span class="keyword">in</span> response.xpath(<span class="string">&#x27;//li[@class=&quot;subject-item&quot;]&#x27;</span>):</span><br><span class="line">        ....</span><br><span class="line">        <span class="keyword">if</span> item[<span class="string">&#x27;url&#x27;</span>] <span class="keyword">and</span> item[<span class="string">&#x27;url&#x27;</span>] != <span class="string">&#x27;Missing&#x27;</span>:</span><br><span class="line">            <span class="comment"># 访问详情页，回调函数为 self.parse_item()</span></span><br><span class="line">            request = scrapy.Request(item[<span class="string">&#x27;url&#x27;</span>], callback=self.parse_item)</span><br><span class="line">            request.meta[<span class="string">&#x27;item&#x27;</span>] = item</span><br><span class="line">            <span class="keyword">yield</span> request</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">yield</span> item</span><br><span class="line"></span><br><span class="line">    next_page = response.xpath(<span class="string">&#x27;//span[@class=&quot;next&quot;]/a/@href&#x27;</span>)</span><br><span class="line">    <span class="keyword">if</span> next_page:</span><br><span class="line">        url = response.urljoin(next_page[<span class="number">0</span>].extract())</span><br><span class="line">        print(<span class="string">&quot;next: &quot;</span>, url)</span><br><span class="line">        <span class="keyword">yield</span> scrapy.Request(url, callback=self.parse)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">parse_item</span>(<span class="params">self, response</span>):</span> <span class="comment"># 详情页解析方法</span></span><br><span class="line">    item = response.meta[<span class="string">&#x27;item&#x27;</span>]</span><br><span class="line">    item[<span class="string">&#x27;morePub&#x27;</span>] = response.xpath(<span class="string">&#x27;//*[@id=&quot;info&quot;]/text()&#x27;</span>).extract()</span><br><span class="line">    <span class="comment"># 获取 isbn</span></span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(item[<span class="string">&#x27;morePub&#x27;</span>]) &gt;= <span class="number">2</span>:</span><br><span class="line">        isbn = item[<span class="string">&quot;morePub&quot;</span>][-<span class="number">2</span>].strip()</span><br><span class="line">        <span class="keyword">if</span> isbn:</span><br><span class="line">            item[<span class="string">&#x27;isbn&#x27;</span>] = isbn</span><br><span class="line">    <span class="keyword">yield</span> item</span><br></pre></td></tr></table></figure>
+<h2 id="确定书籍所属类别">确定书籍所属类别</h2>
+<p>因为想对图书类别进行分析，而豆瓣图书是没有类别信息的，所以得想个办法获取到对应图书的类别信息。</p>
+<p>通过 <a target="_blank" rel="noopener" href="http://opac.calis.edu.cn/opac/simpleSearch.do">CALIS 联合目录公共检索系统</a> 就可以根据 ISBN 查询到对应到图书类别信息。</p>
+<p>接下来就是分析模拟查询请求了。再次借助 chrome 的开发者工具，进行一次图书检索，看看会出现什么样子的请求交互：</p>
+<p><img src="/img/20181226-204925.jpg" /></p>
+<p>因此，查询方法如下：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">queryCatagory</span>(<span class="params">isbn</span>):</span></span><br><span class="line">    url = <span class="string">&quot;http://opac.calis.edu.cn/opac/doSimpleQuery.do&quot;</span></span><br><span class="line">    data = &#123;</span><br><span class="line">        <span class="string">&quot;actionType&quot;</span>: <span class="string">&quot;doSimpleQuery&quot;</span>,</span><br><span class="line">        <span class="string">&quot;pageno&quot;</span>: <span class="number">1</span>,</span><br><span class="line">        <span class="string">&quot;pagingType&quot;</span>: <span class="number">0</span>,</span><br><span class="line">        <span class="string">&quot;operation&quot;</span>: <span class="string">&quot;searchRetrieve&quot;</span>,</span><br><span class="line">        <span class="string">&quot;version&quot;</span>: <span class="number">1.1</span>,</span><br><span class="line">        <span class="string">&quot;query&quot;</span>: <span class="string">&#x27;(bath.isbn=&quot;&#123;0&#125;*&quot;)&#x27;</span>.<span class="built_in">format</span>(isbn),</span><br><span class="line">        <span class="string">&quot;sortkey&quot;</span>: <span class="string">&quot;title&quot;</span>,</span><br><span class="line">        <span class="string">&quot;maximumRecords&quot;</span>: <span class="number">50</span>,</span><br><span class="line">        <span class="string">&quot;startRecord&quot;</span>: <span class="number">1</span>,</span><br><span class="line">        <span class="string">&quot;dbselect&quot;</span>: <span class="string">&quot;all&quot;</span>,</span><br><span class="line">        <span class="string">&quot;langBase&quot;</span>: <span class="string">&quot;default&quot;</span>,</span><br><span class="line">        <span class="string">&quot;conInvalid&quot;</span>: <span class="string">&quot;检索条件不能为空&quot;</span>,</span><br><span class="line">        <span class="string">&quot;indexkey&quot;</span>: <span class="string">&quot;bath.isbn|frt&quot;</span>,</span><br><span class="line">        <span class="string">&quot;condition&quot;</span>: isbn,</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    resp = requests.post(url, data)</span><br><span class="line">    <span class="keyword">if</span> resp.status_code != <span class="number">200</span>: <span class="keyword">return</span> <span class="string">&quot;not found&quot;</span></span><br><span class="line">    page = etree.HTML(resp.text)</span><br><span class="line">    <span class="comment"># 这里我们只获取顶级分类</span></span><br><span class="line">    info = page.xpath(<span class="string">&#x27;//*[@id=&quot;browser&quot;]/li/span/a/u&#x27;</span>)</span><br><span class="line">    <span class="keyword">if</span> info:</span><br><span class="line">        <span class="keyword">return</span> info[<span class="number">0</span>].text</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;not found&quot;</span></span><br></pre></td></tr></table></figure>
+<p>先将类别信息添加到 <code>book/items.py</code> 中：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BookItem</span>(<span class="params">scrapy.Item</span>):</span></span><br><span class="line">    ....</span><br><span class="line">    catagory = scrapy.Field()</span><br></pre></td></tr></table></figure>
+<p>我们把上面的方法添加在 <code>collect_spider.py</code> 中，然后在获取到 isbn 后查询类别信息：</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">parse_item</span>(<span class="params">self, response</span>):</span></span><br><span class="line">    ....</span><br><span class="line">    <span class="comment"># get isbn</span></span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(item[<span class="string">&#x27;morePub&#x27;</span>]) &gt;= <span class="number">2</span>:</span><br><span class="line">        ....</span><br><span class="line">        <span class="keyword">if</span> isbn:</span><br><span class="line">            ....</span><br><span class="line">            <span class="comment"># get category</span></span><br><span class="line">            item[<span class="string">&#x27;catagory&#x27;</span>] = queryCatagory(isbn)</span><br><span class="line">    <span class="keyword">yield</span> item</span><br></pre></td></tr></table></figure>
+<p>最后运行下爬虫即可：</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$ </span>scrapy crawl collect -o items.json</span><br></pre></td></tr></table></figure>
+<h2 id="小结一下">小结一下</h2>
+<p>数据分析的第一步大抵都是确定分析目标，然后根据目标获取相应数据。</p>
+<p>接下来，就是撸起袖子开始分析了～</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E7%88%AC%E8%99%AB/" rel="tag"># 爬虫</a>
+              <a href="/tags/scrapy/" rel="tag"># scrapy</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/12/22/%E3%80%90%E8%AF%91%E3%80%91interface-%E5%92%8C%E5%8F%8D%E5%B0%84%E7%9A%84%E5%85%B3%E7%B3%BB/" rel="prev" title="译|interface 和反射的关系">
+      <i class="fa fa-chevron-left"></i> 译|interface 和反射的关系
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/01/14/how_to_generate_annual_read_report_part2/" rel="next" title="我的年度读书报告生成攻略：第二部分">
+      我的年度读书报告生成攻略：第二部分 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E7%88%AC%E8%99%AB"><span class="nav-number">1.</span> <span class="nav-text">创建爬虫</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96%E4%B9%A6%E7%B1%8D%E6%9B%B4%E5%A4%9A%E7%9A%84%E5%87%BA%E7%89%88%E4%BF%A1%E6%81%AF"><span class="nav-number">2.</span> <span class="nav-text">获取书籍更多的出版信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A1%AE%E5%AE%9A%E4%B9%A6%E7%B1%8D%E6%89%80%E5%B1%9E%E7%B1%BB%E5%88%AB"><span class="nav-number">3.</span> <span class="nav-text">确定书籍所属类别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93%E4%B8%80%E4%B8%8B"><span class="nav-number">4.</span> <span class="nav-text">小结一下</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2018/12/26/how_to_generate_annual_read_report_part1/";
+    this.page.identifier = "2018/12/26/how_to_generate_annual_read_report_part1/";
+    this.page.title = "我的年度读书报告生成攻略：第一部分";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

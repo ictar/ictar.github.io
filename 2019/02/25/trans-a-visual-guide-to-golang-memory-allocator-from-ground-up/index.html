@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="原文：A visual guide to Go Memory Allocator from scratch (Golang)     当我第一次开始试图了解 Go 的内存分配器时，觉得它真令人抓狂。所有的所有都像是神秘的黑盒子。而由于几乎每一个技术魔法都隐藏在抽象之下，因此，你需要层层剥开才能理解它。  因此，在这篇博文中，我们将就做这件事。你想学习关于 Go 内存分配器的所有东西吗？那么，阅读这">
+<meta property="og:type" content="article">
+<meta property="og:title" content="译|从零开始的 Go 内存分配器可视化指南（golang）">
+<meta property="og:url" content="http://ictar.github.io/2019/02/25/trans-a-visual-guide-to-golang-memory-allocator-from-ground-up/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="原文：A visual guide to Go Memory Allocator from scratch (Golang)     当我第一次开始试图了解 Go 的内存分配器时，觉得它真令人抓狂。所有的所有都像是神秘的黑盒子。而由于几乎每一个技术魔法都隐藏在抽象之下，因此，你需要层层剥开才能理解它。  因此，在这篇博文中，我们将就做这件事。你想学习关于 Go 内存分配器的所有东西吗？那么，阅读这">
+<meta property="og:locale">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*FS11mGLFn7uyeSlJq15K6g.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*4Zygvzn9hwFc3NCg8uWUYQ.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*ry7d7jMPW5_GzyPPmHubgA.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/2000/1*ImbY2Tb3wZaeuKblwarFTg.jpeg">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*xek5BQhJhWqsOPAaA5uROw.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*Un3ffseQYt_y3vzObgMqfg.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*mvi6PRy9wu0KmBcP9YT5Cw.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*xeMzyUdfZe9HBQABl2t9Og.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*L6MpddL2RZY-kmguKL29jw.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*WBLW_v9sLqFMwNdn_DZ9AA.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*dWZLGb3sJWncTdEFVuhxzw.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*wF9KuVSk8o-16N64kB11UA.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*sEWsoabfndVlMDhzhdE-Mw.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*ypcI6WgmhQ2OyYbiucWSqA.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*HgVYn7Fd7UGnGSzbx-L0fA.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*rTsieglF6GO1NW78KN8vkQ.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*4bePvN9LhkTkPWlRIWGgew.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*JBeUo5u5l45-3qzEQrpJ3A.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*yX9Q92T4B1aHEoQWTQI36g.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*5pyhqsz3aVLyY_kRFc7Lig.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/1600/1*T9WO7O3EWTWJjCrxaOz4cg.png">
+<meta property="og:image" content="https://cdn-images-1.medium.com/max/2600/1*-OQBs5b4u65NRQM8aFukAw.png">
+<meta property="article:published_time" content="2019-02-25T13:48:28.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.985Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Golang">
+<meta property="article:tag" content="没事翻着玩">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn-images-1.medium.com/max/1600/1*FS11mGLFn7uyeSlJq15K6g.png">
+
+<link rel="canonical" href="http://ictar.github.io/2019/02/25/trans-a-visual-guide-to-golang-memory-allocator-from-ground-up/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>译|从零开始的 Go 内存分配器可视化指南（golang） | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2019/02/25/trans-a-visual-guide-to-golang-memory-allocator-from-ground-up/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          译|从零开始的 Go 内存分配器可视化指南（golang）
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-02-25 21:48:28" itemprop="dateCreated datePublished" datetime="2019-02-25T21:48:28+08:00">2019-02-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2019/02/25/trans-a-visual-guide-to-golang-memory-allocator-from-ground-up/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/02/25/trans-a-visual-guide-to-golang-memory-allocator-from-ground-up/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>原文：<a target="_blank" rel="noopener" href="https://blog.learngoprogramming.com/a-visual-guide-to-golang-memory-allocator-from-ground-up-e132258453ed">A visual guide to Go Memory Allocator from scratch (Golang)</a></p>
+<hr />
+<p>当我第一次开始试图了解 Go 的内存分配器时，觉得它真令人抓狂。所有的所有都像是神秘的黑盒子。而由于几乎每一个技术魔法都隐藏在抽象之下，因此，你需要层层剥开才能理解它。</p>
+<p>因此，在这篇博文中，我们将就做这件事。你想学习关于 Go 内存分配器的所有东西吗？那么，阅读这篇文章算是对了。</p>
+<hr />
+<h3 id="物理内存和虚拟内存">物理内存和虚拟内存</h3>
+<p>每一个内存分配器都需要使用由底层操作系统管理的虚拟内存空间。我们来看看它是如何工作的。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*FS11mGLFn7uyeSlJq15K6g.png" /></p>
+<p><em>上图为物理内存单元的一个简单说明（并非精确表示）</em></p>
+<p><strong>单个内存单元的大大简化概述：</strong></p>
+<ol type="1">
+<li>地址线（晶体管作为开关）提供对电容器（数据到数据线） 的访问。</li>
+<li>当地址线有电流流动时（显示为红色），那么数据线可以写入电容器，因此，电容器充电，存储的逻辑值为“1”。</li>
+<li>当地址线没有电流流动时（显示为绿色），那么数据线 不可以写入电容器，因此，电容器未充电，存储的逻辑值为“0”。</li>
+<li>当 CPU 需要从 RAM“读取”值时，电流会沿着“地址线”发送（关闭开关）。如果电容器正处于充电状态，那么电流则沿着“数据线”向下流动（值为 1）；否则，没有电流流过数据线，故而电容器保持不带电状态（值为 0）。</li>
+</ol>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*4Zygvzn9hwFc3NCg8uWUYQ.png" /></p>
+<p><em>（上图为物理内存单元与 CPU 交互方式的简单说明）</em></p>
+<p><strong>数据总线：</strong>在 CPU 和物理内存之间传输数据。</p>
+<p>让我们稍微聊聊<strong>地址线</strong>和<strong>可寻址字节。</strong></p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*ry7d7jMPW5_GzyPPmHubgA.png" /></p>
+<p><em>CPU 和物理内存之间的地址线的说明性表示。</em></p>
+<p>1. DRAM 中的每一个“字节”被赋予一个唯一的数字标识符（地址）。 <strong>“存在的物理字节 != 地址线的数目”。</strong>(<em>例如，16bit intel 8088, PAE</em>)</p>
+<p>2. 每一个地址线可以发送 1-bit 值，因此，它以给定字节地址的方式指定了“一位”。</p>
+<p>3. 在我们的图中，我们有 <strong>32 </strong>条地址线。因此，每一<strong>字节</strong>都有一个“32 位”地址。 <code>[ 00000000000000000000000000000000 ] — 低位内存地址。 [ 11111111111111111111111111111111 ] — 高位内存地址。</code></p>
+<p>4. 由于对于每个字节我们都有一个 32 位 地址，因此，我们的地址空间由 2³² 个可寻址字节（4 GB）组成（在上面的说明性表示中）。</p>
+<p>故而，可寻址字节依赖于总地址线，因此，对于 64 条地址线 （x86–64 CPU），则有 2⁶⁴ 个可寻址字节（16 个艾字节），但是，大多数使用 64 位指针的架构实际上使用的是 48 位地址线（AMD64）和 42 位地址线（Intel），因此，理论上允许 256 TB 的物理 RAM（Linux 允许<code>[带四级页面表](https://www.kernel.org/doc/Documentation/x86/x86_64/mm.txt)</code> 的 x86-64 上的每个进程拥有大小为 128TB 的地址空间，而 windows 则是 192TB）</p>
+<p>由于物理 RAM 的大小有限，因此，每个进程都运行在其自己的内存沙箱中 —— “虚拟地址空间”，又称<strong>虚拟内存。</strong></p>
+<p><strong>在此虚拟地址空间中的字节地址不再与处理器强加于地址总线的地址相同</strong>。一次呢，必须建立转换数据结构和系统，来将虚拟地址空间中的字节映射到物理字节。</p>
+<p>这个虚拟地址长啥样呢？</p>
+<p><img src="https://cdn-images-1.medium.com/max/2000/1*ImbY2Tb3wZaeuKblwarFTg.jpeg" /></p>
+<p><em>虚拟地址空间表示</em></p>
+<p>因此，当 CPU 执行引用内存地址的指令时，第一步就是将 VMA 中的逻辑地址转换为<strong>线性地址（linear address）。</strong>此转换由 <strong>MMU</strong> 完成。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*xek5BQhJhWqsOPAaA5uROw.png" /></p>
+<p><em>（这<strong>不是</strong>物理图，它只是描述。为简单起见，不包括地址转换过程。）</em></p>
+<p>由于该逻辑地址太大以致于不能实际（取决于各种因素）单独管理，因此，它们是按<strong>页</strong>进行管理的。当必要的分页结构被激活时，<strong>虚拟内存空间被分成较小的区域，这就是页</strong>（<strong>在大多数的 OS 上，大小为 4kB，可以修改</strong>）。这是虚拟内存中的内存管理的最小数据单元。虚拟内存并不存储任何内容，它只是将程序的地址空间_映射_到底层的物理内存。</p>
+<p>个别进程仅仅将此 VMA 视为其地址。<strong>因此，当我们的程序请求更多“堆内存”时，会发生什么呢？</strong></p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*Un3ffseQYt_y3vzObgMqfg.png" /></p>
+<p>上面是一个简单的汇编代码，它请求更多的堆内存。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*mvi6PRy9wu0KmBcP9YT5Cw.png" /></p>
+<p>上图为堆内存增量</p>
+<p>程序通过 <code>[brk](http://www.kernel.org/doc/man-pages/online/pages/man2/brk.2.html)</code>（<code>sbrk</code>/<code>mmap</code> 等）系统调用，请求更多的内存。</p>
+<p>内核仅仅更新堆 VMA，然后调用它。</p>
+<blockquote>
+<p>此时，实际上并没有分配任何页帧，而且新的页也不存在于物理内存中。关键是 VSZ 与 RSS 大小之间的差异点。</p>
+</blockquote>
+<hr />
+<h3 id="内存分配器">内存分配器</h3>
+<p>通过“虚拟地址空间”的基本概述，以及增加堆的含义，内存分配器现在变得更容易理解了。</p>
+<blockquote>
+<p>如果堆有足够的空间以满足代码的内存请求，那么内存分配器可以在没有内核参与的情况下完成请求，否则，它会通过系统（<code>_brk_</code>）调用来扩大堆，通常是请求大块内存。（默认情况下，分配大块内存意味着大于 MMAP_THRESHOLD 字节 -128 kB）。</p>
+</blockquote>
+<p>然而，与仅仅更新 <code>brk 地址</code> 相比，内存分配器会更尽职些。其中主要是如何同时<strong>减少</strong> <code>internal</code> 和 <code>external</code> 碎片，以及它可以<strong>多快</strong>分配块。考虑我们的程序以 p1 到 p4 的顺序，通过使用函数 <code>malloc(size)</code> 来请求连续内存块，然后使用函数 <code>free(pointer)</code> 释放该内存。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*xeMzyUdfZe9HBQABl2t9Og.png" /></p>
+<p><em>上图为外部碎片演示</em></p>
+<p>在步骤 p4 中，即使我们有足够的内存块，但是仍然无法满足对 6 个连续内存块的请求，从而导致内存碎片。</p>
+<p><strong>所以，我们要如何减少内存碎片呢？</strong>这个问题的答案取决于底层库使用的具体的内存分配算法。</p>
+<p>我们将看看 TCMalloc 概述，Go 内存分配器就是紧密模仿这个内存分配器的。</p>
+<hr />
+<h3 id="tcmalloc">TCMalloc</h3>
+<p><a target="_blank" rel="noopener" href="http://goog-perftools.sourceforge.net/doc/tcmalloc.html">TCMalloc（线程缓存内存分配）</a>的核心思想是将内存划分为多个级别，以减少锁粒度。TCMalloc 内存管理内部分为两部分：<strong>线程内存</strong>和<strong>页堆</strong>。</p>
+<h4 id="线程内存">线程内存</h4>
+<p>每个内存页分为 —— 多个可分配的固定大小规格（size class）的可用列表，这有助于减少<strong>碎片</strong>。因此，每个线程都将有一个没有锁的小对象缓存，这使得在并行程序下分配小对象（&lt;= 32k）效率很高。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*L6MpddL2RZY-kmguKL29jw.png" /></p>
+<p><em>线程缓存（每个线程都获取自己线程的本地线程缓存）</em></p>
+<h4 id="页堆page-heap">页堆（Page Heap）</h4>
+<p>TCMalloc 管理的堆由一组页组成，<strong>其中，一组连续的页可以用 span 来表示</strong>。当分配的对象大于 32K 时，页堆被用于分配。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*WBLW_v9sLqFMwNdn_DZ9AA.png" /></p>
+<p><em>页堆（用于 span 管理）</em></p>
+<p>当没有足够的内存来分配小对象时，就会转到页堆来分配内存。如果还是不够，那么页堆将会向操作系统请求更多的内存。</p>
+<p>由于这样的分配模型维护了一个用户空间的内存池，故而能够极大提高内存分配和释放的效率。</p>
+<blockquote>
+<p>注意：虽然说 go 内存分配器最初是基于 tcmalloc 的，但是二者之间已经分歧良多。</p>
+</blockquote>
+<hr />
+<h3 id="go-内存分配器">Go 内存分配器</h3>
+<p>我们知道，Go 运行时将 <strong>Goroutine</strong>（<strong>G</strong>）安排到<strong>逻辑处理器</strong>（<strong>P</strong>）上执行。同样，TCMalloc Go 也会将内存页划分成 <strong>67 </strong> 个不同大小规格。</p>
+<blockquote>
+<p>如果你不熟悉 Go 调度器，那么你可以看看概述（<a target="_blank" rel="noopener" href="https://povilasv.me/go-scheduler/">Go 调度器：M，P 和 G</a>），我会在这里等你看完。</p>
+</blockquote>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*dWZLGb3sJWncTdEFVuhxzw.png" /></p>
+<p><em>Go 的大小规格（size class）</em></p>
+<p>由于 Go 以 <strong>8192B </strong>的粒度管理页，因此如果该页面被分成大小为 <strong>1kB </strong>的块，那么，对于该页，我们就能获得总共 8 个这样的块。例如：</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*wF9KuVSk8o-16N64kB11UA.png" /></p>
+<p><em>8 KB 页面被分成 1KB 的大小规格（size class）（在 Go 中，页以 8KB 的粒度进行维护）</em></p>
+<p>Go 中这些页的运行也通过称为 <strong>mspan</strong> 的结构进行管理。</p>
+<h4 id="mspan">mspan</h4>
+<p>简单来说，它是一个双链表对象，包含页的起始地址（startAddr）、页的 span 类（spanClass）以及所包含的页数目（npages）。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*sEWsoabfndVlMDhzhdE-Mw.png" /></p>
+<p>内存分配器中的 mspan 的说明性表示</p>
+<h4 id="mcache">mcache</h4>
+<p>正如 TCMalloc，Go 为每个<strong>逻辑处理器（P）</strong> 提供一个称为 <strong>mcache</strong> 的本地线程缓存，因此，如果 Goroutine 需要内存，那么它可以直接从 <strong>mcache</strong> 获取，而无需涉及任何的<strong>锁</strong>，因为在任何时候，<strong>逻辑处理器（P）</strong> 上面只会运行一个 <strong>Goroutine</strong>。</p>
+<p><strong>mcache</strong> 包含一个由所有大小规格组成的 <strong>mspan</strong> 作为缓存。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*ypcI6WgmhQ2OyYbiucWSqA.png" /></p>
+<p><em>Go 中 P、mcache 和 mspan 之间关系的说明性表示。</em></p>
+<blockquote>
+<p>由于每个 P 都有 mcache，因此从 mcache 分配内存的时候无需持有锁。</p>
+</blockquote>
+<p>对于每一种大小规格，有两种类型。</p>
+<ol type="1">
+<li><strong>scan</strong> — 包含指针的对象。</li>
+<li><strong>noscan</strong> — 不包含指针的对象。</li>
+</ol>
+<p>这种方法的好处之一是在进行垃圾收集时，无需遍历 <strong>noscan</strong> 对象来找到任何包含活动对象的对象。</p>
+<p><strong>啥时会用到 mcache ？</strong></p>
+<blockquote>
+<p>大小 &lt;= 32K 字节的对象会使用相应大小规格（size class）的 mspan，直接分配到 mcache。</p>
+</blockquote>
+<p><strong>当 mcache 没有空闲的 slot 时，会发生什么？</strong></p>
+<p>从所需大小规格（size class）的 mspans 的 <strong>mcentral</strong> 列表中获取新的 mspan。</p>
+<h4 id="mcentral">mcentral</h4>
+<p>mcentral 对象收集给定大小规格（size class）的所有 span，每个 mcentral 由两个 mspans 列表组成。</p>
+<ol type="1">
+<li><strong>empty</strong> mspanList — 非空闲对象（或者缓存在 mcache 中）的 mspan 列表。</li>
+<li><strong>nonempty</strong> mspanList — 拥有空闲对象的 span 列表。</li>
+</ol>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*HgVYn7Fd7UGnGSzbx-L0fA.png" /></p>
+<p><em>mcentral 的说明性表示</em></p>
+<p><strong>mheap</strong> 结构维护每一个 mcentral 结构。</p>
+<h4 id="mheap">mheap</h4>
+<blockquote>
+<p>mheap 是 Go 中管理堆的对象，全局只有一个 mheap 实例。它拥有虚拟地址空间。</p>
+</blockquote>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*rTsieglF6GO1NW78KN8vkQ.png" /></p>
+<p><em>mheap 的说明性表示。</em></p>
+<p>正如上面说明所示，<strong>mheap 拥有一个 mcentral 数组</strong>。<strong>该数组包含由每个 span 类组成的 mcentral</strong>。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">central [numSpanClasses]<span class="keyword">struct</span> &#123;  </span><br><span class="line">  	mcentral mcentral  </span><br><span class="line">    	pad      [sys.CacheLineSize unsafe.Sizeof(mcentral&#123;&#125;)%sys.CacheLineSize]<span class="keyword">byte</span>  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>由于对于每个 span 大小规格（size class），我们都有 mcentral，因此当 <strong>mcache</strong> 向 mcentral 请求 <strong>mspan</strong> 时，<strong>lock</strong> 被应用于单个 <strong>mcentral</strong> 级别，因此，还可以服务于任何其他同时请求不同大小的 <strong>mspan</strong> 的 <strong>mcache</strong>。</p>
+</blockquote>
+<p><em>填充（Padding）确保 MCentral 固定 CacheLineSize 字节的间隔，这样，每一个 MCentral.lock 就可以获得自己的缓存行</em>，从而避免错误的共享问题。</p>
+<p>那么，当这个 <strong>mcentral</strong> 列表为空时，会发生什么呢？<strong>mcentral</strong> 会从 <strong>mheap</strong> 获取一连串的页，以组成所需大小规格（size class）的 span。</p>
+<ul>
+<li><strong>free [_MaxMHeapList]mSpanList</strong>：这是一个 spanList 数组。每一个 spanList 中的 <strong>mspan</strong> 由 1 ~ 127（_MaxMHeapList — 1）个页组成。例如，free[3] 是一个包含 3 个页的 <strong>mspans</strong> 链表。free 意味着空闲列表，也就是未分配。相对应的是 busy 列表。</li>
+<li><strong>freelarge mSpanList</strong>：<strong>mspans</strong> 列表。列表中每个元素（也就是 mspan）的页数都比 127 大。这作为 mtreap 数据结构进行维护。相对应的是 busylarge。</li>
+</ul>
+<blockquote>
+<p>大小 &gt; 32k 的对象是一个大对象，直接从 mheap 分配。这些大对象的分配请求是以中央锁为代价的，因此，在任何给定时间点只能处理一个 P 的请求。</p>
+</blockquote>
+<h3 id="对象分配流程">对象分配流程</h3>
+<ul>
+<li><p>大小 &gt; 32k 属于大对象，直接从 <strong>mheap</strong> 分配。</p></li>
+<li><p>大小 &lt; 16B 的对象，则使用 mcache 的微小分配器（tiny allocator）进行分配</p></li>
+<li><p>大小介于 16B ~ 32k 之间的对象，则会计算要使用的 sizeClass，然后使用 mcache 中对应的 sizeClass 的块分配</p>
+<ul>
+<li><p>如果 mcache 相应的 sizeClass 没有可用的块，则向 mcentral 申请。</p></li>
+<li><p>如果 mcentral 没有可用的块，那么向 mheap 申请，然后<strong>使用 BestFit 来查找最适合的 mspan</strong>。如果超出了应用程序大小，那么，将根据需要进行划分，以返回用户所需的页数。其余的页面构成一个新的 mspan，并返回 mheap free 列表。</p></li>
+<li><p>如果 mheap 没有可用的 span，那么向操作系统申请一组新的页（至少 1MB）。</p></li>
+</ul></li>
+</ul>
+<blockquote>
+<p>但是，Go 在操作系统级别分配更大的页（称为 arena）。分配大量的页会分摊与操作系统通信的成本。</p>
+</blockquote>
+<p><strong>堆上请求的所有内存都来自 arena。</strong>让我们来看看这个 arena 长啥样。</p>
+<h3 id="go-虚拟内存">Go 虚拟内存</h3>
+<p>让我们看看一个简单的 go 程序的内存。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;  </span><br><span class="line">    <span class="keyword">for</span> &#123;&#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*4bePvN9LhkTkPWlRIWGgew.png" /></p>
+<p><em>一个程序的进程统计信息</em></p>
+<p>所以，即使是一个简单的 go 程序，其虚拟空间大小也大概为 <code>~100 MB</code>，而 RSS 则只有 <code>696kB</code>。我们先尝试弄清楚这种差异。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*JBeUo5u5l45-3qzEQrpJ3A.png" /></p>
+<p><em>map 和 smap 统计信息。</em></p>
+<p>所以，存在大小大约为 <code>2MB，64MB 和 32MB</code> 的内存区域。那么，这些是什么呢？</p>
+<h4 id="arena">arena</h4>
+<p>原来，Go 中的虚拟内存层由一<strong>组 arena</strong> 组成。初始堆映射是一个 arena，即 <code>64MB</code>（基于 go 1.11.5）。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*yX9Q92T4B1aHEoQWTQI36g.png" /></p>
+<p><em>不同系统上的当前增量 arena 大小。</em></p>
+<p>因此，当前内存会按照我们程序所需以小增量进行映射，并且以一个 arena（约 64 MB）开始。</p>
+<p><em>请带着怀疑的态度来看待这些数字。它们是可调整的。</em> 之前，<code>go</code> 用来预先保留连续的虚拟地址，在 64 位系统上，arena 的大小是 512 GB。（如果分配足够大，并且<strong>被 mmap 拒绝分配</strong>的话，会发生什么呢？）</p>
+<p><strong>这一组 arena 就是我们所说的堆。</strong> 在 Go 中，每一个 arena 都以页（大小为 <code>8192 B</code>）粒度进行管理。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*5pyhqsz3aVLyY_kRFc7Lig.png" /></p>
+<p><em>一个 arena（64 MB）</em></p>
+<p>Go 还有两个块：<strong>span</strong> 和 <strong>bitmap</strong>。<strong>它们都在堆外分配，并且包含每个 arena 的元数据。</strong>它们主要在垃圾回收期间使用（所以我们这里暂且不提）。</p>
+<hr />
+<p>我们刚刚讨论过的 Go 中的分配策略分类，只是涉及到丰富多彩的内存分配的皮毛。</p>
+<p>然而，Go 内存管理的一般思想是，对于不同大小的对象，使用不同缓存级别的内存的内存结构来分配内存。将从操作系统获得的单个连续地址块划分为不同级别的缓存，通过减少锁来提高内存分配效率，然后根据指定的大小分配内存分配，以减少内存碎片，并在释放内存后实现更快的垃圾回收。</p>
+<p>现在，我就把这份 Go 内存分配器的可视化概述交给你。</p>
+<p><img src="https://cdn-images-1.medium.com/max/1600/1*T9WO7O3EWTWJjCrxaOz4cg.png" /></p>
+<p><em>运行时内存分配器的可视化概述。</em></p>
+<p><img src="https://cdn-images-1.medium.com/max/2600/1*-OQBs5b4u65NRQM8aFukAw.png" /></p>
+<p>好了，今天就到这了。感谢你的阅读。</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Golang/" rel="tag"># Golang</a>
+              <a href="/tags/%E6%B2%A1%E4%BA%8B%E7%BF%BB%E7%9D%80%E7%8E%A9/" rel="tag"># 没事翻着玩</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/01/31/trans-http-3-from-root-to-tip/" rel="prev" title="译|HTTP/3：从起源到建议">
+      <i class="fa fa-chevron-left"></i> 译|HTTP/3：从起源到建议
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/05/14/an-overview-of-go-tooling/" rel="next" title="译|Go 的工具箱综述">
+      译|Go 的工具箱综述 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%89%A9%E7%90%86%E5%86%85%E5%AD%98%E5%92%8C%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98"><span class="nav-number">1.</span> <span class="nav-text">物理内存和虚拟内存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E5%99%A8"><span class="nav-number">2.</span> <span class="nav-text">内存分配器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#tcmalloc"><span class="nav-number">3.</span> <span class="nav-text">TCMalloc</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E5%86%85%E5%AD%98"><span class="nav-number">3.1.</span> <span class="nav-text">线程内存</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%A1%B5%E5%A0%86page-heap"><span class="nav-number">3.2.</span> <span class="nav-text">页堆（Page Heap）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#go-%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E5%99%A8"><span class="nav-number">4.</span> <span class="nav-text">Go 内存分配器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#mspan"><span class="nav-number">4.1.</span> <span class="nav-text">mspan</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mcache"><span class="nav-number">4.2.</span> <span class="nav-text">mcache</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mcentral"><span class="nav-number">4.3.</span> <span class="nav-text">mcentral</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#mheap"><span class="nav-number">4.4.</span> <span class="nav-text">mheap</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%B9%E8%B1%A1%E5%88%86%E9%85%8D%E6%B5%81%E7%A8%8B"><span class="nav-number">5.</span> <span class="nav-text">对象分配流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#go-%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98"><span class="nav-number">6.</span> <span class="nav-text">Go 虚拟内存</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#arena"><span class="nav-number">6.1.</span> <span class="nav-text">arena</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2019/02/25/trans-a-visual-guide-to-golang-memory-allocator-from-ground-up/";
+    this.page.identifier = "2019/02/25/trans-a-visual-guide-to-golang-memory-allocator-from-ground-up/";
+    this.page.title = "译|从零开始的 Go 内存分配器可视化指南（golang）";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="有一件事，基本贯穿了我在华为的两年多。 当时刚到项目组不到一个月，负责产品版本管理的同事被通知到科特迪瓦出差，因此就把版本的事都交给了另一个同事。而本着每个角色都要有个backup的想法（这个想法其实是很不错的，可惜到后面慢慢的就没坚持下去了），LM把我们都叫过来问我们谁愿意当那个backup。在大家沉默不语的时候，我头脑一热，举起了手。后来的后来，每每提及此事，都感慨自己真是年轻呀~~ 好，那就">
+<meta property="og:type" content="article">
+<meta property="og:title" content="我在华为的两三事(二)">
+<meta property="og:url" content="http://ictar.github.io/2015/11/23/%E6%88%91%E5%9C%A8%E5%8D%8E%E4%B8%BA%E7%9A%84%E4%B8%A4%E4%B8%89%E4%BA%8B(%E4%BA%8C)/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="有一件事，基本贯穿了我在华为的两年多。 当时刚到项目组不到一个月，负责产品版本管理的同事被通知到科特迪瓦出差，因此就把版本的事都交给了另一个同事。而本着每个角色都要有个backup的想法（这个想法其实是很不错的，可惜到后面慢慢的就没坚持下去了），LM把我们都叫过来问我们谁愿意当那个backup。在大家沉默不语的时候，我头脑一热，举起了手。后来的后来，每每提及此事，都感慨自己真是年轻呀~~ 好，那就">
+<meta property="og:locale">
+<meta property="article:published_time" content="2015-11-23T08:18:25.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.948Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="经历">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2015/11/23/%E6%88%91%E5%9C%A8%E5%8D%8E%E4%B8%BA%E7%9A%84%E4%B8%A4%E4%B8%89%E4%BA%8B(%E4%BA%8C)/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>我在华为的两三事(二) | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2015/11/23/%E6%88%91%E5%9C%A8%E5%8D%8E%E4%B8%BA%E7%9A%84%E4%B8%A4%E4%B8%89%E4%BA%8B(%E4%BA%8C)/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          我在华为的两三事(二)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2015-11-23 16:18:25" itemprop="dateCreated datePublished" datetime="2015-11-23T16:18:25+08:00">2015-11-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BF%99%E5%B0%B1%E6%98%AF%E7%94%9F%E6%B4%BB/" itemprop="url" rel="index"><span itemprop="name">这就是生活</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2015/11/23/%E6%88%91%E5%9C%A8%E5%8D%8E%E4%B8%BA%E7%9A%84%E4%B8%A4%E4%B8%89%E4%BA%8B(%E4%BA%8C)/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/11/23/我在华为的两三事(二)/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>有一件事，基本贯穿了我在华为的两年多。 当时刚到项目组不到一个月，负责产品版本管理的同事被通知到科特迪瓦出差，因此就把版本的事都交给了另一个同事。而本着每个角色都要有个backup的想法（这个想法其实是很不错的，可惜到后面慢慢的就没坚持下去了），LM把我们都叫过来问我们谁愿意当那个backup。在大家沉默不语的时候，我头脑一热，举起了手。后来的后来，每每提及此事，都感慨自己真是年轻呀~~ 好，那就当backup吧。反正主负责人在，也没我啥事。可惜没多久，主负责人也去出差了，接手的另一个同事也忙，事情就落在了我这个backup身上。</p>
+<p>这里要提下版本流程。负责版本管理的人要在某个时间进行版本计划收集、确认，在计划时间点对版本进行转测试。版本测试结束后要将所有版本资料整理成规定形式，通知QA进行检查，跟踪版本流程，输出版本度量表。</p>
+<p>其实这些都不难，只是事情相当繁琐，过程略复杂让人记不住而已。加之还要将印度团队的版本归入，每月两次的版本发布是我最为烦躁的时候。</p>
+<p>就这样被折腾了一段时间，在某天项目清闲的时候，我终于忍不住，想对这个过程进行自动化。当然，全自动化是理想，半自动化却相对比较容易实现不是。这个决定大大提高了版本管理的效率，减缓了我的焦躁，以及奠定了我对python的喜爱。</p>
+<p>先是用脚本统计N份文档中的代码量，然后将所有版本资料整理成规定形式，接着检查资料规范及完整性。随着对win32com这个python库进一步熟悉，还用它帮忙拷贝几十份文档的病毒扫描结果，提取相关信息以帮助输出版本度量表。从此，QA能挑出的毛病越来越少，我花在版本这件事上的时间也越来越少。而因为大大减少了文档的打开及复制粘贴，从此手也不酸了。直接跑个脚本，然后该干嘛干嘛。</p>
+<p>人生苦短，我用python.</p>
+<p>用脚本实现这些繁琐的工作，还有一个好处。中途因为出差，将版本这件事转交给另一个同事的时候，我只需要告诉他怎么使用这些脚本即可。</p>
+<p>版本管理这个事情，是我在华为两年多的时间内做的最为完美的两件事之一。即使这个事情，无人关注，无人了解。在这个过程中，我认识了好几个可爱的QA（其中一个还生了一对双胞胎），认识了约好来SZ要找我玩的某CMO，认识了印度妹子P<strong>和S</strong>，S**在我因出差交接的时候每次每次都跟我说希望我回来还能继续做版本的事，在我走的时候还坚持要给我的领导写感谢信。 当然，也有遗憾。在离开前本来是想更进一步自动化的，但因为技能跟不上想法，加之跑去做项目组的产品知识库了。就此搁浅。</p>
+<p>说到项目组的产品知识库，源于当时在学习django。与此同时，在处理问题的过程中迫切的需要知道是否有相同的案例及对应的解决方案和版本，加之平台每次发布版本就只有几个人知道有什么功能变动。learning by doing，确实是一个非常好的学习方式！</p>
+<p>所以我用django+sqlite+bootstrap做了一个博客，用于平台功能改动点和案例共享，提供查询功能。我给每一篇文章添加标签，用于方便的查找某方面的信息。后来，我还增加了一个栏目，用于分享一些非官方的材料。我希望通过它，一些反反复复出现的问题一下子就可以根据从前的经验得到解决，我们可以很容易的知道产品有什么能力有什么不足。自从这个博客完成后，每当项目群里讨论某个问题的时候，有人甩出博客中的一个链接，我就觉得非常自豪。</p>
+<p>每一个产品，都应该有一个属于它自己的博客，界面友好，易于查找。这个博客是服务于团队内部的。它的内容是这个产品有关的所有信息，即使是新手，也可以从中直接快速的学习到关于这个产品的方方面面，避免弯路。而界面往往会关系到人们是否会愿意使用，无法或很难进行搜索则直接影响到这个博客的可用性。 而做一个博客有多难呢？我一个人，从啥都不会到信息录入用了不到两周的时间。（说到这个信息录入，当时的我应该也来自动化一把的，╮(╯▽╰)╭）</p>
+<p>经过了这些，我开始喜欢将一些繁琐的事情交给自动化。因为繁琐，所以常常有规则，有规则则可编程。这一方面，python帮了我很大的忙。 我一直相信，人类是可以从大量重复的工作中解放出来的，这样，更有时间去关注生活，关注自己。</p>
+<p>在华为的这两年多的时间内，我做了很多事。协助过销售，调研分析过需求，做过开发，也在现网交付测试过，维护解决了很多问题，做过项目组的人力预算，管理过整个版本流程。在异国他乡行走过，视野也开阔起来。我遇到了很多很多的人，他们都对我很好很好。</p>
+<p>我的能力还不够，但是我会学习会尝试。我时常有些想法，虽然不成熟，但是当一开始实现了总能让人激动。未来有无限的可能，只要你敢，你愿意。</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E7%BB%8F%E5%8E%86/" rel="tag"># 经历</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2015/11/22/%5B%E8%AF%91%5D%E6%AF%94%E4%B8%80%E6%AF%94%EF%BC%9APython%E7%9A%84%E4%B8%83%E4%B8%AA%E6%95%B0%E6%8D%AE%E5%8F%AF%E8%A7%86%E5%8C%96%E5%B7%A5%E5%85%B7/" rel="prev" title="译|比一比：Python的七个数据可视化工具">
+      <i class="fa fa-chevron-left"></i> 译|比一比：Python的七个数据可视化工具
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2015/12/01/%5B%E8%AF%91%5D%E6%8B%B7%E8%B4%9D-%E6%B5%85%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B7%B1%E6%8B%B7%E8%B4%9D/" rel="next" title="译|拷贝-浅拷贝与深拷贝">
+      译|拷贝-浅拷贝与深拷贝 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2015/11/23/%E6%88%91%E5%9C%A8%E5%8D%8E%E4%B8%BA%E7%9A%84%E4%B8%A4%E4%B8%89%E4%BA%8B(%E4%BA%8C)/";
+    this.page.identifier = "2015/11/23/我在华为的两三事(二)/";
+    this.page.title = "我在华为的两三事(二)";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

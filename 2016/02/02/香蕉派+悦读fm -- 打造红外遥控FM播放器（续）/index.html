@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="前面的香蕉派+悦读fm:打造红外遥控FM播放器讲了怎么使用红外遥控。当时留了一个接下来的任务。这两天弄完并经过长时间的验证，觉得尚可行。那么回家前就说说怎么增加按键控制和频道选择吧  安装mplayer 之前用的是mpg123。虽然mpg123有个命令参数-C可以进行基本的音量控制，播放控制等操作，但是无奈它并不支持PIPE控制，因此python.subprocess也就派不上用场。而虽然它还有一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="香蕉派+悦读fm:打造红外遥控FM播放器（续）">
+<meta property="og:url" content="http://ictar.github.io/2016/02/02/%E9%A6%99%E8%95%89%E6%B4%BE+%E6%82%A6%E8%AF%BBfm%20--%20%E6%89%93%E9%80%A0%E7%BA%A2%E5%A4%96%E9%81%A5%E6%8E%A7FM%E6%92%AD%E6%94%BE%E5%99%A8%EF%BC%88%E7%BB%AD%EF%BC%89/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="前面的香蕉派+悦读fm:打造红外遥控FM播放器讲了怎么使用红外遥控。当时留了一个接下来的任务。这两天弄完并经过长时间的验证，觉得尚可行。那么回家前就说说怎么增加按键控制和频道选择吧  安装mplayer 之前用的是mpg123。虽然mpg123有个命令参数-C可以进行基本的音量控制，播放控制等操作，但是无奈它并不支持PIPE控制，因此python.subprocess也就派不上用场。而虽然它还有一">
+<meta property="og:locale">
+<meta property="article:published_time" content="2016-02-02T02:04:38.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.957Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="香蕉派">
+<meta property="article:tag" content="随便折腾">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2016/02/02/%E9%A6%99%E8%95%89%E6%B4%BE+%E6%82%A6%E8%AF%BBfm%20--%20%E6%89%93%E9%80%A0%E7%BA%A2%E5%A4%96%E9%81%A5%E6%8E%A7FM%E6%92%AD%E6%94%BE%E5%99%A8%EF%BC%88%E7%BB%AD%EF%BC%89/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>香蕉派+悦读fm:打造红外遥控FM播放器（续） | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2016/02/02/%E9%A6%99%E8%95%89%E6%B4%BE+%E6%82%A6%E8%AF%BBfm%20--%20%E6%89%93%E9%80%A0%E7%BA%A2%E5%A4%96%E9%81%A5%E6%8E%A7FM%E6%92%AD%E6%94%BE%E5%99%A8%EF%BC%88%E7%BB%AD%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          香蕉派+悦读fm:打造红外遥控FM播放器（续）
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-02-02 10:04:38" itemprop="dateCreated datePublished" datetime="2016-02-02T10:04:38+08:00">2016-02-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%A6%99%E8%95%89%E6%B4%BE/" itemprop="url" rel="index"><span itemprop="name">香蕉派</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2016/02/02/%E9%A6%99%E8%95%89%E6%B4%BE+%E6%82%A6%E8%AF%BBfm%20--%20%E6%89%93%E9%80%A0%E7%BA%A2%E5%A4%96%E9%81%A5%E6%8E%A7FM%E6%92%AD%E6%94%BE%E5%99%A8%EF%BC%88%E7%BB%AD%EF%BC%89/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/02/02/香蕉派+悦读fm -- 打造红外遥控FM播放器（续）/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>前面的<a href="/2016/01/26/香蕉派+悦读fm%20--%20打造红外遥控FM播放器/">香蕉派+悦读fm:打造红外遥控FM播放器</a>讲了怎么使用红外遥控。当时留了一个接下来的任务。这两天弄完并经过长时间的验证，觉得尚可行。那么回家前就说说怎么增加按键控制和频道选择吧</p>
+<h1 id="安装mplayer">安装mplayer</h1>
+<p>之前用的是mpg123。虽然mpg123有个命令参数<code>-C</code>可以进行基本的音量控制，播放控制等操作，但是无奈它并不支持PIPE控制，因此python.subprocess也就派不上用场。而虽然它还有一个参数<code>-R</code>配合<code>--fifo</code>可以进行远程操作，也就是PIPE可用。但还有个问题，在这种远程操作模式下可用命令是非常有限的，其实就没有我想要的可以上下切音频的命令。因此，转而用mplayer。</p>
+<p>MPlayer有一个参数<code>-slave</code>，配合另一个选项<code>-input filename</code>使用，可以往<code>filename</code>中写入命令（<code>mplayer -input cmdlist</code>可以显示所有可用命令）以控制MPlayer，达到控制音量、上下切换音频等目的。</p>
+<p>安装mplayer很简单，直接<code>apt-get install mplayer</code>即可。 安装后测试使用：<code>mplayer xxx.mp3</code>。</p>
+<p>不知道怎么的，虽然安装顺利，但是在使用的时候会遇到例如<code>libbcm_host.so</code>文件缺失之类的问题。这个文件在香蕉派中完全查不到任何信息，但是却在树莓派的firmware里面找到了。死马当活马医吧。把缺失的<code>.so</code>文件在<a target="_blank" rel="noopener" href="https://github.com/raspberrypi/firmware/tree/master/opt/vc/lib">respberrypi/firmware/opt/vc/lib/</a>下找到后，下载到香蕉派的<code>/usr/lib</code>目录下。Bingo，最后居然也可用了。</p>
+<h1 id="写点代码">写点代码</h1>
+<h2 id="配置lircr文件">配置lircr文件</h2>
+<p>将/etc/lirc/lircr文件修改如下： <figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># XIXI MODES BEGIN</span></span><br><span class="line">begin xixi</span><br><span class="line">	begin</span><br><span class="line">		prog = xixi</span><br><span class="line">		button = KEY_PREVIOUS</span><br><span class="line">		config = KEY_PREVIOUS</span><br><span class="line">	end</span><br><span class="line">	begin</span><br><span class="line">		prog = xixi</span><br><span class="line">		button = KEY_NEXT</span><br><span class="line">		config = KEY_NEXT</span><br><span class="line">	end</span><br><span class="line">	begin</span><br><span class="line">		prog = xixi</span><br><span class="line">		button = KEY_PLAY</span><br><span class="line">		config = KEY_PLAY <span class="comment">#这两个配置的意思是，按一次KEY_PLAY会得到KEY_PLAY</span></span><br><span class="line">		config = KEY_PAUSE <span class="comment"># 再按一次，会得到KEY_PAUSE，这样轮流取值</span></span><br><span class="line">	end</span><br><span class="line">	begin</span><br><span class="line">		prog = xixi</span><br><span class="line">		button = KEY_VOLUMEDOWN</span><br><span class="line">		config = KEY_VOLUMEDOWN</span><br><span class="line">	end</span><br><span class="line">	begin</span><br><span class="line">		prog = xixi</span><br><span class="line">		button = KEY_VOLUMEUP</span><br><span class="line">		config = KEY_VOLUMEUP</span><br><span class="line">	end</span><br><span class="line">	begin</span><br><span class="line">		prog = xixi</span><br><span class="line">		button = KEY_EQUAL</span><br><span class="line">		config = KEY_EQUAL</span><br><span class="line">	end</span><br><span class="line">	begin</span><br><span class="line">		prog = xixi</span><br><span class="line">		button = KEY_0</span><br><span class="line">		config = KEY_0</span><br><span class="line">	end</span><br><span class="line">	begin</span><br><span class="line">		prog = xixi</span><br><span class="line">		button = KEY_1</span><br><span class="line">		config = KEY_1</span><br><span class="line">	end</span><br><span class="line">end xixi</span><br></pre></td></tr></table></figure> ## 频道0：播放本地音乐 因为我们需要全局控制进行，因此，使用subprocess后，应该还要返回一个子进程对象。 <figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">play_local_music</span>():</span></span><br><span class="line">	<span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">	local musics in /samba/DLNA/Music/</span></span><br><span class="line"><span class="string">	&#x27;&#x27;&#x27;</span></span><br><span class="line">	path = <span class="string">r&quot;/samba/DLNA/Music/*.*&quot;</span> <span class="comment"># 本地音乐存储目录</span></span><br><span class="line">	child_process =	subprocess.Popen(<span class="string">&quot;mplayer -slave -input file=cmd_pannel -shuffle -quiet %s&quot;</span> % path, <span class="comment">#若使用列表，会导致没法播放指定目录下的所有文件</span></span><br><span class="line">		shell=<span class="literal">True</span>,</span><br><span class="line">	)</span><br><span class="line">	<span class="keyword">return</span> child_process, []</span><br></pre></td></tr></table></figure> ## 频道1：播放悦读FM 同样的，要返回一个子进程对象。 <figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">import</span> random</span><br><span class="line"><span class="keyword">import</span> subprocess</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">play_yuedu_fm</span>():</span></span><br><span class="line">	<span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">	yuedu.fm</span></span><br><span class="line"><span class="string">	&#x27;&#x27;&#x27;</span></span><br><span class="line">	path = <span class="string">r&quot;./yuedu.fm-fetcher/output&quot;</span> <span class="comment"># yuedu.fm的音频信息保存目录</span></span><br><span class="line">	items = [item <span class="keyword">for</span> item <span class="keyword">in</span> os.listdir(path) <span class="keyword">if</span> item.startswith(<span class="string">&quot;articles&quot;</span>)]</span><br><span class="line">	item = items[random.randint(<span class="number">0</span>,<span class="built_in">len</span>(items)-<span class="number">1</span>)] <span class="comment"># 随机选择一个articles</span></span><br><span class="line">	articles = json.load(file(os.path.join(path,item)))</span><br><span class="line">  play_list = [art[<span class="string">&quot;audio&quot;</span>] <span class="keyword">for</span> art <span class="keyword">in</span> articles[<span class="string">&quot;list&quot;</span>]]</span><br><span class="line">	child_process =	subprocess.Popen(</span><br><span class="line">		[<span class="string">&quot;mplayer&quot;</span>,<span class="string">&#x27;-cache&#x27;</span>, <span class="string">&#x27;1000&#x27;</span>, <span class="string">&#x27;-cache-min&#x27;</span>, <span class="string">&#x27;70&#x27;</span>,<span class="string">&#x27;-slave&#x27;</span>,<span class="string">&#x27;-input&#x27;</span>, <span class="string">&#x27;file=cmd_pannel&#x27;</span>,<span class="string">&#x27;-quiet&#x27;</span>] + play_list]</span><br><span class="line">	) <span class="comment"># 是滴，这里就是用slave模式</span></span><br><span class="line">	<span class="keyword">return</span> (child_process, play_list)</span><br></pre></td></tr></table></figure> ## 其他播放控制 用slave模式打开MPlayer后，我们就可以往控制文件(这里是<code>cmd_pannel</code>)写入命令来控制了播放上/下一首、音量增减、暂停/播放和关闭。</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> lirc</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">play_next</span>():</span> <span class="comment">#播放下一首</span></span><br><span class="line">	os.popen(<span class="string">&quot;echo &#x27;pt_step 1&#x27; &gt; cmd_pannel&quot;</span>)</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">play_prev</span>():</span> <span class="comment">#播放上一首</span></span><br><span class="line">	os.popen(<span class="string">&quot;echo &#x27;pt_step -1&#x27; &gt; cmd_pannel&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">play_pause</span>():</span> <span class="comment">#暂停/播放</span></span><br><span class="line">	os.popen(<span class="string">&quot;echo &#x27;pause&#x27; &gt; cmd_pannel&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">volumn_down</span>():</span> <span class="comment"># 减少音量</span></span><br><span class="line">	os.popen(<span class="string">&quot;echo &#x27;volume -10&#x27; &gt; cmd_pannel&quot;</span>)</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">volumn_up</span>():</span> <span class="comment"># 增加音量</span></span><br><span class="line">	os.popen(<span class="string">&quot;echo &#x27;volume 10&#x27; &gt; cmd_pannel&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">quit</span>(<span class="params">child_process</span>):</span> <span class="comment"># 退出Mplayer。这里需要传递一个子进程对象</span></span><br><span class="line">	os.popen(<span class="string">&quot;echo &#x27;quit&#x27; &gt; cmd_pannel&quot;</span>)</span><br><span class="line">	child_process.terminate() <span class="comment"># 有时候这里的terminate会关不干净</span></span><br><span class="line">	os.system(<span class="string">&quot;killall -9 mplayer&quot;</span>) <span class="comment"># 以防万一</span></span><br><span class="line">	os.popen(<span class="string">&quot;echo &#x27;&#x27; &gt; cmd_pannel&quot;</span>) <span class="comment"># 以防下次启动MPlayer时里面的值会影响</span></span><br></pre></td></tr></table></figure>
+<h2 id="把它们放在一起">把它们放在一起</h2>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#-*- coding: utf-8 -*-</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">no_operation</span>(<span class="params">*args,**kw</span>):</span> <span class="comment"># 默认操作</span></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>,[]</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">	channel_map = &#123; <span class="comment"># 频道映射</span></span><br><span class="line">		<span class="string">&quot;KEY_0&quot;</span> : play_local_music,</span><br><span class="line">		<span class="string">&quot;KEY_1&quot;</span> : play_yuedu_fm,</span><br><span class="line">	&#125;</span><br><span class="line">	operation_map = &#123; <span class="comment"># 命令映射</span></span><br><span class="line">		<span class="string">&quot;KEY_PREVIOUS&quot;</span> : play_prev,</span><br><span class="line">		<span class="string">&quot;KEY_NEXT&quot;</span> : play_next,</span><br><span class="line">		<span class="string">&quot;KEY_PLAY&quot;</span> : play_pause,</span><br><span class="line">		<span class="string">&quot;KEY_PAUSE&quot;</span> : play_pause,</span><br><span class="line">		<span class="string">&quot;KEY_VOLUMEDOWN&quot;</span> : volumn_down,</span><br><span class="line">		<span class="string">&quot;KEY_VOLUMEUP&quot;</span> : volumn_up,</span><br><span class="line">		<span class="string">&quot;KEY_EQUAL&quot;</span> : quit,</span><br><span class="line">	&#125;</span><br><span class="line">	sockid = lirc.init(<span class="string">&quot;xixi&quot;</span>)</span><br><span class="line">	pid, play_list = <span class="literal">None</span>, []</span><br><span class="line">	<span class="keyword">while</span> <span class="literal">True</span>: <span class="comment"># 不断轮询</span></span><br><span class="line">		rc = lirc.nextcode()</span><br><span class="line">		<span class="keyword">if</span> rc <span class="keyword">and</span> rc[<span class="number">0</span>] <span class="keyword">in</span> channel_map: <span class="comment"># 若按键是频道按键</span></span><br><span class="line">			<span class="keyword">if</span> pid: quit(pid) <span class="comment"># 若之前有子进程在运行，先把它干掉</span></span><br><span class="line">			pid, play_list = channel_map.get(rc[<span class="number">0</span>],no_operation)()</span><br><span class="line">			<span class="keyword">continue</span></span><br><span class="line">		<span class="keyword">if</span> <span class="string">&quot;KEY_EQUAL&quot;</span> <span class="keyword">in</span> rc <span class="keyword">and</span> pid: <span class="comment"># 退出子进程</span></span><br><span class="line">			operation_map.get(<span class="string">&quot;KEY_EQUAL&quot;</span>,no_operation)(pid)</span><br><span class="line">			<span class="keyword">continue</span></span><br><span class="line">		<span class="keyword">if</span> rc:</span><br><span class="line">			operation_map.get(rc[<span class="number">0</span>], no_operation)()</span><br></pre></td></tr></table></figure>
+<h1 id="最后">最后……</h1>
+<ol type="1">
+<li>把它放在/etc/rc.local文件中，设置开机自启动，然后想干啥干啥。</li>
+<li>目前我只用了两个频道，要增添频道只要修改lircrc文件，增加频道映射和相应的播放函数即可</li>
+<li>♪(<sup>∇</sup>*)可以回家了~~</li>
+</ol>
+<h1 id="参考文档">参考文档</h1>
+<ul>
+<li><code>man mplayer</code></li>
+<li><a target="_blank" rel="noopener" href="http://www.mplayerhq.hu/DOCS/tech/slave.txt">Mplayer slave mode</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E9%A6%99%E8%95%89%E6%B4%BE/" rel="tag"># 香蕉派</a>
+              <a href="/tags/%E9%9A%8F%E4%BE%BF%E6%8A%98%E8%85%BE/" rel="tag"># 随便折腾</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2016/01/28/%E6%96%B0%E6%B5%AA%E5%BE%AE%E5%8D%9A%E8%87%AA%E5%8A%A8%E7%99%BB%E5%BD%95%E4%B8%8E%E5%BE%AE%E5%8D%9A%E5%8F%91%E9%80%81/" rel="prev" title="新浪微博自动登录与微博发送">
+      <i class="fa fa-chevron-left"></i> 新浪微博自动登录与微博发送
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2016/03/01/2016%E5%B9%B4%E7%82%B9%E4%BA%AE%E6%8A%80%E8%83%BD%E6%A0%91%E7%9A%84%E6%9F%90%E4%B8%AA%E6%9E%9D%E6%A1%A0/" rel="next" title="2016年点亮技能树的某个枝桠">
+      2016年点亮技能树的某个枝桠 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85mplayer"><span class="nav-number">1.</span> <span class="nav-text">安装mplayer</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%86%99%E7%82%B9%E4%BB%A3%E7%A0%81"><span class="nav-number">2.</span> <span class="nav-text">写点代码</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AElircr%E6%96%87%E4%BB%B6"><span class="nav-number">2.1.</span> <span class="nav-text">配置lircr文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%8A%E5%AE%83%E4%BB%AC%E6%94%BE%E5%9C%A8%E4%B8%80%E8%B5%B7"><span class="nav-number">2.2.</span> <span class="nav-text">把它们放在一起</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9C%80%E5%90%8E"><span class="nav-number">3.</span> <span class="nav-text">最后……</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="nav-number">4.</span> <span class="nav-text">参考文档</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2016/02/02/%E9%A6%99%E8%95%89%E6%B4%BE+%E6%82%A6%E8%AF%BBfm%20--%20%E6%89%93%E9%80%A0%E7%BA%A2%E5%A4%96%E9%81%A5%E6%8E%A7FM%E6%92%AD%E6%94%BE%E5%99%A8%EF%BC%88%E7%BB%AD%EF%BC%89/";
+    this.page.identifier = "2016/02/02/香蕉派+悦读fm -- 打造红外遥控FM播放器（续）/";
+    this.page.title = "香蕉派+悦读fm:打造红外遥控FM播放器（续）";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

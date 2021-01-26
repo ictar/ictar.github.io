@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="方法 指针 VS. 值 可以为任何命名类型（除了指针或者接口外）定义方法。方法的接收者不是一定要是结构的。 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21   type ByteSlice []byte &#x2F;&#x2F; 值方法 func (slice ByteSlice) Append(data []byte) []byte { &#x2F;&#x2F; 要求该方法返">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go, go|小白的go小抄：方法、接口和其他类型">
+<meta property="og:url" content="http://ictar.github.io/2017/08/06/Go-go-%E5%B0%8F%E7%99%BD%E7%9A%84go%E5%B0%8F%E6%8A%84%EF%BC%9A%E6%96%B9%E6%B3%95%E3%80%81%E6%8E%A5%E5%8F%A3%E5%92%8C%E5%85%B6%E4%BB%96%E7%B1%BB%E5%9E%8B/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="方法 指针 VS. 值 可以为任何命名类型（除了指针或者接口外）定义方法。方法的接收者不是一定要是结构的。 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21   type ByteSlice []byte &#x2F;&#x2F; 值方法 func (slice ByteSlice) Append(data []byte) []byte { &#x2F;&#x2F; 要求该方法返">
+<meta property="og:locale">
+<meta property="article:published_time" content="2017-08-06T11:28:42.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.991Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="HelloWorld">
+<meta property="article:tag" content="Golang">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2017/08/06/Go-go-%E5%B0%8F%E7%99%BD%E7%9A%84go%E5%B0%8F%E6%8A%84%EF%BC%9A%E6%96%B9%E6%B3%95%E3%80%81%E6%8E%A5%E5%8F%A3%E5%92%8C%E5%85%B6%E4%BB%96%E7%B1%BB%E5%9E%8B/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>Go, go|小白的go小抄：方法、接口和其他类型 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2017/08/06/Go-go-%E5%B0%8F%E7%99%BD%E7%9A%84go%E5%B0%8F%E6%8A%84%EF%BC%9A%E6%96%B9%E6%B3%95%E3%80%81%E6%8E%A5%E5%8F%A3%E5%92%8C%E5%85%B6%E4%BB%96%E7%B1%BB%E5%9E%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Go, go|小白的go小抄：方法、接口和其他类型
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-08-06 19:28:42" itemprop="dateCreated datePublished" datetime="2017-08-06T19:28:42+08:00">2017-08-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2017/08/06/Go-go-%E5%B0%8F%E7%99%BD%E7%9A%84go%E5%B0%8F%E6%8A%84%EF%BC%9A%E6%96%B9%E6%B3%95%E3%80%81%E6%8E%A5%E5%8F%A3%E5%92%8C%E5%85%B6%E4%BB%96%E7%B1%BB%E5%9E%8B/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2017/08/06/Go-go-小白的go小抄：方法、接口和其他类型/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="方法">方法</h3>
+<h4 id="指针-vs.-值">指针 VS. 值</h4>
+<p>可以为任何命名类型（除了指针或者接口外）定义方法。方法的接收者不是一定要是结构的。 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> ByteSlice []<span class="keyword">byte</span></span><br><span class="line"><span class="comment">// 值方法</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(slice ByteSlice)</span> <span class="title">Append</span><span class="params">(data []<span class="keyword">byte</span>)</span> []<span class="title">byte</span></span> &#123; <span class="comment">// 要求该方法返回更新的值</span></span><br><span class="line">    .....</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 指针方法</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *ByteSlice)</span> <span class="title">Append</span><span class="params">(data []<span class="keyword">byte</span>)</span></span> &#123; <span class="comment">// 这个方法可以修改调用者，因此不用返回</span></span><br><span class="line">    slice := *p</span><br><span class="line">    ....</span><br><span class="line">    *p = slice</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *ByteSlice)</span> <span class="title">Write</span><span class="params">(data []<span class="keyword">byte</span>)</span> <span class="params">(n <span class="keyword">int</span>, err error)</span></span> &#123;</span><br><span class="line">    slice := *p</span><br><span class="line">    <span class="comment">// Again as above.</span></span><br><span class="line">    *p = slice</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">len</span>(data), <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 定义了Write方法后，类型*ByteSlice就满足了标准接口io.Write的要求。</span></span><br><span class="line"><span class="keyword">var</span> b ByteSlice</span><br><span class="line">fmt.Fprintf(&amp;b, <span class="string">&quot;This hour has %d days\n&quot;</span>, <span class="number">7</span>)</span><br><span class="line"><span class="comment">// 这里传递ByteSlice的地址是因为，只有*ByteSlice满足了标准接口io.Write的要求。</span></span><br></pre></td></tr></table></figure> 对于接收者而言，关于指针vs.值的规则是：<strong>可以对指针和值引用值方法，但是，只能对指针引用指针方法。</strong></p>
+<p>这是因为，指针方法可以修改接收者，而对值引用指针方法可能会造成该方法接收到该值的一份拷贝，从而使得任何的修改都会被丢弃。因此，Go不允许这种错误。当该值是可寻址的时候，Go会自动插入取址运算符（&amp;），来处理在值上引用指针方法的这种常见场景。例如，在上面的例子中，变量<code>b</code>是可寻址的，因此，通过<code>b.Write</code>就可以调用它的<code>Write</code>方法。编译器会为我们重写成<code>(&amp;b).Write</code>。</p>
+<h3 id="接口和其他类型">接口和其他类型</h3>
+<h4 id="接口">接口</h4>
+<p>Go中的接口提供了一种指定对象行为的方式：如果某个东东可以做这个事，那么，它就可以被用在这里。在Go中，只有一两个方法的接口比比皆是，并且常常会根据方法来赐名，例如，<code>io.Writer</code>就是那些实现了<code>Write</code>的东东。</p>
+<p>一个类型可以实现多个接口。例如，一个集合可以被包<code>sort</code>中的程序排序，只要它实现了<code>sort.Interface</code>（包括<code>Len()</code> / <code>Less(i, j int) bool</code> / <code>Swap(i, j int)</code>），另外，它还可以有一个自定义的格式器（<code>String</code>方法）。 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Sequence []<span class="keyword">int</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// sort.Interface所要求的方法</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s Sequence)</span> <span class="title">Len</span><span class="params">()</span> <span class="title">int</span></span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">len</span>(s)</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s Sequence)</span> <span class="title">Less</span><span class="params">(i, j <span class="keyword">int</span>)</span> <span class="title">bool</span></span> &#123;</span><br><span class="line">    <span class="keyword">return</span> s[i] &lt; s[j]</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s Sequence)</span> <span class="title">Swap</span><span class="params">(i, j <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">    s[i], s[j] = s[j], s[i]</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 用以打印的方法：在打印前先排序</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s Sequence)</span> <span class="title">String</span><span class="params">()</span> <span class="title">string</span></span> &#123;</span><br><span class="line">    sort.Sort(s)</span><br><span class="line">    str := <span class="string">&quot;[&quot;</span></span><br><span class="line">    <span class="keyword">for</span> i, elem := <span class="keyword">range</span> s &#123;</span><br><span class="line">        <span class="keyword">if</span> i &gt; <span class="number">0</span> &#123;</span><br><span class="line">            str += <span class="string">&quot; &quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">        str += fmt.Sprint(elem)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> str + <span class="string">&quot;]&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> #### 转换 在上面的例子中，<code>Sequence</code>的<code>String</code>方法重新实现了<code>Sprint</code>已经为切片实现的东西，因此，我们可以在调用<code>Sprint</code>之前将<code>Sequence</code>转换成一个普通的<code>[]int</code>，从而来利用它已实现的东东： <figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">func (s Sequence) <span class="constructor">String()</span> <span class="built_in">string</span> &#123;</span><br><span class="line">    sort.<span class="constructor">Sort(<span class="params">s</span>)</span></span><br><span class="line">    return fmt.<span class="constructor">Sprint([]<span class="params">int</span>(<span class="params">s</span>)</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 这里的转换并不会创造一个新的值，它只是暂时假装现有的值有一个新的类型。（有其他合法的转换，例如从整型到浮点数，这确实会创造一个新的值。）</p>
+<p>在Go程序中，会转换一个表达式的类型，从而访问一个不同的方法集。还是上面的这个例子，我们可以使用现有的类型<code>sort.IntSlice</code>来把上面的代码缩减成: <figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Sequence <span class="literal">[]</span><span class="built_in">int</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 用以打印的方法：在打印前先排序</span></span><br><span class="line">func (s Sequence) <span class="constructor">String()</span> <span class="built_in">string</span> &#123;</span><br><span class="line">    sort.<span class="constructor">IntSlice(<span class="params">s</span>)</span>.<span class="constructor">Sort()</span></span><br><span class="line">    return fmt.<span class="constructor">Sprint([]<span class="params">int</span>(<span class="params">s</span>)</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 这样，Sequence就不需要实现多个接口（排序和打印）了。使用一个数据项能转换成多种类型（<code>Sequence</code> / <code>sort.IntSlice</code> / <code>[]int</code>）的能力，这些类型每一种都完成部分的工作。</p>
+<h4 id="接口转换和类型断言type-assertion">接口转换和类型断言（type assertion）</h4>
+<p>类型选择（type switch）是这样一个东东的：接收一个接口，然后对于<code>switch</code>中的每一个<code>case</code>，在某种意义上将其转换成那个<code>case</code>的类型。下面是<code>fmt.Printf</code>中的代码如何使用类型选择来将一个值转换成一个字符串的简化示例： <figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Stringer <span class="keyword">interface</span> &#123;</span><br><span class="line">    <span class="built_in">String</span>() <span class="built_in">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> value <span class="keyword">interface</span>&#123;&#125; <span class="comment">// 调用者提供的值</span></span><br><span class="line"><span class="keyword">switch</span> str := value.(<span class="keyword">type</span>) &#123;</span><br><span class="line"><span class="keyword">case</span> <span class="built_in">string</span>:</span><br><span class="line">    <span class="keyword">return</span> str</span><br><span class="line"><span class="keyword">case</span> Stringer:</span><br><span class="line">    <span class="keyword">return</span> str.String()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 类型断言（type assertion）：接收一个接口值，然后从中提取所指定的显式类型的值。 * 语法为<code>newVal, ok := value.(typeName)</code> * 其中，<code>newVal</code>是一个具有静态类型<code>typeName</code>的新值 * <code>typeName</code>必须是该接口<code>value</code>具有的具体类型，或者是<code>value</code>可以转换的第二个接口类型。 * <code>ok</code>是个可选项。如果不带，那么当值不是/无法转换成<code>typeName</code>的时候，程序会崩溃并抛出运行时错误。因此，可以使用<code>ok</code>（“comma, ok”习语）来安全地测试该值是否为<code>typeName</code> <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">str</span>, ok := value.(string)</span><br><span class="line"><span class="keyword">if</span> ok &#123;</span><br><span class="line">    fmt.Printf(<span class="string">&quot;string value is: %q\n&quot;</span>, <span class="built_in">str</span>)</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    fmt.Printf(<span class="string">&quot;value is not a string\n&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line">// 如果类型断言失败，那么，<span class="built_in">str</span>将仍然存在，并且类型为string，但是它将是一个零值，即<span class="string">&quot;&quot;</span></span><br></pre></td></tr></table></figure> ### 参考 - <a target="_blank" rel="noopener" href="https://golang.org/doc/effective_go.html">Effective Go</a></p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/HelloWorld/" rel="tag"># HelloWorld</a>
+              <a href="/tags/Golang/" rel="tag"># Golang</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/08/04/Go-go-%E5%B0%8F%E7%99%BD%E7%9A%84go%E5%B0%8F%E6%8A%84%EF%BC%9A%E6%95%B0%E6%8D%AE%E5%92%8C%E5%88%9D%E5%A7%8B%E5%8C%96/" rel="prev" title="Go, go|小白的go小抄：数据和初始化">
+      <i class="fa fa-chevron-left"></i> Go, go|小白的go小抄：数据和初始化
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/08/08/Go-go-%E5%B0%8F%E7%99%BD%E7%9A%84go%E5%B0%8F%E6%8A%84%EF%BC%9A%E7%A9%BA%E7%99%BD%E7%AC%A6%E5%92%8C%E5%B5%8C%E5%85%A5/" rel="next" title="Go, go|小白的go小抄：空白符和嵌入">
+      Go, go|小白的go小抄：空白符和嵌入 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%B3%95"><span class="nav-number">1.</span> <span class="nav-text">方法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8C%87%E9%92%88-vs.-%E5%80%BC"><span class="nav-number">1.1.</span> <span class="nav-text">指针 VS. 值</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A5%E5%8F%A3%E5%92%8C%E5%85%B6%E4%BB%96%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text">接口和其他类型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8E%A5%E5%8F%A3"><span class="nav-number">2.1.</span> <span class="nav-text">接口</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8E%A5%E5%8F%A3%E8%BD%AC%E6%8D%A2%E5%92%8C%E7%B1%BB%E5%9E%8B%E6%96%AD%E8%A8%80type-assertion"><span class="nav-number">2.2.</span> <span class="nav-text">接口转换和类型断言（type assertion）</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2017/08/06/Go-go-%E5%B0%8F%E7%99%BD%E7%9A%84go%E5%B0%8F%E6%8A%84%EF%BC%9A%E6%96%B9%E6%B3%95%E3%80%81%E6%8E%A5%E5%8F%A3%E5%92%8C%E5%85%B6%E4%BB%96%E7%B1%BB%E5%9E%8B/";
+    this.page.identifier = "2017/08/06/Go-go-小白的go小抄：方法、接口和其他类型/";
+    this.page.title = "Go, go|小白的go小抄：方法、接口和其他类型";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

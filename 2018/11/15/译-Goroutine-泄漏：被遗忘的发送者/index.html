@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="原文：Goroutine Leaks - The Forgotten Sender     介绍 并发编程允许开发者使用多个执行路径来解决问题，并通常用在为提高性能所做的尝试中。但是，并发并不意味着，这些路径并行执行；而是意味着这些路径乱序执行而不是顺序执行。从历史上看，使用标准库或者第三方开发者提供的库可以很方便地进行此类编程。  而在 Go 中，诸如 goroutine 和 channel 这">
+<meta property="og:type" content="article">
+<meta property="og:title" content="译|Goroutine 泄漏：被遗忘的发送者">
+<meta property="og:url" content="http://ictar.github.io/2018/11/15/%E8%AF%91-Goroutine-%E6%B3%84%E6%BC%8F%EF%BC%9A%E8%A2%AB%E9%81%97%E5%BF%98%E7%9A%84%E5%8F%91%E9%80%81%E8%80%85/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="原文：Goroutine Leaks - The Forgotten Sender     介绍 并发编程允许开发者使用多个执行路径来解决问题，并通常用在为提高性能所做的尝试中。但是，并发并不意味着，这些路径并行执行；而是意味着这些路径乱序执行而不是顺序执行。从历史上看，使用标准库或者第三方开发者提供的库可以很方便地进行此类编程。  而在 Go 中，诸如 goroutine 和 channel 这">
+<meta property="og:locale">
+<meta property="article:published_time" content="2018-11-15T12:33:29.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.978Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Golang">
+<meta property="article:tag" content="没事翻着玩">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2018/11/15/%E8%AF%91-Goroutine-%E6%B3%84%E6%BC%8F%EF%BC%9A%E8%A2%AB%E9%81%97%E5%BF%98%E7%9A%84%E5%8F%91%E9%80%81%E8%80%85/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>译|Goroutine 泄漏：被遗忘的发送者 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2018/11/15/%E8%AF%91-Goroutine-%E6%B3%84%E6%BC%8F%EF%BC%9A%E8%A2%AB%E9%81%97%E5%BF%98%E7%9A%84%E5%8F%91%E9%80%81%E8%80%85/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          译|Goroutine 泄漏：被遗忘的发送者
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2018-11-15 20:33:29" itemprop="dateCreated datePublished" datetime="2018-11-15T20:33:29+08:00">2018-11-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2018/11/15/%E8%AF%91-Goroutine-%E6%B3%84%E6%BC%8F%EF%BC%9A%E8%A2%AB%E9%81%97%E5%BF%98%E7%9A%84%E5%8F%91%E9%80%81%E8%80%85/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/11/15/译-Goroutine-泄漏：被遗忘的发送者/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>原文：<a target="_blank" rel="noopener" href="https://www.ardanlabs.com/blog/2018/11/goroutine-leaks-the-forgotten-sender.html">Goroutine Leaks - The Forgotten Sender</a></p>
+<hr />
+<h3 id="介绍">介绍</h3>
+<p>并发编程允许开发者使用多个执行路径来解决问题，并通常用在为提高性能所做的尝试中。但是，并发并不意味着，这些路径并行执行；而是意味着这些路径乱序执行而不是顺序执行。从历史上看，使用标准库或者第三方开发者提供的库可以很方便地进行此类编程。</p>
+<p>而在 Go 中，诸如 goroutine 和 channel 这样的并发特性内置在语言和运行时中,以减少或者消除对库对需求。这就造成了用 Go 编写并发程序很容易的错觉。当你决定使用并发时必须很小心，因为如果不正确使用的话，它们就会带来一些独特的副作用或者陷阱。一不小心，这些陷阱就会造成复杂性以及令人讨厌的错误。</p>
+<p>而在这篇文章中，我将讨论的陷阱则与 Goroutine 泄漏有关。</p>
+<h3 id="goroutine-泄漏">goroutine 泄漏</h3>
+<p>在内存管理方面，Go 为你处理了许多细节。Go 编译器使用 <a target="_blank" rel="noopener" href="https://www.ardanlabs.com/blog/2017/05/language-mechanics-on-escape-analysis.html">escape analysis</a> 来确定值在内存中的位置。运行时使用 <a target="_blank" rel="noopener" href="https://blog.golang.org/ismmkeynote">垃圾收集器</a>来跟踪和管理堆分配。虽然在应用中创造<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Memory_leak">内存泄漏</a> 不是不可能，但是这种概率已经被大大降低了。</p>
+<p>内存泄漏的一种常见类型是 Goroutine 泄漏。你启动了一个 Goroutine，并且你期望它最终会终止，但如果它永远结束不了，那么说明它已经泄露了。它存在于应用的整个生命周期中，并且为这个 Goroutine 分配的任何内存都不会得到释放。这也是“<a target="_blank" rel="noopener" href="https://dave.cheney.net/2016/12/22/never-start-a-goroutine-without-knowing-how-it-will-stop">永远不要启动一个不知道它将如何停止的 Goroutine</a>”这个建议背后的部分原因。</p>
+<p>为了描述基本的 Goroutine 泄露，让我们看看下面的代码：</p>
+<p><strong>清单 1</strong><br />
+<a target="_blank" rel="noopener" href="https://play.golang.org/p/dsu3PARM24K" class="uri">https://play.golang.org/p/dsu3PARM24K</a></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">31</span> <span class="comment">// leak is a buggy function. It launches a goroutine that</span></span><br><span class="line"><span class="number">32</span> <span class="comment">// blocks receiving from a channel. Nothing will ever be</span></span><br><span class="line"><span class="number">33</span> <span class="comment">// sent on that channel and the channel is never closed so</span></span><br><span class="line"><span class="number">34</span> <span class="comment">// that goroutine will be blocked forever.</span></span><br><span class="line"><span class="number">35</span> <span class="function"><span class="keyword">func</span> <span class="title">leak</span><span class="params">()</span></span> &#123;</span><br><span class="line"><span class="number">36</span>     ch := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line"><span class="number">37</span> </span><br><span class="line"><span class="number">38</span>     <span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line"><span class="number">39</span>         val := &lt;-ch</span><br><span class="line"><span class="number">40</span>         fmt.Println(<span class="string">&quot;We received a value:&quot;</span>, val)</span><br><span class="line"><span class="number">41</span>     &#125;()</span><br><span class="line"><span class="number">42</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>清单 1 定义了一个名为 <code>leak</code> 的函数。该函数在第 36 行创建了一个 channel，以允许 Goroutine 传递整型数据。然后，在第 38 行创建了 Goroutine，该 Goroutine 在第 39 行阻塞，以等待从 channel 中接收值。当这个 Goroutine 在等待（接收值）时，<code>leak</code> 函数却返回了。此时，该程序的其他任何部分都不能通过这个 channel 发送信号。这使得该 Goroutine 阻塞在第 39 行，并且永远处于等待状态。第 40 行的 <code>fmt.Println</code> 调用将永远不会发生。</p>
+<p>在这个例子中，代码审查阶段就可以快速识别到这个 Goroutine 泄露。不幸的是，生产代码中的 Goroutine 泄露往往更难以发现。我不可能展示 Goroutine 泄露可能会发生的所有方式，但是，这篇文章将详细说明你可能会遇到的一类 Goroutine 泄露：</p>
+<h3 id="泄露被遗忘的发送者">泄露：被遗忘的发送者</h3>
+<p><em><strong>在这个泄露示例中，你将会看到一个无限期阻塞的 Goroutine，它等待向 channel 发送值。</strong></em></p>
+<p>我们将看到的这个程序会基于一些搜索词来查找记录，然后将其打印出来。该程序建立在一个名为 <code>search</code> 的函数之上：</p>
+<p><strong>清单 2</strong><br />
+<a target="_blank" rel="noopener" href="https://play.golang.org/p/o6_eMjxMVFv" class="uri">https://play.golang.org/p/o6_eMjxMVFv</a></p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dv">29</span> <span class="co">// search simulates a function that finds a record based</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dv">30</span> <span class="co">// on a search term. It takes 200ms to perform this work.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="dv">31</span> <span class="kw">func</span> search(term <span class="dt">string</span>) (<span class="dt">string</span>, <span class="dt">error</span>) &#123;</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="dv">32</span>     time.Sleep(<span class="dv">200</span> * time.Millisecond)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="dv">33</span>     <span class="kw">return</span> <span class="st">&quot;some value&quot;</span>, <span class="ot">nil</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="dv">34</span> &#125;</span></code></pre></div>
+<p>在清单 2 中，第 31 行的 <code>search</code> 函数是一个模拟实现，用以模拟像数据库查询或者 web 调用这样的长耗时操作。在这个例子中，耗时硬编码为 200ms。</p>
+<p>清单 3 展示了调用 <code>search</code> 函数的应用。</p>
+<p><strong>清单 3</strong><br />
+<a target="_blank" rel="noopener" href="https://play.golang.org/p/o6_eMjxMVFv" class="uri">https://play.golang.org/p/o6_eMjxMVFv</a></p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dv">17</span> <span class="co">// process is the work for the program. It finds a record</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="dv">18</span> <span class="co">// then prints it.</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="dv">19</span> <span class="kw">func</span> process(term <span class="dt">string</span>) <span class="dt">error</span> &#123;</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="dv">20</span>     record, err := search(term)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="dv">21</span>     <span class="kw">if</span> err != <span class="ot">nil</span> &#123;</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="dv">22</span>         <span class="kw">return</span> err</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="dv">23</span>     &#125;</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="dv">24</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="dv">25</span>     fmt.Println(<span class="st">&quot;Received:&quot;</span>, record)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="dv">26</span>     <span class="kw">return</span> <span class="ot">nil</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="dv">27</span> &#125;</span></code></pre></div>
+<p>在清单 3 中的第 19 行，定义了一个名为 <code>process</code> 的函数，它接收一个表示搜索词的 <code>string</code> 参数。在第 20 行，将 <code>term</code> 变量传递给 <code>search</code> 函数（它会返回一个记录和一个错误信息）。如果发生了错误，那么在第 22 行就会将错误返回给调用者。如果没有错误发生，那么，会在第 25 行打印这个记录。</p>
+<p>对某些应用而言，顺序调用 <code>search</code> 产生的延时可能是不能接受的。假设 <code>search</code> 不可能更快了，那么，可以修改 <code>process</code> 函数为不消耗 <code>search</code> 产生的总延迟。</p>
+<p>为此，可以使用一个 Goroutine，如下清单 4 所示。不幸的是，这第一次尝试存在错误，因为它创造了潜在的 Goroutine 泄露。</p>
+<p><strong>清单 4</strong><br />
+<a target="_blank" rel="noopener" href="https://play.golang.org/p/m0DHuchgX0A" class="uri">https://play.golang.org/p/m0DHuchgX0A</a></p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dv">38</span> <span class="co">// result wraps the return values from search. It allows us</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="dv">39</span> <span class="co">// to pass both values across a single channel.</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="dv">40</span> <span class="kw">type</span> result <span class="kw">struct</span> &#123;</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="dv">41</span>     record <span class="dt">string</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="dv">42</span>     err    <span class="dt">error</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="dv">43</span> &#125;</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="dv">44</span> </span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="dv">45</span> <span class="co">// process is the work for the program. It finds a record</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="dv">46</span> <span class="co">// then prints it. It fails if it takes more than 100ms.</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="dv">47</span> <span class="kw">func</span> process(term <span class="dt">string</span>) <span class="dt">error</span> &#123;</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="dv">48</span> </span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="dv">49</span>     <span class="co">// Create a context that will be canceled in 100ms.</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="dv">50</span>     ctx, cancel := context.WithTimeout(context.Background(), <span class="dv">100</span>*time.Millisecond)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="dv">51</span>     <span class="kw">defer</span> cancel()</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="dv">52</span> </span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="dv">53</span>     <span class="co">// Make a channel for the goroutine to report its result.</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="dv">54</span>     ch := <span class="bu">make</span>(<span class="kw">chan</span> result)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="dv">55</span> </span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="dv">56</span>     <span class="co">// Launch a goroutine to find the record. Create a result</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="dv">57</span>     <span class="co">// from the returned values to send through the channel.</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="dv">58</span>     <span class="kw">go</span> <span class="kw">func</span>() &#123;</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="dv">59</span>         record, err := search(term)</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="dv">60</span>         ch &lt;- result&#123;record, err&#125;</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="dv">61</span>     &#125;()</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="dv">62</span> </span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="dv">63</span>     <span class="co">// Block waiting to either receive from the goroutine&#39;s</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="dv">64</span>     <span class="co">// channel or for the context to be canceled.</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="dv">65</span>     <span class="kw">select</span> &#123;</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="dv">66</span>     <span class="kw">case</span> &lt;-ctx.Done():</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="dv">67</span>         <span class="kw">return</span> errors.New(<span class="st">&quot;search canceled&quot;</span>)</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="dv">68</span>     <span class="kw">case</span> result := &lt;-ch:</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="dv">69</span>         <span class="kw">if</span> result.err != <span class="ot">nil</span> &#123;</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="dv">70</span>             <span class="kw">return</span> result.err</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="dv">71</span>         &#125;</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="dv">72</span>         fmt.Println(<span class="st">&quot;Received:&quot;</span>, result.record)</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="dv">73</span>         <span class="kw">return</span> <span class="ot">nil</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="dv">74</span>     &#125;</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a><span class="dv">75</span> &#125;</span></code></pre></div>
+<p>在清单 4 中的第 50 行，重写了 <code>process</code> 函数，创建了一个将会在 100ms 后取消的 <code>Context</code>。关于如何使用 <code>Context</code> 的更多信息，请阅读 <a target="_blank" rel="noopener" href="https://blog.golang.org/context">golang.org 博文</a>。</p>
+<p>然后在第 54 行，程序创建了一个无缓存 channel，允许 Goroutine 传递 <code>result</code> 类型的数据。在第 58 行到第 61 行，定义了一个匿名函数，然后以此创建了一个 Goroutine。这个 Goroutine 调用 <code>search</code>，然后在第 60 行试图通过该 channel 发送调用结果。</p>
+<p>在 Goroutine 运行的过程中，在第 65 行，<code>process</code> 执行了 <code>select</code> 块。这个块的两个 case 都是 channel 接收操作。</p>
+<p>第 66 行是一个从 <code>ctx.Done()</code> channel 接收数据的 case。如果取消了前面定义的 <code>Context</code>（过了 100ms），那么就会执行这个 case。 而如果执行了这个 case，那么在第 67 行，<code>process</code> 就会返回一个错误，表示它放弃等待。</p>
+<p>或者，第 68 行的 case 从 <code>ch</code> channel 接收值，然后把值赋给一个名为 <code>result</code> 的变量。和前面的顺序实现一样，程序在第 69 行和第 70 行检查和处理错误。如果没有错误，那么该程序会在第 72 行打印记录，并返回 <code>nil</code>，表示成功。</p>
+<p>此重构版本设置了 <code>process</code> 函数将会等待 <code>search</code> 完成的最长持续时间。然而，该实现也会产生潜在的 Goroutine 泄露。想一想这个代码中 Goroutine 在做的事情吧；在第 60 行，它往 channel 发送数据。向这个 channel 发送数据会阻塞执行，直到另一个 Goroutine 准备好接收该数据。在超时的情况下，接收者停止等待从 Goroutine 接收数据并继续执行。这将会导致 Goroutine <strong>永远</strong> 阻塞在等待接收者，而显然，接收者永远都不会出现。这正是 Goroutine 泄露之时。</p>
+<h4 id="修复创建一些空间">修复：创建一些空间</h4>
+<p>解决这种泄露最简单的方式是，将 channel 从无缓存 channel 更改为容量为 1 的有缓存 channel。</p>
+<p><strong>清单 5</strong><br />
+<a target="_blank" rel="noopener" href="https://play.golang.org/p/u3xtQ48G3qK" class="uri">https://play.golang.org/p/u3xtQ48G3qK</a></p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dv">53</span>     <span class="co">// Make a channel for the goroutine to report its result.</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="dv">54</span>     <span class="co">// Give it capacity so sending doesn&#39;t block.</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="dv">55</span>     ch := <span class="bu">make</span>(<span class="kw">chan</span> result, <span class="dv">1</span>)</span></code></pre></div>
+<p>现在，在超时的情况下，接收者继续执行之后，通过将 <code>result</code> 值放在 channel，search Goroutine 将会完成其发送操作，然后返回。最终，用于这个 Goroutine 以及这个 channel 的内存将会被回收。一切都会自然而然地发挥作用。</p>
+<p>在 <a target="_blank" rel="noopener" href="https://www.ardanlabs.com/blog/2017/10/the-behavior-of-channels.html">channel 的行为（The Behavior of Channels）</a>中，William Kennedy 提供了几个关于 channel 行为的很好的例子，并且提供了有关其使用的哲学。那篇文中的最后一个示例 <a target="_blank" rel="noopener" href="https://www.ardanlabs.com/blog/2017/10/the-behavior-of-channels.html#signal-without-data-context">“清单 10”</a> 展示了一个类似于这个超时示例的程序。阅读那篇文章，以获取关于何时使用带缓存 channel，以及什么级别的容量合适的更多建议。</p>
+<h3 id="总结">总结</h3>
+<p>Go 让启动 Goroutine 变得简单，但是，明智使用它们则是我们的责任。在这篇文章中，我展示了如何错误使用 Goroutine 的一个例子。有许多其他的方式会创造 Goroutine 泄露，并且在使用并发的时候也可能遇到其他陷阱。在以后的文章中，我将提供更多的 Goroutine 泄露和其他并发陷阱的例子。现在，我会给你这个建议；任何时候当你启动一个 Goroutine 时，都必须问你自己：</p>
+<ul>
+<li>它何时终止？</li>
+<li>什么可能会阻止它终止？</li>
+</ul>
+<p><em><strong>并发是良器，但必须小心使用。</strong></em></p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Golang/" rel="tag"># Golang</a>
+              <a href="/tags/%E6%B2%A1%E4%BA%8B%E7%BF%BB%E7%9D%80%E7%8E%A9/" rel="tag"># 没事翻着玩</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/11/10/go-fmt-print-map-key-sorted/" rel="prev" title="Go | fmt：按键序打印 map">
+      <i class="fa fa-chevron-left"></i> Go | fmt：按键序打印 map
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/12/22/%E3%80%90%E8%AF%91%E3%80%91interface-%E5%92%8C%E5%8F%8D%E5%B0%84%E7%9A%84%E5%85%B3%E7%B3%BB/" rel="next" title="译|interface 和反射的关系">
+      译|interface 和反射的关系 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#goroutine-%E6%B3%84%E6%BC%8F"><span class="nav-number">2.</span> <span class="nav-text">goroutine 泄漏</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%84%E9%9C%B2%E8%A2%AB%E9%81%97%E5%BF%98%E7%9A%84%E5%8F%91%E9%80%81%E8%80%85"><span class="nav-number">3.</span> <span class="nav-text">泄露：被遗忘的发送者</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BF%AE%E5%A4%8D%E5%88%9B%E5%BB%BA%E4%B8%80%E4%BA%9B%E7%A9%BA%E9%97%B4"><span class="nav-number">3.1.</span> <span class="nav-text">修复：创建一些空间</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2018/11/15/%E8%AF%91-Goroutine-%E6%B3%84%E6%BC%8F%EF%BC%9A%E8%A2%AB%E9%81%97%E5%BF%98%E7%9A%84%E5%8F%91%E9%80%81%E8%80%85/";
+    this.page.identifier = "2018/11/15/译-Goroutine-泄漏：被遗忘的发送者/";
+    this.page.title = "译|Goroutine 泄漏：被遗忘的发送者";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

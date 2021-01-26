@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="某次测试一个用 Go 编写的 HTTP 服务（使用 nginx 进行了反向代理）的时候，发现请求直接返回了 400 Bad Request: invalid header value。而在 handler 入口处的调试日志并没有打印。同时，nginx 日志显示，请求已经被转发到了后面的 HTTP 服务。也就是说，这个 400 错误是 Go 在接受请求后，进入 handler 之前返回的。故而在此记">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go&#x2F;HTTP | 标准库对请求头的处理简析">
+<meta property="og:url" content="http://ictar.github.io/2018/03/14/Go%E7%9A%84HTTP%E6%A0%87%E5%87%86%E5%BA%93%E5%AF%B9%E8%AF%B7%E6%B1%82%E5%A4%B4%E7%9A%84%E5%A4%84%E7%90%86%E7%AE%80%E6%9E%90/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="某次测试一个用 Go 编写的 HTTP 服务（使用 nginx 进行了反向代理）的时候，发现请求直接返回了 400 Bad Request: invalid header value。而在 handler 入口处的调试日志并没有打印。同时，nginx 日志显示，请求已经被转发到了后面的 HTTP 服务。也就是说，这个 400 错误是 Go 在接受请求后，进入 handler 之前返回的。故而在此记">
+<meta property="og:locale">
+<meta property="article:published_time" content="2018-03-14T04:21:13.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.993Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Golang">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2018/03/14/Go%E7%9A%84HTTP%E6%A0%87%E5%87%86%E5%BA%93%E5%AF%B9%E8%AF%B7%E6%B1%82%E5%A4%B4%E7%9A%84%E5%A4%84%E7%90%86%E7%AE%80%E6%9E%90/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>Go/HTTP | 标准库对请求头的处理简析 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2018/03/14/Go%E7%9A%84HTTP%E6%A0%87%E5%87%86%E5%BA%93%E5%AF%B9%E8%AF%B7%E6%B1%82%E5%A4%B4%E7%9A%84%E5%A4%84%E7%90%86%E7%AE%80%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Go/HTTP | 标准库对请求头的处理简析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2018-03-14 12:21:13" itemprop="dateCreated datePublished" datetime="2018-03-14T12:21:13+08:00">2018-03-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2018/03/14/Go%E7%9A%84HTTP%E6%A0%87%E5%87%86%E5%BA%93%E5%AF%B9%E8%AF%B7%E6%B1%82%E5%A4%B4%E7%9A%84%E5%A4%84%E7%90%86%E7%AE%80%E6%9E%90/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/03/14/Go的HTTP标准库对请求头的处理简析/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>某次测试一个用 Go 编写的 HTTP 服务（使用 nginx 进行了反向代理）的时候，发现请求直接返回了 <code>400 Bad Request: invalid header value</code>。而在 handler 入口处的调试日志并没有打印。同时，nginx 日志显示，请求已经被转发到了后面的 HTTP 服务。也就是说，这个 400 错误是 Go 在接受请求后，进入 handler 之前返回的。故而在此记录下，Go 的 HTTP 标准库对请求 header 的处理方式。</p>
+<h2 id="httplex"><code>httplex</code></h2>
+<p>golang 的标准库 <code>net/http</code> 使用 <a target="_blank" rel="noopener" href="https://godoc.org/golang.org/x/net/lex/httplex"><code>golang.org/x/net/lex/httplex</code></a> 对请求头进行校验。其中，有三个校验函数：</p>
+<ul>
+<li><p><code>func ValidHeaderFieldName(v string) bool</code></p>
+<p>用以检验 <code>v</code> 是否为一个有效的 HTTP/1.x 的 header 字段名。（对于 HTTP/2 有额外的限制：不允许大写的 ASCII 字母）</p>
+<blockquote>
+<p>检验标准：RFC 7230。不能为空，并且字符范围为："!" / "#" / "$" / "%" / "&amp;" / "'" / "*" / "+" / "-" / "." / "^" / "_" / "`" / "|" / "~" / DIGIT（数字） / ALPHA（字母，不区分大小写）</p>
+</blockquote></li>
+<li><p><code>func ValidHeaderFieldValue(v string) bool</code></p>
+<p>用以检验 <code>v</code> 是哦否为一个有效的 header 字段值。</p>
+<blockquote>
+<p>检验标准：<a target="_blank" rel="noopener" href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2">http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2</a></p>
+</blockquote></li>
+<li><p><code>func ValidHostHeader(h string) bool</code></p>
+<p>用以检验 <code>h</code> 是否为一个有效的 <code>Host</code> 头。</p>
+<blockquote>
+<p>当前的校验标准：不完全受 rfc7230 限制，只要字符范围为 "!" / "$" / "%" / "&amp;" / "(" / ")" / "*" / "+" / "," / "-" / "." / ":" / ";" / "=" / "[" / "'" / "]" / "_" / "~" / DIGIT（数字） / ALPHA（字母，不区分大小写）即可。</p>
+</blockquote></li>
+</ul>
+<h2 id="nethttp-对请求头的校验"><code>net/http</code> 对请求头的校验</h2>
+<blockquote>
+<p>使用 go 1.9.2，HTTP/1.x。代码位于 <code>net/http/server.go</code> 中</p>
+</blockquote>
+<ul>
+<li><code>Host</code> 头的数目不能超过 1，否则： <figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ curl http:<span class="regexp">//</span>localhost:<span class="number">18080</span>/ -H <span class="string">&quot;Host: 123&quot;</span> -H <span class="string">&quot;Host: 456&quot;</span></span><br><span class="line"><span class="number">400</span> Bad Request: too many Host headers</span><br></pre></td></tr></table></figure></li>
+<li><code>Host</code> 头的值可以通过 <code>httplex.ValidHostHeader</code> 方法的校验，否则： <figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ curl http:<span class="regexp">//</span>localhost:<span class="number">18080</span>/ -H <span class="string">&quot;Host: 123@&quot;</span></span><br><span class="line"><span class="number">400</span> Bad Request: malformed Host header</span><br></pre></td></tr></table></figure></li>
+<li>每一个 header 的字段名都可以通过 <code>httplex.ValidHeaderFieldName</code> 的校验，否则： <figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ curl http:<span class="regexp">//</span>localhost:<span class="number">18080</span>/ -H <span class="string">&quot;Host: 123&quot;</span> -H <span class="string">&quot;X-Custome@tes123: 123abc&quot;</span></span><br><span class="line"><span class="number">400</span> Bad Request: invalid header name</span><br></pre></td></tr></table></figure></li>
+<li>每一个 header 的字段值都可以通过 <code>httplex.ValidHeaderFieldValue</code> 的校验，否则返回： <figure class="highlight basic"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">400 </span>Bad Request: invalid header value</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="碎碎念">碎碎念</h2>
+<p>当发送 HTTP 请求后，收到 Go 自身标准库的错误返回，而不是自己编写的错误返回时，如果错误信息模糊无法确定真正的异常原因。那么只好拿着错误信息到 <code>net/http</code> 包代码所在到位置直接暴力搜索了。有时候可以加上日志打印，把错误抛出的上下文打印出来（记得备份源代码，记得删除 <code>http.a</code> 文件，记得重新编译！！）。这样，就可以让服务“直接”告诉你根因所在了。</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Golang/" rel="tag"># Golang</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/11/29/golang-json-number-unmarshal-null-marshal/" rel="prev" title="Golang/JSON | 数值的反序列化和空值的序列化">
+      <i class="fa fa-chevron-left"></i> Golang/JSON | 数值的反序列化和空值的序列化
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/03/20/%E5%A6%82%E4%BD%95%E7%94%A8go%E5%AE%9E%E7%8E%B0%E8%B6%85%E6%97%B6%E6%8E%A7%E5%88%B6/" rel="next" title="如何用 go 实现超时控制">
+      如何用 go 实现超时控制 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#httplex"><span class="nav-number">1.</span> <span class="nav-text">httplex</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#nethttp-%E5%AF%B9%E8%AF%B7%E6%B1%82%E5%A4%B4%E7%9A%84%E6%A0%A1%E9%AA%8C"><span class="nav-number">2.</span> <span class="nav-text">net&#x2F;http 对请求头的校验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A2%8E%E7%A2%8E%E5%BF%B5"><span class="nav-number">3.</span> <span class="nav-text">碎碎念</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2018/03/14/Go%E7%9A%84HTTP%E6%A0%87%E5%87%86%E5%BA%93%E5%AF%B9%E8%AF%B7%E6%B1%82%E5%A4%B4%E7%9A%84%E5%A4%84%E7%90%86%E7%AE%80%E6%9E%90/";
+    this.page.identifier = "2018/03/14/Go的HTTP标准库对请求头的处理简析/";
+    this.page.title = "Go/HTTP | 标准库对请求头的处理简析";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

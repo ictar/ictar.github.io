@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="原文：The Best Way to Learn Python  Python变得比以往任何时候都受欢迎。从后端Web服务器，到前端游戏开发，Python被广泛应用于其间各方各面。Python是一门真正的通用语言，并迅速成为任何一个自重的程序员兵器谱上的一个必备工具。  但是，Python并不是因为流行而受欢迎的。而是因为它易学，如伪代码般易读及极度敏捷。然而，学习任何一个新语言都有可能成为一项艰">
+<meta property="og:type" content="article">
+<meta property="og:title" content="译|学习Python最佳方法">
+<meta property="og:url" content="http://ictar.github.io/2015/11/16/[%E8%AF%91]%E5%AD%A6%E4%B9%A0Python%E6%9C%80%E4%BD%B3%E6%96%B9%E6%B3%95/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="原文：The Best Way to Learn Python  Python变得比以往任何时候都受欢迎。从后端Web服务器，到前端游戏开发，Python被广泛应用于其间各方各面。Python是一门真正的通用语言，并迅速成为任何一个自重的程序员兵器谱上的一个必备工具。  但是，Python并不是因为流行而受欢迎的。而是因为它易学，如伪代码般易读及极度敏捷。然而，学习任何一个新语言都有可能成为一项艰">
+<meta property="og:locale">
+<meta property="og:image" content="https://cdn.tutsplus.com/net/uploads/legacy/2099_python/books.png">
+<meta property="og:image" content="https://cdn.tutsplus.com/net/uploads/legacy/2099_python/euler.png">
+<meta property="article:published_time" content="2015-11-16T08:09:55.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.951Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="没事翻着玩">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.tutsplus.com/net/uploads/legacy/2099_python/books.png">
+
+<link rel="canonical" href="http://ictar.github.io/2015/11/16/[%E8%AF%91]%E5%AD%A6%E4%B9%A0Python%E6%9C%80%E4%BD%B3%E6%96%B9%E6%B3%95/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>译|学习Python最佳方法 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2015/11/16/[%E8%AF%91]%E5%AD%A6%E4%B9%A0Python%E6%9C%80%E4%BD%B3%E6%96%B9%E6%B3%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          译|学习Python最佳方法
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2015-11-16 16:09:55" itemprop="dateCreated datePublished" datetime="2015-11-16T16:09:55+08:00">2015-11-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2015/11/16/%5B%E8%AF%91%5D%E5%AD%A6%E4%B9%A0Python%E6%9C%80%E4%BD%B3%E6%96%B9%E6%B3%95/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/11/16/[译]学习Python最佳方法/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>原文：<a target="_blank" rel="noopener" href="http://code.tutsplus.com/tutorials/the-best-way-to-learn-python--net-26288">The Best Way to Learn Python</a></p>
+<p>Python变得比以往任何时候都受欢迎。从后端Web服务器，到前端游戏开发，Python被广泛应用于其间各方各面。Python是一门真正的通用语言，并迅速成为任何一个自重的程序员兵器谱上的一个必备工具。</p>
+<p>但是，Python并不是因为流行而受欢迎的。而是因为它易学，如伪代码般易读及极度敏捷。然而，学习任何一个新语言都有可能成为一项艰巨的任务，而找到正确的方法以及向正确的人学习则可以事半功倍。这就是本指南能够做到的。这是是滴Python容易，有趣及值得学习的蓝图。</p>
+<h1 id="任务1从基础开始">任务1：从基础开始</h1>
+<p>在写这篇文章的时候，有两个主流的Python版本：Python 2.7和Python 3.2.选择哪个版本来学习并不重要，因为它们之间的区别是很小的 - 尤其是对初学者而言。但是应该知道，Python 2拥有远远超过Python 3的第三方支持，而Python 3是设计语言的开发者的主要关注点。选择取决于你自己，但是如果你的代码与任何特定的教程都不同，请确保和教程中使用的Python版本相同。</p>
+<h2 id="维基百科的python非程序员教程"><a target="_blank" rel="noopener" href="http://en.wikibooks.org/wiki/Non-Programmer%27s_Tutorial_for_Python_2.6">维基百科的Python非程序员教程</a></h2>
+<p>维基百科总是学习新东西的一个重要来源，Python也不例外。 在这里，你可以找到一系列扎实而中肯的指导。它不会过于技术化，而你可以投入某些有用的变成并且立即得到回报。因此，我推荐这个网站，作为开始你的Python之旅的最好地方。</p>
+<h2 id="官方python教程"><a target="_blank" rel="noopener" href="http://docs.python.org/tutorial/">官方Python教程</a></h2>
+<p>你不会找到比官方python.org文档最好的信息来源了。然而，如果你想即刻投入，我相信大部分的你们都会想，这可能不是开始的最好地方。</p>
+<pre><code>它的内容会比维基百科更技术化，在后续你深入语言时将会很有帮助。但是，对于初学者而言，它将妨碍你学习这么一门超级简单且美的语言。</code></pre>
+<p>对于初学者，Python 2和Python 3最大的区别最有可能是Python 2可以打印而不需要使用括号。Python 3需要括号，但也仅此而已。</p>
+<h1 id="任务2教程和视频教程">任务2：教程和视频教程</h1>
+<h2 id="thenewboston的python编程教程"><a target="_blank" rel="noopener" href="http://www.youtube.com/playlist?list=PLEA1FEF17E1E5C0DA&amp;feature=plcp">TheNewBoston的Python编程教程</a></h2>
+<p>TheNewBoston的播放列表总是很棒的，你可以学到一大堆的语言。"Bucky"是一个超好的讲师，因为他很好的处理了有趣和容易听讲之间的关系。我强烈推荐他的任何播放列表 - 特别是他的Python播放列表。他假设学习的人编程零基础，并且会讲给你可以牢固掌握的语言。</p>
+<h2 id="nettuts的从头开始学python"><a target="_blank" rel="noopener" href="http://net.tutsplus.com/sessions/python-from-scratch/">Nettuts+的从头开始学Python</a></h2>
+<p>另一个是Giles Lavelle的Python简介。正如TheNewBoston系列，Lavelle也假设学习的人编程零基础。</p>
+<pre><code>如果你想要你的应用如何体现在一些实际应用中，或者目标在于使用Python进行web开发，这个系列可能就是你想要的那个。</code></pre>
+<p>这个视频教程让你使用Django这个Python web框架从无到创建一个动态网站。</p>
+<h2 id="showmedo的python教程"><a target="_blank" rel="noopener" href="http://showmedo.com/videotutorials/python">ShowMeDo的Python教程</a></h2>
+<pre><code>StackOverflow不只是充满了&quot;新手&quot;错误和问题。</code></pre>
+<p>ShowMeDo拥有Python相关视频的庞大目录。然而它可能没有最好的用户体验。这些视频的级别从完全新手到最高级的Python技术。很值得一试。</p>
+<h2 id="构建一个可以玩网络游戏的python机器人"><a target="_blank" rel="noopener" href="http://active.tutsplus.com/tutorials/workflow/how-to-build-a-python-bot-that-can-play-web-games/">构建一个可以玩网络游戏的Python机器人</a></h2>
+<p>这个教程在关于你将学到什么是非常明确的。所以对于一个完全初学者来说，并不推荐。不过，我觉得，它值得一提。在这个指导中，Chris Kiehl会向你展示如何构建一个非常有意思的Python机器人，这个机器人将为你玩一个简单的游戏。这个教程真真正正展示了Python的能力。它可以用于完成你可能在你电脑上完成的每一天重复的工作。</p>
+<h1 id="任务3免费的电子书">任务3：免费的电子书</h1>
+<p><img src="https://cdn.tutsplus.com/net/uploads/legacy/2099_python/books.png" /> 当你努力学习一些新的东西的时候，找到一个本好书是相当困难的。Python拥有强大的社区和大量免费的高质量的电子书以供选择。下面是一些最好的图书的快速列表。你可以下载它们的免费电子书版本，或者，也可以选择购买实体书（或者捐赠）来支持作者，我肯定，他们将不胜感激。</p>
+<h2 id="learn-python-the-hard-way"><a target="_blank" rel="noopener" href="http://learnpythonthehardway.org/">Learn Python the Hard Way</a></h2>
+<p>请忽略它的名字，Learn Python the Hard Way让Python学习难以置信的简单 - 正如它所意味的一样！在这本书中，Zed A. Shaw从头开始提供你一些Python的细节和全面而详尽的指南，而不会阻碍你实际的编码。Shaw这本书是非正式的，但是相当详细，这让阅读这本书变得容易而且值得一读。</p>
+<h2 id="think-python-how-to-think-like-a-computer-scientist"><a target="_blank" rel="noopener" href="http://www.greenteapress.com/thinkpython/thinkpython.html">Think Python: How to Think Like a Computer Scientist</a></h2>
+<p>正如子标题所暗示的，"如何像一个计算机科学家一样思考"，Think Python更偏于理论知识。这对于初学者来说可能会有点挫败，但是在有关算法理论和高级概念方面，这本书是非常值得一读的。</p>
+<h2 id="invent-with-python"><a target="_blank" rel="noopener" href="http://inventwithpython.com/chapters/">Invent With Python</a></h2>
+<p>如果你习惯于"边做边学"，那么构建你自己的游戏将会是一个很有价值的体验！在这本书中，Al Sweigart假设读者没有任何Python基础，并且带你一路构造自己的游戏。由于这本书是面向游戏开发的，对于完全新手来说会有点快。这篇文章的后面将提到他的一本类似的书，这本书假设读者已经有了一些Python知识。如果你觉得你已经很好地掌握了这门语言，那么他其他的书将会更适合你。</p>
+<h2 id="the-django-book"><a target="_blank" rel="noopener" href="http://www.djangobook.com/">The Django Book</a></h2>
+<p>如果你想学习Python的WEB开发，那么你可能会使用Django框架。这本书假设你已经可以顺利使用Python了，但如果你是这个框架的初学者，它还会教你Django。The Django Book几乎如它们自身一样好，对于任何萌芽中的web开发者也是无价之宝。</p>
+<h2 id="python-books"><a target="_blank" rel="noopener" href="http://wiki.python.org/moin/PythonBooks">Python Books</a></h2>
+<p>如果这还不够，或者想要一本关于特定主题的书，那么你可以试试这个链接。<a target="_blank" rel="noopener" href="http://python.org/">python.org</a>上的人们已经汇集了广泛的书籍列表，这些列表根据难度和主题分类。</p>
+<h1 id="任务4熟悉stackoverflow">任务4：熟悉StackOverflow</h1>
+<p>成千上万的程序员都经历过你必然要面对的每一个问题。<a target="_blank" rel="noopener" href="http://stackoverflow.com/">StackOverflow</a>是一个超棒的资源，在那里，开发者可以找到他们问题的答案。当你偶然碰到了一个你不确定如何解决的问题时，搜索StackOverflow。你将极有可能找到问题的答案以及其他人如何解决他们的问题。</p>
+<p>但是，StackOverflow不仅仅是充满了"新手"错误和问题。也有一些真正聪明和乐于助人的人使用这个网站 - 向他们学习吧！</p>
+<pre><code>例如，看一看[Python的隐藏特性](http://stackoverflow.com/questions/101268/hidden-features-of-python)</code></pre>
+<p>你可能在这里看到的许多其他正式教程不会提供的提示和小窍门，但它们对于高级Python用户来说将会非常有用。</p>
+<h1 id="任务5欧拉计划">任务5：欧拉计划</h1>
+<p><img src="https://cdn.tutsplus.com/net/uploads/legacy/2099_python/euler.png" /> <a target="_blank" rel="noopener" href="http://projecteuler.net/">欧拉计划</a>是我最喜欢的网站。在创建一个账号后，你可以完成网站上~400的问题。每一个问题大概包括50%的数学和50%的编程。在我看来，最有成就感的是可以学到更多关于每个主题的东西。</p>
+<p>一开始的时候，问题会比较简单，以测试你关于语言的知识。但难度将会逐渐增长，以挑战即使是最有经验的程序员。最后，问题的难度将会促使你去寻找最有效的算法 - 如果你不想等待数小时来计算答案。</p>
+<pre><code>没有什么比促使你找到欧拉计划中的问题最快最有效的方法更能将你变成一个变成能手了。</code></pre>
+<p>当你破解了一个新的问题，你将获得进入论坛中关于这个问题的线程的机会。在那里，有很多人在讨论关于他们的方法和想法。在这个线程中的后面几页，你可能可以找到用Python实现的一些方法。这才是提高你的编程技巧的真正关键的地方。如果有人的方法比你更快，花点时间分析一下你还可以怎么提高你自己的方法。随着时间的推移，你将获得所有的技巧，并且以一种有意义的方式增长你的Python知识。</p>
+<p>另外，也有一些关于欧拉计划上的问题解决方案（使用Python）的很棒的博客。如果你被困在一个问题中，不要害羞，你可以看看其他开发者的解法，只要你想要从中学习。 下面是两个我喜欢的博客： * <a target="_blank" rel="noopener" href="http://blog.dreamshire.com/">Dreamshire</a> * <a target="_blank" rel="noopener" href="http://blog.mycila.com/">Mycila</a></p>
+<h1 id="任务6构造一个游戏">任务6：构造一个游戏</h1>
+<p>没有什么比构造你自己的游戏更令你满意了。它可以是一个陡峭的学习曲线，但非常非常的值得。<a target="_blank" rel="noopener" href="http://www.pygame.org/news.html">PyGame</a>是Python最有名的游戏库，你可以找到一些关于它的免费教程。下面是一些好用的PyGame教程。</p>
+<h2 id="官方pygame教程"><a target="_blank" rel="noopener" href="http://www.pygame.org/docs/">官方PyGame教程</a></h2>
+<p>除了原始的Python教程外，PyGame开发者也有属于他们自己的介绍文档。但如果你想要直接学习及开始构建你的游戏，那么这些可能过于技术了。然而，开发者文档将一直会是你最好的信息来源。所以，我仍然推荐你熟悉这个网站。</p>
+<h2 id="invent-with-python-with-pygame"><a target="_blank" rel="noopener" href="http://inventwithpython.com/pygame/chapters/">Invent With Python (With PyGame)</a></h2>
+<p>这个由 Al Sweigart提供的免费电子书贯穿PyGame库，带你从零基础到可以构建一些有些。如果你想要的话，简单的游戏将为你提供完美的平台来开始自己的项目。广泛而详尽的注释贯穿了Sweigart所有的代码以帮助你学习。</p>
+<h2 id="thenewboston的计算机游戏开发教程"><a target="_blank" rel="noopener" href="http://www.youtube.com/playlist?list=PL8E21BDD0981FDF66">TheNewBoston的计算机游戏开发教程</a></h2>
+<p>这是TheNewBoston的另一个播放列表。它可以当做PyGame简介。它基于零基础假设，会让你对PyGame库感觉良好。但不像InventWithPython指南，它更关注于知识点，而不会带你构造自己完整的游戏。</p>
+<h1 id="任务7了解一些常用库和工具">任务7：了解一些常用库和工具</h1>
+<p>Python是通用语言，它几乎可以做任何一件事。所以，当然的，它拥有看似源源不断的库和工具。下面是一些最受欢迎的。</p>
+<h2 id="pypy"><a target="_blank" rel="noopener" href="http://pypy.org/">PyPy</a></h2>
+<p>如果你正在进行一些CPU密集型工作，然后你发现Python正在成为瓶颈，那么，你可能需要PyPy。PyPy是一个Python的可选编辑器，它可以提高处理速度。</p>
+<h2 id="numpy-scipy"><a target="_blank" rel="noopener" href="http://numpy.scipy.org/">NumPy + SciPy</a></h2>
+<p>这两个通常齐头并进（SciPy依赖于NumPy）。如果你正在进行一些严谨的数字运算或科学研究，那么这两个库将会是你最好的搭档。NumPy和SciPy扩展了Python的数学方法和能力，可以极大的提高某些任务的速度。</p>
+<h2 id="beautifulsoup"><a target="_blank" rel="noopener" href="http://www.crummy.com/software/BeautifulSoup/">BeautifulSoup</a></h2>
+<p>BeautifulSoup确实很美丽。如果你需要抓取一个HTML页面以获得一些信息，你将会明白它将带来多少的沮丧和让你掉多少头发。BeautifulSoup将会为你完成这些使你更长寿。强烈推荐，享受它给你带来的乐趣吧~</p>
+<h2 id="python-image-library"><a target="_blank" rel="noopener" href="http://www.pythonware.com/products/pil/">Python Image Library</a></h2>
+<p>Python Image Library (PIL) 是一个扩展库，对于图片处理极为有用。如果你需要操作一张图片，没准PIL能帮到你。</p>
+<h2 id="django"><a target="_blank" rel="noopener" href="https://www.djangoproject.com/">Django</a></h2>
+<p>文章前面也提到了，如果你的目标是web开发，你将可能用到Django框架。它是Python最常用的web框架，也是拥有最多学习资源的框架。</p>
+<h1 id="任务8参与开源项目">任务8：参与开源项目</h1>
+<p>在你对这门语言有了一个深入的了解后，能够阅读和理解其他人的代码将是一个很重要的技能 - 更不用说这也是一个学习的好方法。 因此，开源项目是很不错的。这里，首选Github或者Bitbucket。不要担心人们会对你对代码评头论足，也不需要立刻贡献什么。你可以随时fork一个项目，自己修改一下来看看如何工作。如果碰巧看到一些你觉得可以改进的地方，真棒！放手去做吧，然后提交你对改进。这就是开源的意义。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://bitbucket.org/">BitBucket</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/">Github</a></li>
+<li><a target="_blank" rel="noopener" href="https://tutsplus.com/course/git-essentials/">Git Essentials (Screencast Course)</a></li>
+</ul>
+<h1 id="总结">总结</h1>
+<p>我希望我可以为你提供一个牢固的Python知识基础。如果你觉得还有其他好玩的地方应该包括在这个课程表中，请在下面评论以便共享。</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E6%B2%A1%E4%BA%8B%E7%BF%BB%E7%9D%80%E7%8E%A9/" rel="tag"># 没事翻着玩</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2015/11/13/%E4%B8%80%E4%BA%9BSQL%E4%BC%98%E5%8C%96%E6%8A%80%E5%B7%A7/" rel="prev" title="一些SQL优化技巧">
+      <i class="fa fa-chevron-left"></i> 一些SQL优化技巧
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2015/11/19/%E6%88%91%E5%9C%A8%E5%8D%8E%E4%B8%BA%E7%9A%84%E4%B8%A4%E4%B8%89%E4%BA%8B(%E4%B8%80)/" rel="next" title="我在华为的两三事(一)">
+      我在华为的两三事(一) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A11%E4%BB%8E%E5%9F%BA%E7%A1%80%E5%BC%80%E5%A7%8B"><span class="nav-number">1.</span> <span class="nav-text">任务1：从基础开始</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%B4%E5%9F%BA%E7%99%BE%E7%A7%91%E7%9A%84python%E9%9D%9E%E7%A8%8B%E5%BA%8F%E5%91%98%E6%95%99%E7%A8%8B"><span class="nav-number">1.1.</span> <span class="nav-text">维基百科的Python非程序员教程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%98%E6%96%B9python%E6%95%99%E7%A8%8B"><span class="nav-number">1.2.</span> <span class="nav-text">官方Python教程</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A12%E6%95%99%E7%A8%8B%E5%92%8C%E8%A7%86%E9%A2%91%E6%95%99%E7%A8%8B"><span class="nav-number">2.</span> <span class="nav-text">任务2：教程和视频教程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#thenewboston%E7%9A%84python%E7%BC%96%E7%A8%8B%E6%95%99%E7%A8%8B"><span class="nav-number">2.1.</span> <span class="nav-text">TheNewBoston的Python编程教程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#nettuts%E7%9A%84%E4%BB%8E%E5%A4%B4%E5%BC%80%E5%A7%8B%E5%AD%A6python"><span class="nav-number">2.2.</span> <span class="nav-text">Nettuts+的从头开始学Python</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#showmedo%E7%9A%84python%E6%95%99%E7%A8%8B"><span class="nav-number">2.3.</span> <span class="nav-text">ShowMeDo的Python教程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%84%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8F%AF%E4%BB%A5%E7%8E%A9%E7%BD%91%E7%BB%9C%E6%B8%B8%E6%88%8F%E7%9A%84python%E6%9C%BA%E5%99%A8%E4%BA%BA"><span class="nav-number">2.4.</span> <span class="nav-text">构建一个可以玩网络游戏的Python机器人</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A13%E5%85%8D%E8%B4%B9%E7%9A%84%E7%94%B5%E5%AD%90%E4%B9%A6"><span class="nav-number">3.</span> <span class="nav-text">任务3：免费的电子书</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#learn-python-the-hard-way"><span class="nav-number">3.1.</span> <span class="nav-text">Learn Python the Hard Way</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#think-python-how-to-think-like-a-computer-scientist"><span class="nav-number">3.2.</span> <span class="nav-text">Think Python: How to Think Like a Computer Scientist</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#invent-with-python"><span class="nav-number">3.3.</span> <span class="nav-text">Invent With Python</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#the-django-book"><span class="nav-number">3.4.</span> <span class="nav-text">The Django Book</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#python-books"><span class="nav-number">3.5.</span> <span class="nav-text">Python Books</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A14%E7%86%9F%E6%82%89stackoverflow"><span class="nav-number">4.</span> <span class="nav-text">任务4：熟悉StackOverflow</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A15%E6%AC%A7%E6%8B%89%E8%AE%A1%E5%88%92"><span class="nav-number">5.</span> <span class="nav-text">任务5：欧拉计划</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A16%E6%9E%84%E9%80%A0%E4%B8%80%E4%B8%AA%E6%B8%B8%E6%88%8F"><span class="nav-number">6.</span> <span class="nav-text">任务6：构造一个游戏</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%98%E6%96%B9pygame%E6%95%99%E7%A8%8B"><span class="nav-number">6.1.</span> <span class="nav-text">官方PyGame教程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#invent-with-python-with-pygame"><span class="nav-number">6.2.</span> <span class="nav-text">Invent With Python (With PyGame)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#thenewboston%E7%9A%84%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91%E6%95%99%E7%A8%8B"><span class="nav-number">6.3.</span> <span class="nav-text">TheNewBoston的计算机游戏开发教程</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A17%E4%BA%86%E8%A7%A3%E4%B8%80%E4%BA%9B%E5%B8%B8%E7%94%A8%E5%BA%93%E5%92%8C%E5%B7%A5%E5%85%B7"><span class="nav-number">7.</span> <span class="nav-text">任务7：了解一些常用库和工具</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#pypy"><span class="nav-number">7.1.</span> <span class="nav-text">PyPy</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#numpy-scipy"><span class="nav-number">7.2.</span> <span class="nav-text">NumPy + SciPy</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#beautifulsoup"><span class="nav-number">7.3.</span> <span class="nav-text">BeautifulSoup</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#python-image-library"><span class="nav-number">7.4.</span> <span class="nav-text">Python Image Library</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#django"><span class="nav-number">7.5.</span> <span class="nav-text">Django</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A18%E5%8F%82%E4%B8%8E%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE"><span class="nav-number">8.</span> <span class="nav-text">任务8：参与开源项目</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">9.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2015/11/16/[%E8%AF%91]%E5%AD%A6%E4%B9%A0Python%E6%9C%80%E4%BD%B3%E6%96%B9%E6%B3%95/";
+    this.page.identifier = "2015/11/16/[译]学习Python最佳方法/";
+    this.page.title = "译|学习Python最佳方法";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="前段时间需要利用fastdfs来实现文件的上传操作。但是fastdfs官方并不提供golang客户端。但是github大法好呀。于是言小白屁颠屁颠地在github上找到了一个fastdfs的第三方实现golang客户端：tRavAsty&#x2F;fdfs_client。  一切开发就绪，但是在测试阶段总会偶然的出现在对fastdfs发起上传文件请求的时候hang住的情况。  在加了无数次debug日志，以">
+<meta property="og:type" content="article">
+<meta property="og:title" content="记一次使用golang连接池遇到的坑">
+<meta property="og:url" content="http://ictar.github.io/2017/08/17/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%BD%BF%E7%94%A8golang%E8%BF%9E%E6%8E%A5%E6%B1%A0%E9%81%87%E5%88%B0%E7%9A%84%E5%9D%91/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="前段时间需要利用fastdfs来实现文件的上传操作。但是fastdfs官方并不提供golang客户端。但是github大法好呀。于是言小白屁颠屁颠地在github上找到了一个fastdfs的第三方实现golang客户端：tRavAsty&#x2F;fdfs_client。  一切开发就绪，但是在测试阶段总会偶然的出现在对fastdfs发起上传文件请求的时候hang住的情况。  在加了无数次debug日志，以">
+<meta property="og:locale">
+<meta property="article:published_time" content="2017-08-17T12:07:26.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.961Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Golang">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2017/08/17/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%BD%BF%E7%94%A8golang%E8%BF%9E%E6%8E%A5%E6%B1%A0%E9%81%87%E5%88%B0%E7%9A%84%E5%9D%91/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>记一次使用golang连接池遇到的坑 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2017/08/17/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%BD%BF%E7%94%A8golang%E8%BF%9E%E6%8E%A5%E6%B1%A0%E9%81%87%E5%88%B0%E7%9A%84%E5%9D%91/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          记一次使用golang连接池遇到的坑
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-08-17 20:07:26" itemprop="dateCreated datePublished" datetime="2017-08-17T20:07:26+08:00">2017-08-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2017/08/17/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%BD%BF%E7%94%A8golang%E8%BF%9E%E6%8E%A5%E6%B1%A0%E9%81%87%E5%88%B0%E7%9A%84%E5%9D%91/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2017/08/17/记一次使用golang连接池遇到的坑/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>前段时间需要利用fastdfs来实现文件的上传操作。但是fastdfs官方并不提供golang客户端。但是github大法好呀。于是言小白屁颠屁颠地在github上找到了一个fastdfs的第三方实现golang客户端：<a target="_blank" rel="noopener" href="https://github.com/tRavAsty/fdfs_client">tRavAsty/fdfs_client</a>。</p>
+<p>一切开发就绪，但是在测试阶段总会偶然的出现在对fastdfs发起上传文件请求的时候hang住的情况。</p>
+<p>在加了无数次debug日志，以及最后祭出gdb的情况下，终于将问题范围缩小到<a target="_blank" rel="noopener" href="https://github.com/tRavAsty/fdfs_client/blob/master/connection.go">connection.go</a>中的相关实现上。</p>
+<p>这个文件提供了连接池的相关操作。在此客户端中，一切与fastdfs的实际交互都会通过连接池中的连接进行。</p>
+<h3 id="问题定位">问题定位</h3>
+<p>下面是调试定位过程。</p>
+<p>第一次夯住时借助gdb看到程序一直在<code>makeConn()</code>方法中。此方法的代码实现如下： <figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(this *ConnectionPool)</span> <span class="title">makeConn</span><span class="params">()</span> <span class="params">(net.Conn, error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> n <span class="keyword">int</span></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		n = rand.Intn(<span class="built_in">len</span>(this.hosts))</span><br><span class="line">		<span class="keyword">if</span> !this.busyConns[n] &#123;</span><br><span class="line">			this.busyConns[n] = <span class="literal">true</span></span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	host := this.hosts[n]</span><br><span class="line">	addr := fmt.Sprintf(<span class="string">&quot;%s:%d&quot;</span>, host, this.ports[n])</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> net.DialTimeout(<span class="string">&quot;tcp&quot;</span>, addr, time.Minute)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 其中，busyConns是连接池的一个字段，用来记录连接是否有效。在该方法中，会随机挑选一个连接，只有在某个连接的有效性记录为<code>false</code>（无效）的情况下，才会将其标记为<code>true</code>(有效)，然后创建一个新的连接。</p>
+<p>这里的<code>for</code>是个死循环，只有在找到一个无效连接的情况下才会退出此循环。因此一开始怀疑这里存在问题导致无法退出。即存在初始化后所有连接之后（即<code>busyConns</code>里面所有项的值都为true），再次调用<code>makeConns</code>获取新连接时陷入死循环。将其改为遍历： <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">func (<span class="keyword">this</span> *ConnectionPool) makeConn() (net.Conn, error) &#123;</span><br><span class="line">	<span class="keyword">var</span> n int</span><br><span class="line">	<span class="keyword">var</span> busy, has bool</span><br><span class="line">	<span class="keyword">for</span> n, busy = range <span class="keyword">this</span>.busyConns &#123;</span><br><span class="line">		<span class="keyword">if</span> !busy &#123;</span><br><span class="line">			<span class="keyword">this</span>.busyConns[n] = <span class="literal">true</span></span><br><span class="line">			has = <span class="literal">true</span></span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> !has &#123;</span><br><span class="line">		logger.Errorf(<span class="string">&quot;all hosts are busy: %v&quot;</span>, <span class="keyword">this</span>.busyConns)</span><br><span class="line">		<span class="keyword">return</span> nil, ErrAllConnBusy</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	host := <span class="keyword">this</span>.hosts[n]</span><br><span class="line">	addr := fmt.Sprintf(<span class="string">&quot;%s:%d&quot;</span>, host, <span class="keyword">this</span>.ports[n])</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> net.DialTimeout(<span class="string">&quot;tcp&quot;</span>, addr, time.Minute)</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure> OK。继续测试。该问题一直没再重现。然而，等到要上线的前一天，它它它，它又㕛叒叕出现了/(ㄒoㄒ)/~~</p>
+<p>因为这是偶发情况，找不到触发条件，因此只能按住案发现场不重启，然后好好看看这个库的逻辑： 1. 连接池库提供初始化连接池函数<code>NewConnectionPool</code>。在此函数中，调用<code>makeConn</code>方法创建指定数目的连接，然后扔到连接池中一个名为<code>conns</code>的channel中。 2. 每次向连接池获取连接的时候，会调用<code>Get()</code>方法。这个方法中，使用<code>for</code>+<code>select case</code>模式。 1. 如果能从<code>conns</code>这个channel中接收到一个连接，并且此连接不是nil，而且属于活跃连接（使用<code>activeConn</code>方法判定），那么返回该连接。否则退出此<code>select case</code>，进入下一次<code>select case</code> 2. 如果接收不到连接，则会在<code>default</code>子块中尝试通过<code>makeConn</code>方法来获得一个新的连接。然后将此连接发送到<code>conns</code>这个channel中。这样，在下一次<code>select case</code>中，就能够接收到一个有效的连接了。</p>
+<p>于是，这里又存在一个死循环。如果一直收不到连接，而在<code>makeConn</code>中又创建不了有效连接的话，那么<code>select case</code>块就会一直跑到<code>default</code>子块中，而唯一退出<code>for</code>循环的条件位于<code>case</code>子块呀大人~~~</p>
+<p>通过上面我们可以知道，只要<code>busyConns</code>的值都为true，那么就不会返回有效连接。但是，搜遍整个代码，都没有把<code>busyConns</code>中的值设为<code>false</code>的操作呀摔！</p>
+<p>于是，改改改。</p>
+<p>根据<code>busyConns</code>的语义，当连接无效的时候，我们就应该把其在<code>busyConns</code>上对应的值置为false。而我们会在将连接放回连接池的时候检查连接的有效性。故而，可以在连接池的<code>put</code>方法里，当检查连接无效的时候，将其在<code>busyConns</code>上置为false。（为了避免此文像裹脚布，这里代码我就不贴了。）</p>
+<p>好了，这次，我们知道是因为连接的问题触发程序卡住了。那么，改完测试一下。</p>
+<p>运行程序，拿出命令<code>tcpkill</code>把连接灭掉。</p>
+<p>然而，不幸的是，程序，再一次卡住了卡住了卡住了！！！</p>
+<p>万念俱灰的言小白知道，这不是因为自己之前改得不对，事实上从调试日志来看，程序根本就没走到<code>put</code>方法。所以还是回到<code>Get</code>方法上。然后，在某小可怜的提示下，终于发现还有一处不对。</p>
+<p>我们回到上面说到的<code>Get</code>方法。当从channel中收到一个连接的时候，是会检查连接有效性的。但是，问题来了，当连接无效的时候，直接退出当前<code>select case</code>，进入下一个<code>select case</code>，而没有把此无效连接通过<code>put</code>方法放回连接池。此时，会导致此连接对应的<code>busyConns</code>中的值还是一直保持着<code>true</code>不变。这样，我们在<code>default</code>子块中就再次陷入了<code>makeConns</code>一直获取不到有效连接的困境中。修改后的<code>Get()</code>关键部分代码如下： <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> &#123;</span><br><span class="line">	select &#123;</span><br><span class="line">	case conn := &lt;-<span class="keyword">this</span>.conns:</span><br><span class="line">		<span class="keyword">if</span> conn == nil &#123;</span><br><span class="line">		    logger.Errorf(<span class="string">&quot;[GET] connection from channel is null&quot;</span>)</span><br><span class="line">			<span class="keyword">this</span>.put(conn, <span class="literal">false</span>)</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">			<span class="comment">//return nil, ErrClosed</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> err := <span class="keyword">this</span>.activeConn(conn); err != nil &#123;</span><br><span class="line">		    logger.Errorf(<span class="string">&quot;[GET] active connection error: %s&quot;</span>, err)</span><br><span class="line">			<span class="keyword">this</span>.put(conn, <span class="literal">true</span>)</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">this</span>.wrapConn(conn), nil</span><br><span class="line">	default:</span><br><span class="line">		<span class="keyword">if</span> <span class="keyword">this</span>.Len() &gt;= <span class="keyword">this</span>.maxConns &#123;</span><br><span class="line">			errmsg := fmt.Sprintf(<span class="string">&quot;Too many connctions %d&quot;</span>, <span class="keyword">this</span>.Len())</span><br><span class="line">			<span class="keyword">return</span> nil, errors.New(errmsg)</span><br><span class="line">		&#125;</span><br><span class="line">		conn, n, err := <span class="keyword">this</span>.makeConn()</span><br><span class="line">		<span class="keyword">if</span> err != nil &#123;</span><br><span class="line">			<span class="keyword">return</span> nil, err</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">this</span>.conns &lt;- conn</span><br><span class="line">		logger.Debugf(<span class="string">&quot;[GET] put connection for %s to channel, current channel size: %d&quot;</span>, <span class="keyword">this</span>.hosts[n], len(<span class="keyword">this</span>.conns))</span><br><span class="line">		<span class="comment">//put connection to pool and go next `for` loop</span></span><br><span class="line">		<span class="comment">//return this.wrapConn(conn), nil</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure> 至此，问题解决。</p>
+<h3 id="总结">总结</h3>
+<p>经过此次调试，有几点心得： 1. 关键位置的日志一定要给足！ 2. 善用gdb 3. 对可能造成死循环的情况一定要谨慎考虑*3。</p>
+<p>人們往往根據內心已有的信念或情緒來對外部事物進行評判，以得出與內心一致的結論。這就是驗證性偏見。 —— <a target="_blank" rel="noopener" href="https://book.douban.com/subject/27096799/">司馬懿心戰</a></p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Golang/" rel="tag"># Golang</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/08/10/Go-go-%E5%B0%8F%E7%99%BD%E7%9A%84go%E5%B0%8F%E6%8A%84%EF%BC%9A%E5%B9%B6%E5%8F%91%E5%92%8C%E9%94%99%E8%AF%AF/" rel="prev" title="Go, go|小白的go小抄：并发和错误">
+      <i class="fa fa-chevron-left"></i> Go, go|小白的go小抄：并发和错误
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/11/29/golang-json-number-unmarshal-null-marshal/" rel="next" title="Golang/JSON | 数值的反序列化和空值的序列化">
+      Golang/JSON | 数值的反序列化和空值的序列化 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E5%AE%9A%E4%BD%8D"><span class="nav-number">1.</span> <span class="nav-text">问题定位</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">2.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2017/08/17/%E8%AE%B0%E4%B8%80%E6%AC%A1%E4%BD%BF%E7%94%A8golang%E8%BF%9E%E6%8E%A5%E6%B1%A0%E9%81%87%E5%88%B0%E7%9A%84%E5%9D%91/";
+    this.page.identifier = "2017/08/17/记一次使用golang连接池遇到的坑/";
+    this.page.title = "记一次使用golang连接池遇到的坑";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

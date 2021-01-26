@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="几个简单排序算法及其Python实现：插入排序，选择排序，冒泡排序，归并排序">
+<meta property="og:type" content="article">
+<meta property="og:title" content="九大排序算法及其Python实现之简单排序">
+<meta property="og:url" content="http://ictar.github.io/2015/12/01/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E7%AE%80%E5%8D%95%E6%8E%92%E5%BA%8F/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="几个简单排序算法及其Python实现：插入排序，选择排序，冒泡排序，归并排序">
+<meta property="og:locale">
+<meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Insertion-sort-example-300px.gif/220px-Insertion-sort-example-300px.gif">
+<meta property="og:image" content="http://images.cnitblog.com/i/497634/201403/130003333397123.jpg">
+<meta property="og:image" content="http://img.blog.csdn.net/20130609182235937">
+<meta property="og:image" content="http://img.my.csdn.net/uploads/201301/26/1359204305_2056.png">
+<meta property="article:published_time" content="2015-12-01T03:04:58.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.993Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="算法">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Insertion-sort-example-300px.gif/220px-Insertion-sort-example-300px.gif">
+
+<link rel="canonical" href="http://ictar.github.io/2015/12/01/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E7%AE%80%E5%8D%95%E6%8E%92%E5%BA%8F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>九大排序算法及其Python实现之简单排序 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2015/12/01/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E7%AE%80%E5%8D%95%E6%8E%92%E5%BA%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          九大排序算法及其Python实现之简单排序
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2015-12-01 11:04:58" itemprop="dateCreated datePublished" datetime="2015-12-01T11:04:58+08:00">2015-12-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">算法与数据结构</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2015/12/01/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E7%AE%80%E5%8D%95%E6%8E%92%E5%BA%8F/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/12/01/九大排序算法及其Python实现之简单排序/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+            <div class="post-description">几个简单排序算法及其Python实现：插入排序，选择排序，冒泡排序，归并排序</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>输入：n个数的一个序列&lt;a1,a2,...,an&gt; (A[1..n]) 输出：输入序列的一个排序&lt;b1,b2,...,bn&gt;，满足b1≤b2≤...≤bn。</p>
+<h1 id="插入排序">插入排序</h1>
+<h2 id="思想">思想</h2>
+<p>扫描数组，每次将一个待排序的记录，按其关键字大小插入到前面已经排好序的子序列中的适当位置，直到全部记录插入完成为止。 参考：<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/zh/%E6%8F%92%E5%85%A5%E6%8E%92%E5%BA%8F">Wiki百科：插入排序</a></p>
+<h2 id="实现">实现</h2>
+<p>伪代码 <figure class="highlight dns"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">INSERTION-SORT(<span class="keyword">A</span>) </span><br><span class="line">    for j = <span class="number">2</span> to <span class="keyword">A</span>.length</span><br><span class="line">        key = <span class="keyword">A</span>[j]</span><br><span class="line">        //将<span class="keyword">A</span>[j]插入到已排序序列<span class="keyword">A</span>[<span class="number">1</span>..j-<span class="number">1</span>]</span><br><span class="line">        i = j - <span class="number">1</span></span><br><span class="line">        while i &gt; <span class="number">0</span> and <span class="keyword">A</span>[i] &gt; key</span><br><span class="line">            <span class="keyword">A</span>[i+<span class="number">1</span>] = <span class="keyword">A</span>[i]</span><br><span class="line">            i = i -<span class="number">1</span></span><br><span class="line">        <span class="keyword">A</span>[i+<span class="number">1</span>] = key</span><br></pre></td></tr></table></figure> 1. Python实现（升序） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">INSERTION_SORT_ASC</span>(<span class="params">A</span>):</span></span><br><span class="line">    n= <span class="built_in">len</span>(A) <span class="comment">#A的长度</span></span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,n): <span class="comment"># 从第二个元素开始，遍历数组</span></span><br><span class="line">        key, i = A[j], j <span class="comment"># 保存当前元素的值key</span></span><br><span class="line">        <span class="keyword">while</span> i&gt;<span class="number">0</span> <span class="keyword">and</span> A[i-<span class="number">1</span>]&gt;key: <span class="comment">#当前元素前面的序列是已经排序好的数组</span></span><br><span class="line">            A[i] = A[i-<span class="number">1</span>] <span class="comment"># 将较大的数后移</span></span><br><span class="line">            i -=<span class="number">1</span> <span class="comment"># 继续往前找</span></span><br><span class="line">        A[i] = key <span class="comment"># i为当前元素的插入位置</span></span><br></pre></td></tr></table></figure> 2. Python实现（降序） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">INSERTION_SORT_DESC</span>(<span class="params">A</span>):</span></span><br><span class="line">    n = <span class="built_in">len</span>(A)</span><br><span class="line">    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,n):</span><br><span class="line">        key, i = A[j], j</span><br><span class="line">        <span class="keyword">while</span> i&gt;<span class="number">0</span> <span class="keyword">and</span> A[i-<span class="number">1</span>]&lt;key:</span><br><span class="line">            A[i] = A[i-<span class="number">1</span>]</span><br><span class="line">            i -= <span class="number">1</span></span><br><span class="line">        A[i] = key</span><br></pre></td></tr></table></figure> ## 图片说明 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Insertion-sort-example-300px.gif/220px-Insertion-sort-example-300px.gif" /> ## 复杂度 1. 空间复杂度：O(1), in-place排序 2. 时间复杂度：O(n^2)</p>
+<h2 id="注意">注意</h2>
+<ol type="1">
+<li>只要循环到一个小于或等于key值的数就说明找到key值的位置了。此时需要结束循环</li>
+<li>用key值去比较，而不是用相邻的两个值做比较</li>
+<li>当n很小的时候效率较高，当n很大的时候，不适用</li>
+<li>一种稳定的算法</li>
+</ol>
+<table style="width:6%;">
+<colgroup>
+<col style="width: 5%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td># 选择排序 ## 思想 为每个位置选择当前元素最小的。即，首先找出A中的最小元素并将其与A[0]中的元素进行交换。接着，找出A中次最小元素并将其与A[1]中的元素进行交换。对A中前n-1个元素按该方式继续。 参考：<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E9%80%89%E6%8B%A9%E6%8E%92%E5%BA%8F">Wiki百科：选择排序</a></td>
+</tr>
+<tr class="even">
+<td>## 实现 伪代码： <figure class="highlight livecodeserver"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">SELECTION_SORT(A)</span><br><span class="line">    <span class="keyword">for</span> i = <span class="number">1</span> <span class="built_in">to</span> A.<span class="built_in">length</span><span class="number">-1</span></span><br><span class="line">        <span class="built_in">min</span> = i</span><br><span class="line">        <span class="keyword">for</span> j=i+<span class="number">1</span> <span class="built_in">to</span> A.<span class="built_in">length</span><span class="comment"> //找出当前位置最小的</span></span><br><span class="line">            <span class="keyword">if</span> A[j] &lt; A[<span class="built_in">min</span>]</span><br><span class="line">                <span class="built_in">min</span> = j</span><br><span class="line">        exchange A[i] <span class="keyword">with</span> A[<span class="built_in">min</span>]</span><br></pre></td></tr></table></figure> 1. Python实现（升序） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">SELECTION_SORT_ASC</span>(<span class="params">A</span>):</span></span><br><span class="line">    n = <span class="built_in">len</span>(A)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,n-<span class="number">1</span>):</span><br><span class="line">        <span class="built_in">min</span> = i</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(i+<span class="number">1</span>,n): <span class="comment">#找出当前位置最小的</span></span><br><span class="line">            <span class="keyword">if</span> A[j]&lt;A[<span class="built_in">min</span>]: <span class="built_in">min</span>=j</span><br><span class="line">        <span class="keyword">if</span> i!=<span class="built_in">min</span>: A[i],A[<span class="built_in">min</span>] = A[<span class="built_in">min</span>],A[i]</span><br></pre></td></tr></table></figure> 2. Python实现（降序） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">SELECTION_SORT_DESC</span>(<span class="params">A</span>):</span></span><br><span class="line">    n = <span class="built_in">len</span>(A)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,n-<span class="number">1</span>):</span><br><span class="line">        <span class="built_in">max</span> = i</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(i+<span class="number">1</span>,n): <span class="comment">#找出当前位置最大的</span></span><br><span class="line">            <span class="keyword">if</span> A[j]&gt;A[<span class="built_in">max</span>]: <span class="built_in">max</span>=j</span><br><span class="line">        <span class="keyword">if</span> i!=<span class="built_in">max</span>: A[i],A[<span class="built_in">max</span>] = A[<span class="built_in">max</span>],A[i]</span><br></pre></td></tr></table></figure> ## 图片说明 <img src="http://images.cnitblog.com/i/497634/201403/130003333397123.jpg" /> ## 复杂度 1. 空间复杂度：O(1), in-place排序 2. 时间复杂度：O(n^2)</td>
+</tr>
+<tr class="odd">
+<td>## 注意 1. 记录最小/大那个元素的下标，而不是值。 2. 相同元素的前后顺序可能改变，因此是不稳定的排序算法</td>
+</tr>
+</tbody>
+</table>
+<h1 id="冒泡排序">冒泡排序</h1>
+<h2 id="思想-1">思想</h2>
+<p>反复交换相邻的未按次序排列的元素。即把小的元素往前调，或者把大的元素往后调 参考：<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/zh/%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F">Wiki百科：冒泡排序</a> ## 实现 伪代码： <figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="constructor">BUBBLESORT(A)</span></span><br><span class="line">    <span class="keyword">for</span> i=<span class="number">1</span> <span class="keyword">to</span> <span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>length-<span class="number">1</span> <span class="comment">//从前往后扫描数组</span></span><br><span class="line">        <span class="keyword">for</span> j=<span class="module-access"><span class="module"><span class="identifier">A</span>.</span></span>length <span class="keyword">downto</span> i+<span class="number">1</span> <span class="comment">//从后开始，不断把小的元素往前推</span></span><br><span class="line">            <span class="keyword">if</span> A<span class="literal">[<span class="identifier">j</span>]</span> &lt; A<span class="literal">[<span class="identifier">j</span>-<span class="number">1</span>]</span></span><br><span class="line">                exchange A<span class="literal">[<span class="identifier">j</span>]</span> <span class="keyword">with</span> A<span class="literal">[<span class="identifier">j</span>-<span class="number">1</span>]</span></span><br></pre></td></tr></table></figure> 1. Python实现（升序） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">BUBBLE_SORT_ASC</span>(<span class="params">A</span>):</span></span><br><span class="line">    n = <span class="built_in">len</span>(A)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,n-<span class="number">1</span>):</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(i+<span class="number">1</span>,n)[::-<span class="number">1</span>]:</span><br><span class="line">            <span class="keyword">if</span> A[j] &lt; A[j-<span class="number">1</span>]: A[j], A[j-<span class="number">1</span>] = A[j-<span class="number">1</span>], A[j]</span><br></pre></td></tr></table></figure> 2. Python实现（降序） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">BUBBLE_SORT_DESC</span>(<span class="params">A</span>):</span></span><br><span class="line">    n = <span class="built_in">len</span>(A)</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>, n-<span class="number">1</span>):</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(i+<span class="number">1</span>,n)[::-<span class="number">1</span>]:</span><br><span class="line">            <span class="keyword">if</span> A[j] &gt; A[j-<span class="number">1</span>]: A[j], A[j-<span class="number">1</span>] = A[j-<span class="number">1</span>], A[j]</span><br></pre></td></tr></table></figure> ## 图片说明 <img src="http://img.blog.csdn.net/20130609182235937" /> ## 复杂度 1. 空间复杂度：O(1), in-place排序 2. 最差/平均/最优时间复杂度：O(n^2) ## 注意 1. 相同元素的前后顺序不会改变，因此是一种稳定的排序算法。 2. 低效的简单排序算法</p>
+<hr />
+<h1 id="归并排序">归并排序</h1>
+<h2 id="思想分而治之">思想：分而治之</h2>
+<ol type="1">
+<li>分解：分解待排序的n个元素的序列成各具n/2个元素的两个子序列</li>
+<li>解决：使用归并排序递归地排序两个子序列</li>
+<li>合并(MERGE)：合并两个已排序的子序列以产生已排序的答案 参考：<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F">Wiki百科：归并排序</a></li>
+</ol>
+<h2 id="实现-1">实现</h2>
+<p>伪代码： <figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 合并操作</span></span><br><span class="line"><span class="comment">// p, q, r是数组的下标，满足p≤q&lt;r</span></span><br><span class="line"><span class="comment">// 假设子序列A[p..q]和A[q+1..r]已排好序</span></span><br><span class="line"><span class="comment">// 此过程合并这两个子数组形成单一的已排好序的子数组并代替当前的子数组A[p..r]</span></span><br><span class="line"><span class="comment">// 时间复杂度O(n), n=r-p+1</span></span><br><span class="line"><span class="comment">// 哨兵的设置：避免检查堆为空，只需要执行r-p+1个基本步骤，算法就可以停止</span></span><br><span class="line"><span class="constructor">MERGE(A, <span class="params">p</span>, <span class="params">q</span>, <span class="params">r</span>)</span></span><br><span class="line">    n1 = q - p + <span class="number">1</span> <span class="comment">//A[p..q]的元素个数</span></span><br><span class="line">    n2 = r - q <span class="comment">//A[q+1..r]的元素个数</span></span><br><span class="line">    <span class="keyword">let</span> L<span class="literal">[<span class="number">1.</span>.<span class="identifier">n1</span>+<span class="number">1</span>]</span> <span class="keyword">and</span> R<span class="literal">[<span class="number">1.</span>.<span class="identifier">n2</span>+<span class="number">1</span>]</span> be <span class="keyword">new</span> arrays</span><br><span class="line">    <span class="keyword">for</span> i=<span class="number">1</span> <span class="keyword">to</span> n1</span><br><span class="line">        L<span class="literal">[<span class="identifier">i</span>]</span> = A<span class="literal">[<span class="identifier">p</span>+<span class="identifier">i</span>-<span class="number">1</span>]</span></span><br><span class="line">    <span class="keyword">for</span> j=<span class="number">1</span> <span class="keyword">to</span> n2</span><br><span class="line">        R<span class="literal">[<span class="identifier">j</span>]</span> = A<span class="literal">[<span class="identifier">q</span>+<span class="identifier">j</span>]</span></span><br><span class="line">    L<span class="literal">[<span class="identifier">n1</span>+<span class="number">1</span>]</span> = ∞ <span class="comment">//哨兵</span></span><br><span class="line">    R<span class="literal">[<span class="identifier">n2</span>+<span class="number">1</span>]</span> = ∞</span><br><span class="line">    i = <span class="number">1</span></span><br><span class="line">    j = <span class="number">1</span></span><br><span class="line">    <span class="keyword">for</span> k=p <span class="keyword">to</span> r</span><br><span class="line">        <span class="keyword">if</span> L<span class="literal">[<span class="identifier">i</span>]</span> ≤ R<span class="literal">[<span class="identifier">j</span>]</span></span><br><span class="line">            A<span class="literal">[<span class="identifier">k</span>]</span> = L<span class="literal">[<span class="identifier">i</span>]</span></span><br><span class="line">            i = i + <span class="number">1</span></span><br><span class="line">        <span class="keyword">else</span> A<span class="literal">[<span class="identifier">k</span>]</span> = R<span class="literal">[<span class="identifier">j</span>]</span></span><br><span class="line">            j = j + <span class="number">1</span></span><br><span class="line"><span class="comment">// 排序子数组A[p..r]</span></span><br><span class="line"><span class="comment">// 初始调用：MERGE_SORT(A, 1, A.length)</span></span><br><span class="line"><span class="constructor">MERGE_SORT(A, <span class="params">p</span>, <span class="params">r</span>)</span>:</span><br><span class="line">    <span class="keyword">if</span> p &lt; r: <span class="comment">//若p≥r，则该数组最多有一个元素，所以已经排好序</span></span><br><span class="line">        q = (p+r)/<span class="number">2</span> <span class="comment">//这里表示整除，分解</span></span><br><span class="line">        <span class="constructor">MERGE_SORT(A, <span class="params">p</span>, <span class="params">q</span>)</span> <span class="comment">// 左子数组排序</span></span><br><span class="line">        <span class="constructor">MERGE_SORT(A, <span class="params">q</span>+1, <span class="params">r</span>)</span> <span class="comment">// 右子数组排序</span></span><br><span class="line">        <span class="constructor">MERGE(A, <span class="params">p</span>, <span class="params">q</span>, <span class="params">r</span>)</span> <span class="comment">//合并</span></span><br></pre></td></tr></table></figure> 1. Python实现 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 升序</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">MERGE</span>(<span class="params">A, p, q, r</span>):</span></span><br><span class="line">    L,R = A[p:q+<span class="number">1</span>],A[q+<span class="number">1</span>:r+<span class="number">1</span>]</span><br><span class="line">    <span class="comment"># 增加哨兵值，float(&#x27;inf&#x27;)在Python中表示无穷大</span></span><br><span class="line">    L.append(<span class="built_in">float</span>(<span class="string">&#x27;inf&#x27;</span>)) <span class="comment"># 若降序，则需要修改为L.append(float(&#x27;-inf&#x27;))</span></span><br><span class="line">    R.append(<span class="built_in">float</span>(<span class="string">&#x27;inf&#x27;</span>)) <span class="comment"># 同上</span></span><br><span class="line">    i, j, k = <span class="number">0</span>, <span class="number">0</span>, p</span><br><span class="line">    <span class="keyword">while</span> k &lt;= r:</span><br><span class="line">        <span class="keyword">if</span> L[i] &lt; R[j]: <span class="comment"># 若降序，则需要修改成L[i] &gt; R[j]</span></span><br><span class="line">            A[k] = L[i]</span><br><span class="line">            i+=<span class="number">1</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            A[k] = R[j]</span><br><span class="line">            j+=<span class="number">1</span></span><br><span class="line">        k+=<span class="number">1</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">MERGE_SORT</span>(<span class="params">A, p, r</span>):</span></span><br><span class="line">    <span class="keyword">if</span> p &lt; r:</span><br><span class="line">        q = (p+r)//<span class="number">2</span></span><br><span class="line">        MERGE_SORT(A,p,q)</span><br><span class="line">        MERGE_SORT(A,q+<span class="number">1</span>,r)</span><br><span class="line">        MERGE(A,p,q,r)</span><br></pre></td></tr></table></figure> ## 图片说明 <img src="http://img.my.csdn.net/uploads/201301/26/1359204305_2056.png" /> ## 复杂度 1. 最差/平均时间复杂度：O(nlogn)；最优时间复杂度：O(n) 2. 最差空间复杂度：O(n)</p>
+<h2 id="注意-1">注意</h2>
+<ol type="1">
+<li>归并的时候，计算出来的n1, n2是真实的L数组和R数组的长度。如果使用哨兵，申请L数组和R数组的时候，需要给哨兵申请一个位置，也就是说，需要申请的长度比实际上多1，即n1+1, n2+1</li>
+<li>归并的时候，将左右数组的元素放到目标（也是源）数组排序后的位置时，循环用目标数组的位置作为继续条件。也就是说，只要目标数组的位置占满了，就可以退出比较循环。</li>
+<li>归并的时候，若不使用哨兵，注意主循环结束的条件是，左数组、右数组或者目标数组有一个到达了数组的最后一个元素。</li>
+<li>这种排序方法比较占用内存，却是一种效率高且稳定的算法</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E7%AE%97%E6%B3%95/" rel="tag"># 算法</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2015/12/01/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E7%BA%BF%E6%80%A7%E6%97%B6%E9%97%B4%E6%8E%92%E5%BA%8F/" rel="prev" title="九大排序算法及其Python实现之线性排序">
+      <i class="fa fa-chevron-left"></i> 九大排序算法及其Python实现之线性排序
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2015/12/07/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E5%A0%86%E6%8E%92%E5%BA%8F/" rel="next" title="九大排序算法及其Python实现之堆排序">
+      九大排序算法及其Python实现之堆排序 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8F%92%E5%85%A5%E6%8E%92%E5%BA%8F"><span class="nav-number">1.</span> <span class="nav-text">插入排序</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%9D%E6%83%B3"><span class="nav-number">1.1.</span> <span class="nav-text">思想</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.2.</span> <span class="nav-text">实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F"><span class="nav-number">1.3.</span> <span class="nav-text">注意</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F"><span class="nav-number">2.</span> <span class="nav-text">冒泡排序</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%9D%E6%83%B3-1"><span class="nav-number">2.1.</span> <span class="nav-text">思想</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F"><span class="nav-number">3.</span> <span class="nav-text">归并排序</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%9D%E6%83%B3%E5%88%86%E8%80%8C%E6%B2%BB%E4%B9%8B"><span class="nav-number">3.1.</span> <span class="nav-text">思想：分而治之</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0-1"><span class="nav-number">3.2.</span> <span class="nav-text">实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F-1"><span class="nav-number">3.3.</span> <span class="nav-text">注意</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2015/12/01/%E4%B9%9D%E5%A4%A7%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6Python%E5%AE%9E%E7%8E%B0%E4%B9%8B%E7%AE%80%E5%8D%95%E6%8E%92%E5%BA%8F/";
+    this.page.identifier = "2015/12/01/九大排序算法及其Python实现之简单排序/";
+    this.page.title = "九大排序算法及其Python实现之简单排序";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="链表的形式 单链接或双链接，已排序或未排序，循环的或非循环的  双向链表 链表L中的每个元素都是一个对象，每个对象有一个关键字key和两个指针：next和prev，对象中还可以包含其他辅助数据（卫星数据）。若x是链表中的一个元素，则有： * x.next指向它在链表中的后继元素，x.prev指向它的前驱元素 * 若x.prev &#x3D; None，则元素x是链表的第一个元素，即链表的头(head) *">
+<meta property="og:type" content="article">
+<meta property="og:title" content="链表及其Python的简单实现">
+<meta property="og:url" content="http://ictar.github.io/2016/01/04/%E9%93%BE%E8%A1%A8%E5%8F%8A%E5%85%B6Python%E7%9A%84%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="链表的形式 单链接或双链接，已排序或未排序，循环的或非循环的  双向链表 链表L中的每个元素都是一个对象，每个对象有一个关键字key和两个指针：next和prev，对象中还可以包含其他辅助数据（卫星数据）。若x是链表中的一个元素，则有： * x.next指向它在链表中的后继元素，x.prev指向它的前驱元素 * 若x.prev &#x3D; None，则元素x是链表的第一个元素，即链表的头(head) *">
+<meta property="og:locale">
+<meta property="og:image" content="http://img.blog.csdn.net/20130426213000402">
+<meta property="og:image" content="http://ictar.github.io/img/201601051134.png">
+<meta property="article:published_time" content="2016-01-04T03:32:50.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.946Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="数据结构">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://img.blog.csdn.net/20130426213000402">
+
+<link rel="canonical" href="http://ictar.github.io/2016/01/04/%E9%93%BE%E8%A1%A8%E5%8F%8A%E5%85%B6Python%E7%9A%84%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>链表及其Python的简单实现 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2016/01/04/%E9%93%BE%E8%A1%A8%E5%8F%8A%E5%85%B6Python%E7%9A%84%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          链表及其Python的简单实现
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-01-04 11:32:50" itemprop="dateCreated datePublished" datetime="2016-01-04T11:32:50+08:00">2016-01-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" itemprop="url" rel="index"><span itemprop="name">算法与数据结构</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2016/01/04/%E9%93%BE%E8%A1%A8%E5%8F%8A%E5%85%B6Python%E7%9A%84%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/01/04/链表及其Python的简单实现/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="链表的形式">链表的形式</h1>
+<p>单链接或双链接，已排序或未排序，循环的或非循环的</p>
+<h2 id="双向链表">双向链表</h2>
+<p>链表L中的每个元素都是一个对象，每个对象有一个关键字key和两个指针：next和prev，对象中还可以包含其他辅助数据（卫星数据）。若x是链表中的一个元素，则有： * x.next指向它在链表中的后继元素，x.prev指向它的前驱元素 * 若x.prev = None，则元素x是链表的第一个元素，即链表的头(head) * 若x.next = None, 则元素x是链表的最后一个元素，即链表的尾(tail) * L.head指向链表L的第一个元素，若L.head = None，则链表为空。</p>
+<figure>
+<img src="http://img.blog.csdn.net/20130426213000402" alt="双向链表" /><figcaption aria-hidden="true">双向链表</figcaption>
+</figure>
+<h2 id="单向链表">单向链表</h2>
+<p>链表L中的每个元素都是一个对象，每个对象有一个关键字key和一个指针：next，对象中还可以包含其他辅助数据（卫星数据）</p>
+<h2 id="已排序链表">已排序链表</h2>
+<p>链表的线性顺序与链表元素中关键字的线性顺序一致。因此，最小的元素就是表头元素，最大的元素是表尾元素。</p>
+<p>注：对于未排序链表，这各元素可以以任何顺序出现</p>
+<h2 id="循环链表">循环链表</h2>
+<p>链表L中的每个元素都是一个对象，每个对象有一个关键字key和两个指针：next和prev，对象中还可以包含其他辅助数据（卫星数据）。有： * 表头元素的prev指针指向表尾元素 * 表尾元素的next指针指向表头元素</p>
+<h1 id="链表的操作">链表的操作</h1>
+<p>注：以未排序且双链接链表为例</p>
+<ol type="1">
+<li>搜索 <figure class="highlight sas"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># 线性搜索，返回指向第一个关键字为k的元素的指针</span><br><span class="line"># 若无关键字为k的对象，则返回None</span><br><span class="line"># 最坏时间复杂度：O(n)，n为链表中元素个数</span><br><span class="line">LIST_SEARCH(L, k)</span><br><span class="line">    <span class="meta">x</span> = L.head</span><br><span class="line">    <span class="meta">while</span> <span class="meta">x</span> != None <span class="meta">and</span> <span class="meta">x</span>.<span class="meta">key</span> != k</span><br><span class="line">        <span class="meta">x</span> = <span class="meta">x</span>.next</span><br><span class="line">    <span class="meta">return</span> <span class="meta">x</span></span><br></pre></td></tr></table></figure></li>
+<li>插入 <figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># x为已设置好关键字key的元素</span><br><span class="line"># 将x插入到链表的前端</span><br><span class="line"># 时间复杂度：<span class="constructor">O(1)</span></span><br><span class="line"><span class="constructor">LIST_INSERT(L, <span class="params">x</span>)</span></span><br><span class="line">    x.next = <span class="module-access"><span class="module"><span class="identifier">L</span>.</span></span>head</span><br><span class="line">    <span class="keyword">if</span> <span class="module-access"><span class="module"><span class="identifier">L</span>.</span></span>head != None # 若L不为空链表，则将L原第一个元素指向x</span><br><span class="line">        <span class="module-access"><span class="module"><span class="identifier">L</span>.</span></span>head.prev = x</span><br><span class="line">    <span class="module-access"><span class="module"><span class="identifier">L</span>.</span></span>head = x</span><br><span class="line">    x.prev = None</span><br></pre></td></tr></table></figure> <img src="" alt="链表的插入" /></li>
+<li>删除 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># x是指向要删除元素</span></span><br><span class="line"><span class="comment"># 若要删除具有给定关键字值的元素，必须先调用LIST_SEARCH找到该元素</span></span><br><span class="line"><span class="comment"># 时间复杂度：O(1)</span></span><br><span class="line">LIST_DELETE(L,x)</span><br><span class="line">    <span class="keyword">if</span> x.prev != <span class="literal">None</span></span><br><span class="line">        x.prev.<span class="built_in">next</span> = x.<span class="built_in">next</span></span><br><span class="line">    <span class="keyword">else</span> L.head = x.<span class="built_in">next</span> <span class="comment"># x是第一个元素</span></span><br><span class="line">    <span class="keyword">if</span> x.<span class="built_in">next</span> != <span class="literal">None</span> <span class="comment"># 若x不是最后一个元素</span></span><br><span class="line">        x.<span class="built_in">next</span>.prev = x.prev</span><br></pre></td></tr></table></figure></li>
+<li>简化操作：哨兵 哨兵L.nil是一个哑对象，表示None，其作用是简化边界条件的处理。 将常规的双向链表转变为一个有哨兵的双向循环链表：
+<ul>
+<li>哨兵L.nil位于表头和表尾之间</li>
+<li>属性L.nil.next指向表头，L.nil.prev指向表尾</li>
+<li>表尾的next属性和表头的prev属性同时指向L.nil</li>
+<li>把对L.head的引用代替为对L.nil.next的引用</li>
+<li>一个空的链表只由一个哨兵构成，L.nil.next和L.nil.prev同时指向L.nil <img src="/img/201601051134.png" alt="带哨兵的双向循环链表" /> <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">LIST_SEARCH_SENTINEL(L,k)</span><br><span class="line">    x = L.nil.<span class="built_in">next</span></span><br><span class="line">    <span class="keyword">while</span> x != L.nil <span class="keyword">and</span> x.key != k:</span><br><span class="line">        x = x.<span class="built_in">next</span></span><br><span class="line">    <span class="keyword">return</span> x</span><br><span class="line">LIST_INSERT_SENTINEL(L,x)</span><br><span class="line">    x.<span class="built_in">next</span> = L.nil.<span class="built_in">next</span></span><br><span class="line">    L.nil.<span class="built_in">next</span>.prev = x</span><br><span class="line">    L.nil.<span class="built_in">next</span> = x</span><br><span class="line">    x.prev = L.nil</span><br><span class="line">LIST_DELETE_SENTINEL(L,x)</span><br><span class="line">    x.prev.<span class="built_in">next</span> = x.<span class="built_in">next</span></span><br><span class="line">    x.<span class="built_in">next</span>.prev = x.prev</span><br></pre></td></tr></table></figure> 注意：仅当真正简化代码时才使用哨兵。</li>
+</ul></li>
+</ol>
+<h1 id="python实现">Python实现</h1>
+<p>结点对象： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DNode</span>(<span class="params"><span class="built_in">object</span></span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self,value=<span class="number">0</span>,prev=<span class="literal">None</span>,<span class="built_in">next</span>=<span class="literal">None</span></span>):</span></span><br><span class="line">        self.value = value</span><br><span class="line">        self.<span class="built_in">next</span> = <span class="built_in">next</span></span><br><span class="line">        self.prev = prev</span><br></pre></td></tr></table></figure> 双向循环列表（无哨兵） <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DLink</span>(<span class="params"><span class="built_in">object</span></span>):</span> <span class="comment"># 双向循环列表（无哨兵）</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self</span>):</span></span><br><span class="line">        self.head = <span class="literal">None</span> <span class="comment">#表头初始为None</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">search</span>(<span class="params">self,key</span>):</span></span><br><span class="line">        <span class="string">&#x27;&#x27;&#x27;返回指向第一个关键字为key的元素的指针</span></span><br><span class="line"><span class="string">           若无关键字为k的对象，则返回None</span></span><br><span class="line"><span class="string">        &#x27;&#x27;&#x27;</span></span><br><span class="line">        x = self.head</span><br><span class="line">        <span class="keyword">while</span> x != <span class="literal">None</span> <span class="keyword">and</span> x.value != key:</span><br><span class="line">            x = x.<span class="built_in">next</span></span><br><span class="line">        <span class="keyword">return</span> x</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">insert</span>(<span class="params">self,x</span>):</span></span><br><span class="line">        <span class="string">&#x27;&#x27;&#x27;x为已设置好关键字key的元素</span></span><br><span class="line"><span class="string">           将x插入到链表的前端</span></span><br><span class="line"><span class="string">        &#x27;&#x27;&#x27;</span></span><br><span class="line">        x.<span class="built_in">next</span> = self.head</span><br><span class="line">        <span class="keyword">if</span> self.head <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>: <span class="comment"># 若不为空链</span></span><br><span class="line">            self.head.prev = x</span><br><span class="line">        self.head = x</span><br><span class="line">        x.prev = <span class="literal">None</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">delete</span>(<span class="params">self,x</span>):</span></span><br><span class="line">        <span class="string">&#x27;&#x27;&#x27;&#x27;删除元素&#x27;&#x27;&#x27;</span></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> <span class="built_in">isinstance</span>(x,DNode): x = self.search(x)</span><br><span class="line">        <span class="keyword">if</span> x <span class="keyword">is</span> <span class="literal">None</span>: <span class="keyword">return</span></span><br><span class="line">        <span class="keyword">if</span> x.prev != <span class="literal">None</span>: <span class="comment"># x不是第一个结点</span></span><br><span class="line">            x.prev.<span class="built_in">next</span> = x.<span class="built_in">next</span></span><br><span class="line">        <span class="keyword">else</span>: self.head = x.<span class="built_in">next</span></span><br><span class="line">        <span class="keyword">if</span> x.<span class="built_in">next</span> != <span class="literal">None</span>: <span class="comment"># x不是最后一个结点</span></span><br><span class="line">            x.<span class="built_in">next</span>.prev = x.prev</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">show</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="string">&#x27;&#x27;&#x27;打印链表&#x27;&#x27;&#x27;</span></span><br><span class="line">        x = self.head</span><br><span class="line">        <span class="keyword">while</span> x != <span class="literal">None</span>:</span><br><span class="line">            <span class="built_in">print</span> x.value</span><br><span class="line">            x = x.<span class="built_in">next</span></span><br></pre></td></tr></table></figure> 双向循环链表(带哨兵) <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">DLinkS</span>(<span class="params"><span class="built_in">object</span></span>):</span> <span class="comment"># 带哨兵的双向循环链表</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self</span>):</span></span><br><span class="line">        self.nil = DNode() <span class="comment"># 哨兵</span></span><br><span class="line">        self.nil.<span class="built_in">next</span> = self.nil <span class="comment"># 一个空的链表只由一个哨兵构成，L.nil.next和L.nil.prev同时指向L.nil</span></span><br><span class="line">        self.nil.prev = self.nil</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">search</span>(<span class="params">self,key</span>):</span></span><br><span class="line">        x = self.nil.<span class="built_in">next</span></span><br><span class="line">        <span class="keyword">while</span> x != self.nil <span class="keyword">and</span> x.value != key:</span><br><span class="line">            x = x.<span class="built_in">next</span></span><br><span class="line">        <span class="keyword">return</span> x</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">insert</span>(<span class="params">self,x</span>):</span></span><br><span class="line">        x.<span class="built_in">next</span> = self.nil.<span class="built_in">next</span></span><br><span class="line">        self.nil.<span class="built_in">next</span>.prev = x</span><br><span class="line">        self.nil.<span class="built_in">next</span> = x</span><br><span class="line">        x.prev = self.nil</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">delete</span>(<span class="params">self,x</span>):</span></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> <span class="built_in">isinstance</span>(x,DNode): x = self.search(x)</span><br><span class="line">        <span class="keyword">if</span> x <span class="keyword">is</span> <span class="literal">None</span>: <span class="keyword">return</span></span><br><span class="line">        x.prev.<span class="built_in">next</span> = x.<span class="built_in">next</span></span><br><span class="line">        x.<span class="built_in">next</span>.prev = x.prev</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">show</span>(<span class="params">self</span>):</span></span><br><span class="line">        x = self.nil.<span class="built_in">next</span></span><br><span class="line">        <span class="keyword">while</span> x != self.nil:</span><br><span class="line">            <span class="built_in">print</span> x.value</span><br><span class="line">            x = x.<span class="built_in">next</span></span><br></pre></td></tr></table></figure> # 单向链表实现的其他结构 ## 单向链表结点 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Node</span>(<span class="params"><span class="built_in">object</span></span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self,value,<span class="built_in">next</span>=<span class="literal">None</span></span>):</span></span><br><span class="line">        self.value = value</span><br><span class="line">        self.<span class="built_in">next</span> = <span class="built_in">next</span></span><br></pre></td></tr></table></figure> ## 单向链表 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Link</span>(<span class="params"><span class="built_in">object</span></span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self</span>):</span></span><br><span class="line">        self.head = <span class="literal">None</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">search</span>(<span class="params">self,key</span>):</span></span><br><span class="line">        x = self.head</span><br><span class="line">        <span class="keyword">while</span> x != <span class="literal">None</span> <span class="keyword">and</span> x.value != key:</span><br><span class="line">            x = x.<span class="built_in">next</span></span><br><span class="line">        <span class="keyword">return</span> x</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">insert</span>(<span class="params">self,x</span>):</span> <span class="comment"># 插入到链表头</span></span><br><span class="line">        <span class="keyword">if</span> self.head <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            x.<span class="built_in">next</span> = self.head</span><br><span class="line">        self.head = x</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">delete</span>(<span class="params">self,key</span>):</span></span><br><span class="line">        prev, x = <span class="literal">None</span>, self.head</span><br><span class="line">        <span class="comment">#查找第一个值为key的元素x，并保留x前的元素prev</span></span><br><span class="line">        <span class="keyword">while</span> x != <span class="literal">None</span> <span class="keyword">and</span> x.value != key:</span><br><span class="line">            prev = x</span><br><span class="line">            x = x.<span class="built_in">next</span></span><br><span class="line">        <span class="keyword">if</span> x <span class="keyword">is</span> <span class="literal">None</span>: <span class="keyword">return</span></span><br><span class="line">        <span class="keyword">if</span> prev: <span class="comment"># x不是第一个元素</span></span><br><span class="line">            prev.<span class="built_in">next</span> = x.<span class="built_in">next</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            self.head = x.<span class="built_in">next</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">show</span>(<span class="params">self</span>):</span></span><br><span class="line">        x = self.head</span><br><span class="line">        <span class="keyword">while</span> x != <span class="literal">None</span>:</span><br><span class="line">            <span class="built_in">print</span> x.value</span><br><span class="line">            x = x.<span class="built_in">next</span></span><br></pre></td></tr></table></figure> ## 栈 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 单链表实现栈</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UNDERFLOW</span>(<span class="params">Exception</span>):</span><span class="keyword">pass</span> <span class="comment"># 下溢</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">StackL</span>(<span class="params"><span class="built_in">object</span></span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self</span>):</span></span><br><span class="line">        self.head = <span class="literal">None</span></span><br><span class="line">    <span class="comment">#测试一个栈是否为空</span></span><br><span class="line">    STACK_EMPTY = <span class="keyword">lambda</span> self: self.head <span class="keyword">is</span> <span class="literal">None</span></span><br><span class="line">    <span class="comment">#插入元素到栈顶</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">PUSH</span>(<span class="params">self,x</span>):</span></span><br><span class="line">        <span class="keyword">if</span> self.head <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            x.<span class="built_in">next</span> = self.head          </span><br><span class="line">        self.head = x</span><br><span class="line">    <span class="comment">#将栈顶元素返回并删除</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">POP</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="keyword">if</span> self.STACK_EMPTY():</span><br><span class="line">            <span class="keyword">raise</span> UNDERFLOW(<span class="string">&quot;stack is empty&quot;</span>)</span><br><span class="line">        x = self.head</span><br><span class="line">        self.head = x.<span class="built_in">next</span></span><br><span class="line">        <span class="keyword">return</span> x</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">show</span>(<span class="params">self</span>):</span></span><br><span class="line">        x = self.head</span><br><span class="line">        <span class="keyword">while</span> x <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            <span class="built_in">print</span> x.value</span><br><span class="line">            x = x.<span class="built_in">next</span></span><br></pre></td></tr></table></figure> ## 队列 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UNDERFLOW</span>(<span class="params">Exception</span>):</span><span class="keyword">pass</span> <span class="comment"># 下溢</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">QueueL</span>(<span class="params"><span class="built_in">object</span></span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self</span>):</span></span><br><span class="line">        self.head = self.tail = <span class="literal">None</span></span><br><span class="line">    <span class="comment"># 判断队列是否为空</span></span><br><span class="line">    QUEUE_EMPTY = <span class="keyword">lambda</span> self: self.head == <span class="literal">None</span></span><br><span class="line">    <span class="comment"># 入队</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">ENQUEUE</span>(<span class="params">self, x</span>):</span></span><br><span class="line">        <span class="keyword">if</span> self.QUEUE_EMPTY(): <span class="comment">#空队列，队头队尾都执行同一个元素</span></span><br><span class="line">            self.head = self.tail = x</span><br><span class="line">        <span class="keyword">else</span>: <span class="comment">#否则，队头保持不变，新元素放在队尾后</span></span><br><span class="line">            self.tail.<span class="built_in">next</span> = x</span><br><span class="line">            self.tail = x</span><br><span class="line">    <span class="comment"># 出队</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">DEQUEUE</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="keyword">if</span> self.QUEUE_EMPTY(): <span class="keyword">raise</span> UNDERFLOW(<span class="string">&quot;the queue is empty&quot;</span>)</span><br><span class="line">        x = self.head</span><br><span class="line">        self.head = x.<span class="built_in">next</span></span><br><span class="line">        <span class="keyword">return</span> x</span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">show</span>(<span class="params">self</span>):</span></span><br><span class="line">        x = self.head</span><br><span class="line">        <span class="keyword">while</span> x <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            <span class="built_in">print</span> x.value</span><br><span class="line">            x = x.<span class="built_in">next</span></span><br></pre></td></tr></table></figure></p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="tag"># 数据结构</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2015/12/16/%E9%82%A3%E4%BA%9B%E4%BB%A4%E4%BA%BAwow%E7%9A%84%E5%B0%8F%E6%8A%80%E5%B7%A7%E9%9B%86%E9%94%A6/" rel="prev" title="那些令人wow的小技巧集锦">
+      <i class="fa fa-chevron-left"></i> 那些令人wow的小技巧集锦
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2016/01/11/%E6%A0%91%E5%8F%8A%E5%85%B6Python%E7%9A%84%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/" rel="next" title="树及其Python的简单实现">
+      树及其Python的简单实现 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%93%BE%E8%A1%A8%E7%9A%84%E5%BD%A2%E5%BC%8F"><span class="nav-number">1.</span> <span class="nav-text">链表的形式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%8C%E5%90%91%E9%93%BE%E8%A1%A8"><span class="nav-number">1.1.</span> <span class="nav-text">双向链表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%95%E5%90%91%E9%93%BE%E8%A1%A8"><span class="nav-number">1.2.</span> <span class="nav-text">单向链表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%B2%E6%8E%92%E5%BA%8F%E9%93%BE%E8%A1%A8"><span class="nav-number">1.3.</span> <span class="nav-text">已排序链表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AA%E7%8E%AF%E9%93%BE%E8%A1%A8"><span class="nav-number">1.4.</span> <span class="nav-text">循环链表</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%93%BE%E8%A1%A8%E7%9A%84%E6%93%8D%E4%BD%9C"><span class="nav-number">2.</span> <span class="nav-text">链表的操作</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#python%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.</span> <span class="nav-text">Python实现</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2016/01/04/%E9%93%BE%E8%A1%A8%E5%8F%8A%E5%85%B6Python%E7%9A%84%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/";
+    this.page.identifier = "2016/01/04/链表及其Python的简单实现/";
+    this.page.title = "链表及其Python的简单实现";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

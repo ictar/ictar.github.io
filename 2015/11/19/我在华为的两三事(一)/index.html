@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="从2013年8月，到2015年11月，在华为也待了两年有余。  大队培训完就被分到了华为的电信软件部门。虽然自己对通信并不感冒，但也傻傻的不会要求调岗，便从0开始接触运营商相关的东西。  所在的产品中文名可以叫做服务开通，顾名思义就是为用户订购产品的一个中间件，做协议转换。上与CRM(Customer Relationship Management)、CBS等进行交互，接受用户信息变更及订购关系变">
+<meta property="og:type" content="article">
+<meta property="og:title" content="我在华为的两三事(一)">
+<meta property="og:url" content="http://ictar.github.io/2015/11/19/%E6%88%91%E5%9C%A8%E5%8D%8E%E4%B8%BA%E7%9A%84%E4%B8%A4%E4%B8%89%E4%BA%8B(%E4%B8%80)/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="从2013年8月，到2015年11月，在华为也待了两年有余。  大队培训完就被分到了华为的电信软件部门。虽然自己对通信并不感冒，但也傻傻的不会要求调岗，便从0开始接触运营商相关的东西。  所在的产品中文名可以叫做服务开通，顾名思义就是为用户订购产品的一个中间件，做协议转换。上与CRM(Customer Relationship Management)、CBS等进行交互，接受用户信息变更及订购关系变">
+<meta property="og:locale">
+<meta property="article:published_time" content="2015-11-19T07:59:28.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.964Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="经历">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://ictar.github.io/2015/11/19/%E6%88%91%E5%9C%A8%E5%8D%8E%E4%B8%BA%E7%9A%84%E4%B8%A4%E4%B8%89%E4%BA%8B(%E4%B8%80)/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>我在华为的两三事(一) | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2015/11/19/%E6%88%91%E5%9C%A8%E5%8D%8E%E4%B8%BA%E7%9A%84%E4%B8%A4%E4%B8%89%E4%BA%8B(%E4%B8%80)/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          我在华为的两三事(一)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2015-11-19 15:59:28" itemprop="dateCreated datePublished" datetime="2015-11-19T15:59:28+08:00">2015-11-19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BF%99%E5%B0%B1%E6%98%AF%E7%94%9F%E6%B4%BB/" itemprop="url" rel="index"><span itemprop="name">这就是生活</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2015/11/19/%E6%88%91%E5%9C%A8%E5%8D%8E%E4%B8%BA%E7%9A%84%E4%B8%A4%E4%B8%89%E4%BA%8B(%E4%B8%80)/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2015/11/19/我在华为的两三事(一)/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>从2013年8月，到2015年11月，在华为也待了两年有余。</p>
+<p>大队培训完就被分到了华为的电信软件部门。虽然自己对通信并不感冒，但也傻傻的不会要求调岗，便从0开始接触运营商相关的东西。</p>
+<p>所在的产品中文名可以叫做服务开通，顾名思义就是为用户订购产品的一个中间件，做协议转换。上与CRM(Customer Relationship Management)、CBS等进行交互，接受用户信息变更及订购关系变更请求，细分业务逻辑，下发命令到core network(例如HLR, VMS等)进行相关操作。 产品又分为PDU和SDU。PDU负责平台开发，SDU负责业务定制，在平台的基础上进行二次开发。我呢，属于产品SDU团队的一员。因为产品不大，也相对已经成熟了，团队（包括印研所）五十多个人，负责海外近百个局点的调研、需求分析、开发、测试、交付上线及后期维护和需求承接。 此为背景。</p>
+<p>接触的第一个局点是坦桑尼亚Z<em>平台版本升级带来的业务版本的全新开发。同时，还承接了沙特B</em>和马来M<em>产品的维护工作。于是，在熟悉产品开发模式、维护工作和间歇性解决问题的过程中，度过了我六个月的试用期。 回想那段时间，坦桑尼亚Z</em>的开发过程中有deadline转测试的压力，有因为不熟悉导致频频被测试诘问。维护沙特B<em>和马来M</em>的时候，有一段时间一看到英文邮件就头疼。在同事维护期间安静的像个乖小孩的沙特B<em>到了我负责的时候就变成了熊孩子，隔三差五要出个小问题。2014年春节前夕，因为马来M</em>突然异常差点回不了家过年。 但是呢，坦桑尼亚Z<em>在多方协商下终于在今年5月份上线成功。因为马来M</em>，我认识了一些可爱的人，频频邀请我到马来西亚玩。</p>
+<p>转正没多久，由于负责需求分析的同事休产假，负责开发交付的同事跑到现场出差去了，我接下了在这两年多里占据极大位置的项目：埃塞俄比亚电信全网扩容项目。 那时真是年少不懂事，但是很多事真的就是在一念之间。 当时的我，对开发维护还一知半解，CRM/CBS/HLR是干什么还停留在认识缩写的阶段，更别说对整个电信业务流程的了解，大概LM觉得有压力才能更快的成长，而且有整个项目组那么多有经验的同事的加持不会出啥大问题。又或者是有经验的同事一眼看出了这个项目到处都是坑所以没人愿意接，只有我傻乎乎的往里面跳还不自知。总而言之，一下子，本来只想做做此项目的开发的我，一下子变成了它的需求分析和开发的负责人。突然发现，很多变化都是因为出生牛犊不怕虎敢于尝试带来的。</p>
+<p>接下这个项目没多久，就碰到了一个问题。因为我们产品在这个项目中的位置是替换掉Z//的服务开通，而Z//的服务开通是需要跟Z//的CDMA网络进行交互的，意味着我们产品也需要跟Z//的CDMA网络中的三个产品进行交互。而由于某些原因，这三个产品只有两个产品有残缺对不上版本号的接口文档。加之项目组从未有与这三个产品交互的经验，因此，等到拿到Z//的服务开通和这三个产品的交互抓包信息的时候一看到都是非MML的socket交互的时候，大家都束手无措。 当时的我，内心是崩溃的。其他人可以说爱莫能助，因为项目不是他们负责的。但是我不行。虽然我也无能为力，但是直接跟上级说搞不定然后就不搞了这是不现实的。 因此，在某一天，我终于鼓起勇气打开了其中一个产品残缺的接口文档和对应的又臭又长的binary socket包。一看，接口文档里满篇的C结构和接口定义。幸好C的基础还没丢。于是我把所有的C结构和接口整理到VS中，用debug模式看结构信息，居然被我发现了如何解析交互信息。而另一个没有任何接口文档的产品呢，则是根据它偶尔出现的ASCII显示进行分割、计算、猜测和验证。现在说着轻巧简单，但是当时天天盯着一堆的十六进制着实苦不堪言。幸好，Ele是个幸运的小孩。 然后就是交互接口开发，闲暇的时候看看项目的总方案了解业务流程，跟调研的同事沟通内部逻辑。渐渐的，需求分析的工作也顺手起来。</p>
+<p>后来，因为现场交付上线迫在眉睫，需要人去出差的时候，我虽有些许犹豫，最后还是决定同意去埃塞尔比亚。因为我想看看我的分析、我的开发是否正确。当然，也有私心，毕竟还木有出过国，虽然去的是大非洲，而当时埃博拉肆虐。 在埃塞尔比亚的那近三个月的时间，很累。天天上班，时常晚上工作到一两点，昼夜温差大所以一到晚上就冷的要死，风沙大而且空气不好。但是却收获颇丰。在那里，我终于了解了一整套电信流程，从一个用户到营业厅开户到订购套餐到扣费到其他停复机等操作，这么长的一段时间内我的工作终于找到了意义，跟现实接了轨。当我拿着一张只有IMSI的空卡开了户定了业务打通第一个电话的时候我是喜悦的。当我挨个挨个的尝试不同的业务，呼叫转移、停机、换卡、三方通话，等等等等，那些原来只存在文档中的冰冷的文字变得生动起来。当我尝试对接CDMA网络，看着返回成功的那一刻，我激动的想跳舞，这说明了那些一遍又一遍查看解析数据包的日子并不是徒劳无功。项目里的人都在一起，为了同一个目标在努力。那些日子，忙绿却相当充实。哦，我想我还会想念那里的strawberry juice和mixed，想念那里大大小小的中国餐厅，想念那里的咖啡和在tomoca悠闲的喝着咖啡的日子。 埃塞之后，再无埃塞。 我几乎包办了产品在这个项目的需求分析、开发、测试、交付和问题处理，以及偶尔的人力预算分析。经过那些日子的洗礼，那个一无所知的小女孩也可以在别人需要帮助的时候出现在旁边，那些对从前的我来说晦涩难懂的东西也变得开明易懂起来，跟别人沟通也不再是一件艰难的事。而我的眼界也慢慢的放开。</p>
+<p>回国之后，可能是LM觉得我已经可以跳出单纯的coding工作。我开始接手新项目的调研，从无到有的写需求规格文档。</p>
+<p>如果以后的以后，有机会到相关国家，一定要用自己做过的项目的运营商的移动电话卡，因为自己曾经，为此，做过努力。</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E7%BB%8F%E5%8E%86/" rel="tag"># 经历</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2015/11/16/%5B%E8%AF%91%5D%E5%AD%A6%E4%B9%A0Python%E6%9C%80%E4%BD%B3%E6%96%B9%E6%B3%95/" rel="prev" title="译|学习Python最佳方法">
+      <i class="fa fa-chevron-left"></i> 译|学习Python最佳方法
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2015/11/22/UnicodeDecodeError%E5%AE%9E%E5%BD%95/" rel="next" title="UnicodeDecodeError实录">
+      UnicodeDecodeError实录 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2015/11/19/%E6%88%91%E5%9C%A8%E5%8D%8E%E4%B8%BA%E7%9A%84%E4%B8%A4%E4%B8%89%E4%BA%8B(%E4%B8%80)/";
+    this.page.identifier = "2015/11/19/我在华为的两三事(一)/";
+    this.page.title = "我在华为的两三事(一)";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

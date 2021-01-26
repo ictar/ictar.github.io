@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="原文：Go - graceful shutdown of worker goroutines     在这篇博文中，我们将看看 Go 程序的优雅关闭。这类 Go 程序有一些执行任务的工作 goroutine，要求在程序关闭之前，这些工作 goroutine 必须完成任务。  介绍 在一个最近的项目中，我们有一个使用场景：一个基于 Go 的微服务不断地消费另一个第三方库发出的事件。这些事件在调用外部">
+<meta property="og:type" content="article">
+<meta property="og:title" content="译 | 如何优雅地关闭 Go 中的工作 goroutine">
+<meta property="og:url" content="http://ictar.github.io/2019/10/19/trans-go-worker-cancellation/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="原文：Go - graceful shutdown of worker goroutines     在这篇博文中，我们将看看 Go 程序的优雅关闭。这类 Go 程序有一些执行任务的工作 goroutine，要求在程序关闭之前，这些工作 goroutine 必须完成任务。  介绍 在一个最近的项目中，我们有一个使用场景：一个基于 Go 的微服务不断地消费另一个第三方库发出的事件。这些事件在调用外部">
+<meta property="og:locale">
+<meta property="og:image" content="https://callistaenterprise.se/assets/blogg/goblog/other/blog-oct2019-1.png">
+<meta property="og:image" content="https://callistaenterprise.se/assets/blogg/goblog/other/blog-oct2019-2.png">
+<meta property="article:published_time" content="2019-10-19T02:49:44.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.932Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Golang">
+<meta property="article:tag" content="没事翻着玩">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://callistaenterprise.se/assets/blogg/goblog/other/blog-oct2019-1.png">
+
+<link rel="canonical" href="http://ictar.github.io/2019/10/19/trans-go-worker-cancellation/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>译 | 如何优雅地关闭 Go 中的工作 goroutine | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2019/10/19/trans-go-worker-cancellation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          译 | 如何优雅地关闭 Go 中的工作 goroutine
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-10-19 10:49:44" itemprop="dateCreated datePublished" datetime="2019-10-19T10:49:44+08:00">2019-10-19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2019/10/19/trans-go-worker-cancellation/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/10/19/trans-go-worker-cancellation/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>原文：<a target="_blank" rel="noopener" href="https://callistaenterprise.se/blogg/teknik/2019/10/05/go-worker-cancellation/">Go - graceful shutdown of worker goroutines</a></p>
+<hr />
+<p>在这篇博文中，我们将看看 Go 程序的优雅关闭。这类 Go 程序有一些执行任务的工作 goroutine，要求在程序关闭之前，这些工作 goroutine 必须完成任务。</p>
+<h1 id="介绍">介绍</h1>
+<p>在一个最近的项目中，我们有一个使用场景：一个基于 Go 的微服务不断地消费另一个第三方库发出的事件。这些事件在调用外部服务之前，会进行一些处理。而外部服务处理每个请求的速度都相当慢，但另一方面，它能够处理许多并发请求。因此，我们实现了一个简单的 worker 池，将输入事件扇出为几个并发执行的 goroutine。</p>
+<p>总的来说，它看起来像这样：</p>
+<figure>
+<img src="https://callistaenterprise.se/assets/blogg/goblog/other/blog-oct2019-1.png" alt="figure 1" /><figcaption aria-hidden="true">figure 1</figcaption>
+</figure>
+<p>然而，我们需要保证在该微服务关闭的时候，当前任何正在运行的对外部服务的请求必须完成，并且请求结果在我们的内部后端持久化。</p>
+<h2 id="worker-池和终止信号处理">worker 池和终止信号处理</h2>
+<p><a target="_blank" rel="noopener" href="https://gobyexample.com/worker-pools">worker 池模式</a>是一个有名的关于 worker 池的 Go 模式。此外，还有大量关于如何进行<a target="_blank" rel="noopener" href="https://gobyexample.com/signals">基于 SIGTERM 通知的优雅关闭</a>的例子。但我们意识到，我们的一些需求使得使用场景有点更复杂。</p>
+<p>当程序接收到 SIGTERM 或者 SIGINT 信号（例如，因容器编排器缩容到一定数目的副本数而产生的）时，在终止整个程序之前，必须允许当前任何工作中的 worker goroutine 完成它们长期运行的工作。</p>
+<p>让事情稍微复杂些的是，我们对生产者端的库没有任何控制权。一开始我们会注册一个回调函数，每当生产端的库有了一个（我们需要的）事件，就会调用这个回调函数。该库会处于阻塞状态，直到回调函数结束执行。然后，当有更多事件产生时，库会再次调用这个函数。</p>
+<p>worker-pool 的诸多 goroutine 通过使用标准的“对 channel 进行 range 操作”结构，来不断处理事件，例如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">workerFunc</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">for</span> event := <span class="keyword">range</span> jobsChan &#123; <span class="comment">// 阻塞直到接收到一个事件，或者该 channel 被关闭。</span></span><br><span class="line">        <span class="comment">// handle the event...</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>这意味着，让一个 worker “结束”最干净的方式是关闭名为 “jobsChan” 的 channel。</p>
+<h2 id="在生产者端进行关闭">在生产者端进行关闭</h2>
+<p>你首先学到的关于在 Go 中关闭 channel 的第一件事情之一是，如果向已关闭的 channel 发送数据，程序就会 panic。这归结于一个非常简单的规则：</p>
+<blockquote>
+<p>“总是在生产者端关闭一个 channel（Always close a channel on the producer side）”</p>
+</blockquote>
+<p>不管怎样，什么是生产者端呢？嗯，一般是那个将事件发送到 channel 里的 <em>goroutine</em>： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">callbackFunc</span><span class="params">(event <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	jobsChan&lt;-event</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure> 上面是我们的回调函数 callbackFunc，我们将其注册到外部库中，外部库就会将事件传给我们。<em>（为了让这些例子简单些，我将真实的事件替换为一个简单的整形，以作为负载。）</em></p>
+<p>你要如何 <em>安全地</em> 保护上面的代码免于给已关闭的 channel 发送数据呢？一路沿着 Mutex、布尔型标志和 if 语句以确定是否一些_其他_ goroutine 关闭了 channel，以及控制是否应该允许发送数据，这并不简单。多留心潜在的竞争条件和不确定行为。</p>
+<p>我们的解决方法是引入一个中间 channel 和一个内部的“消费者”，后者作为回调和任务 channel 之间的代理：</p>
+<figure>
+<img src="https://callistaenterprise.se/assets/blogg/goblog/other/blog-oct2019-2.png" alt="figure 2" /><figcaption aria-hidden="true">figure 2</figcaption>
+</figure>
+<p>消费者函数看起来像这样：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">startConsumer</span><span class="params">(ctx context.Context)</span></span> &#123;</span><br><span class="line">    <span class="comment">// Loop until a ctx.Done() is received. Note that select&#123;&#125; blocks until either case happens</span></span><br><span class="line">    <span class="keyword">for</span> &#123;</span><br><span class="line">            <span class="keyword">select</span> &#123;</span><br><span class="line">            <span class="keyword">case</span> event := &lt;-intermediateChan:</span><br><span class="line">                jobsChan &lt;- event</span><br><span class="line">            <span class="keyword">case</span> _ &lt;- ctx.Done():</span><br><span class="line">                <span class="built_in">close</span>(jobsChan)</span><br><span class="line">                <span class="keyword">return</span>             <span class="comment">// exit this function so we don&#x27;t consume anything more from the intermediate chan</span></span><br><span class="line">            &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>好了，等下。这个 “select” 和 “ctx.Done()” 是啥？</p>
+<p>恕我直言，<a target="_blank" rel="noopener" href="https://gobyexample.com/select">select</a> 语句是 Go 最神奇的东西之一。它允许多个 channel 的等待和协同。在这种情况下，我们或者会从中间 channel 那里收到事件，然后将其传到 jobsChan，又或者会从 <a target="_blank" rel="noopener" href="https://golang.org/pkg/context/#WithCancel">context.Context</a> 接收到取消信号。</p>
+<p>关闭 jobsChan 之后的 <em>return</em> 语句将让我们离开 for 循环和函数，这确保了 <em>不会有新事件被传递给</em> jobsChan,并且不会从 intermediateChan 消费到 <em>任何事件</em>。</p>
+<p>所以，要么是传递事件到 jobsChan（worker 从这里消费），要么在作为生产者的 <em>同一个 goroutine 中</em> 关闭 jobsChan。</p>
+<p>关闭 jobsChan 意味着消费端的所有 worker 将会停止遍历 jobsChan：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> event := <span class="keyword">range</span> jobsChan &#123; <span class="comment">// &lt;- on the close(jobsChan), all goroutines waiting for jobs here will exit the for-loop</span></span><br><span class="line">    <span class="comment">// handle the event...</span></span><br><span class="line">&#125; </span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="发出取消信号">发出取消信号</h2>
+<p>等待 Go 程序退出是一种有名的模式：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    ... rest of program ...</span><br><span class="line">    </span><br><span class="line">    termChan := <span class="built_in">make</span>(<span class="keyword">chan</span> os.Signal)</span><br><span class="line">    signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)</span><br><span class="line">    &lt;-termChan <span class="comment">// Blocks here until either SIGINT or SIGTERM is received.</span></span><br><span class="line">    <span class="comment">// 接下来呢？</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>在 “接下来呢？” 这一部分，捕获到 SIGINT 或者 SIGTERM 后，主 goroutine 恢复执行。我们需要告诉将事件从 intermediateChan 传到 jobsChan 的消费者，跨 goroutine 边界关闭 jobsChan。</p>
+<p>再次，使用 Mutex 和条件语句来解决这个问题，技术上是可行的，但是相当难搞并且容易出错。作为替代，我们会利用前面提及的 context.Context 的取消支持。</p>
+<p>在 <em>func main()</em> 的某个地方，我们设置了一个带取消支持的根 background context：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    ctx, cancelFunc := context.WithCancel(ctx.Background())</span><br><span class="line">    <span class="comment">// ... some omitted code ...</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">go</span> startConsumer(ctx) <span class="comment">// pass the cancellable context to the consumer function</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// ... some more omitted code ...</span></span><br><span class="line">    &lt;-termChan</span><br><span class="line">    </span><br><span class="line">    cancelFunc() <span class="comment">// call the cancelfunc to notify the consumer it&#x27;s time to shut stuff down.</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>这就是 <em>&lt; -ctx.Done()</em> 这一 select case 如何被调用的，它开始优雅拆卸 channel 和 worker。</p>
+<h2 id="使用-waitgroup">使用 WaitGroup</h2>
+<p>上面这个方法只有一个问题：调用 <em>cancelFunc()</em> 后，程序会立即退出，这意味着，正在动态调用中的工作 goroutine 将没有时间执行完毕，这使得我们系统中的处理有可能处于中间态。</p>
+<p>我们需要停止关闭，直到所有的 worker 都报告说它们完成了工作。现在，我们进入 <a target="_blank" rel="noopener" href="https://golang.org/pkg/sync/#WaitGroup">sync.WaitGroup</a>，它允许我们等待任意数目的 goroutine 结束！</p>
+<p>当启动 worker 时，我们传递一个指向在 <em>func main()</em> 中创建的 WaitGroup 的指针：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> numberOfWorkers = <span class="number">4</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">// ... omitted ...</span></span><br><span class="line">    wg := &amp;sync.WaitGroup&#123;&#125;</span><br><span class="line">    wg.Add(numberOfWorkers)</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Start [workerPoolSize] workers</span></span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; workerPoolSize; i++ &#123;</span><br><span class="line">        <span class="keyword">go</span> workerFunc(wg)</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// ... more omitted stuff ...</span></span><br><span class="line">    </span><br><span class="line">    &lt;-termChan    <span class="comment">// wait for SIGINT / SIGTERM</span></span><br><span class="line">    cancelFunc()  <span class="comment">// send the shutdown signal through the context.Context</span></span><br><span class="line">    wg.Wait()     <span class="comment">// program will wait here until all worker goroutines have reported that they&#x27;re done</span></span><br><span class="line">    fmt.Println(<span class="string">&quot;Workers done, shutting down!&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>这会稍微改变我们的 worker 启动函数： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">workerFunc</span><span class="params">(wg *sync.WaitGroup)</span></span> &#123;</span><br><span class="line">    <span class="keyword">defer</span> wg.Done() <span class="comment">// Mark this goroutine as done! once the function exits</span></span><br><span class="line">    <span class="keyword">for</span> event := <span class="keyword">range</span> jobsChan &#123;</span><br><span class="line">        <span class="comment">// handle the event...</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure> <em>wg.Done()</em> 将 waitgroup 减一，一旦内部计数器变成 0，那么主 goroutine 将继续执行 <em>wg.Wait()</em> 之下的语句。这就完成了优雅关闭！</p>
+<h3 id="运行">运行</h3>
+<p>最终程序的源代码在下一个部分。在此其中，我添加了一些日志，这样就能看看该过程发生了什么。</p>
+<p>下面是一个带有 4 个工作 goroutine 的程序的执行输出，这里，我使用 Ctrl+C 来停止程序： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="keyword">go</span> run main.<span class="keyword">go</span> </span><br><span class="line">  Worker <span class="number">3</span> starting</span><br><span class="line">  Worker <span class="number">2</span> starting</span><br><span class="line">  Worker <span class="number">1</span> starting</span><br><span class="line">  Worker <span class="number">0</span> starting</span><br><span class="line">  Worker <span class="number">3</span> finished processing job <span class="number">0</span></span><br><span class="line">  Worker <span class="number">0</span> finished processing job <span class="number">3</span></span><br><span class="line">  ^C*********************************     &lt;-- HERE I PRESS CTRL+C</span><br><span class="line">  Shutdown signal received</span><br><span class="line">  *********************************</span><br><span class="line">  Worker <span class="number">3</span> finished processing job <span class="number">4</span></span><br><span class="line">  Worker <span class="number">2</span> finished processing job <span class="number">1</span></span><br><span class="line">  Worker <span class="number">1</span> finished processing job <span class="number">2</span></span><br><span class="line">  Consumer received cancellation signal, closing jobsChan!   &lt;-- Here, the consumer receives the &lt;-ctx.Done()</span><br><span class="line">  Worker <span class="number">3</span> finished processing job <span class="number">6</span></span><br><span class="line">  Worker <span class="number">0</span> finished processing job <span class="number">5</span></span><br><span class="line">  Worker <span class="number">1</span> finished processing job <span class="number">8</span></span><br><span class="line">  Worker <span class="number">2</span> finished processing job <span class="number">7</span></span><br><span class="line">  Worker <span class="number">0</span> finished processing job <span class="number">10</span></span><br><span class="line">  Worker <span class="number">0</span> interrupted                    &lt;-- Worker <span class="number">0</span> has finished job #<span class="number">10</span>, <span class="number">3</span> left</span><br><span class="line">  Worker <span class="number">2</span> finished processing job <span class="number">12</span></span><br><span class="line">  Worker <span class="number">2</span> interrupted                    &lt;-- Worker <span class="number">2</span> has finished job #<span class="number">12</span>, <span class="number">2</span> left</span><br><span class="line">  Worker <span class="number">3</span> finished processing job <span class="number">9</span></span><br><span class="line">  Worker <span class="number">3</span> interrupted                    &lt;-- Worker <span class="number">3</span> has finished job #<span class="number">9</span>, <span class="number">1</span> left</span><br><span class="line">  Worker <span class="number">1</span> finished processing job <span class="number">11</span></span><br><span class="line">  Worker <span class="number">1</span> interrupted                    &lt;-- Worker <span class="number">1</span> has finished job #<span class="number">11</span>, all done</span><br><span class="line">  All workers done, shutting down!</span><br><span class="line"></span><br></pre></td></tr></table></figure> 有人可能会观察到，消费者接收到 <em>&lt; -ctx.Done()</em> 的时间点实际上是不确定的，这是因为 Go 运行时调度 channel 上的通信到 select 语句的方法。Go 规范是这样说的： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">“如果可以处理一个或多个通信，那么选择进行处理的那个 chanel 是通过统一的伪随机选择的。（If one or more of the communications can proceed, a single one that can proceed is chosen via a uniform pseudo-random selection）”。</span><br><span class="line"></span><br></pre></td></tr></table></figure> 这就是为什么即使在按下 CTRL+C 之后，任务也可以被传给 worker。</p>
+<p>另一个特别的事情是，似乎即使在关闭了 jobsChan <em>之后</em>，任务（任务 9-12）还是被传给 worker 了。恩，它们实际是在该 channel 被关闭 <em>之前</em> 被传给 worker 的。这个现象会发生是因为我们使用了一个带有 4 个“槽” 的缓存 channel。这意味着，假定我们第三方生产者以比我们的 worker 可以处理的速度更快地不断传递新事件，如果所有四个 worker 都从 channel 中消费了一个任务并且处理它们，那么该 channel 里就可能会有四个新的事件正等待被消费。关闭 channel 并不会影响那些已经缓存到 channel 里的数据 —— Go 允许消费者消费它们。</p>
+<p>如果我们将 jobsChan 修改为无缓存的： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">jobsChan := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line"></span><br></pre></td></tr></table></figure> 然后再次运行： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="keyword">go</span> run main.<span class="keyword">go</span></span><br><span class="line">.... omitted <span class="keyword">for</span> brevity ....</span><br><span class="line">^C*********************************</span><br><span class="line">Shutdown signal received</span><br><span class="line">*********************************</span><br><span class="line">Worker <span class="number">3</span> finished processing job <span class="number">3</span></span><br><span class="line">Worker <span class="number">3</span> started job <span class="number">5</span></span><br><span class="line">Worker <span class="number">0</span> finished processing job <span class="number">4</span></span><br><span class="line">Worker <span class="number">0</span> started job <span class="number">6</span></span><br><span class="line">Consumer received cancellation signal, closing jobsChan! &lt;-- again, it may take some time until the consumer is handed &lt;-ctx.Done()</span><br><span class="line">Consumer closed jobsChan</span><br><span class="line">Worker <span class="number">1</span> finished processing job <span class="number">1</span>     &lt;-- From here on, we see that each worker finishes exactly one job before being interrupted.</span><br><span class="line">Worker <span class="number">1</span> interrupted</span><br><span class="line">Worker <span class="number">2</span> finished processing job <span class="number">2</span></span><br><span class="line">Worker <span class="number">2</span> interrupted</span><br><span class="line">Worker <span class="number">0</span> finished processing job <span class="number">6</span></span><br><span class="line">Worker <span class="number">0</span> interrupted</span><br><span class="line">Worker <span class="number">3</span> finished processing job <span class="number">5</span></span><br><span class="line">Worker <span class="number">3</span> interrupted</span><br><span class="line">All workers done, shutting down!</span><br><span class="line"></span><br></pre></td></tr></table></figure> 这一次，在 channel 关闭后，我们就没有看到任何“不期望的”任务被 worker 消费了。然而，让 channel 缓存跟 worker 数相同的数据，是在不必要拖慢生产端的情况下，让 worker 保持处理数据的常见优化手法。</p>
+<h1 id="完整的程序">完整的程序</h1>
+<p>上面的代码片段在某些地方进行了简化，以使得它们尽可能简洁。带有某些结构以封装和模拟第三方生产者的完整程序如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;context&quot;</span></span><br><span class="line">	<span class="string">&quot;fmt&quot;</span></span><br><span class="line">	<span class="string">&quot;math/rand&quot;</span></span><br><span class="line">	<span class="string">&quot;os&quot;</span></span><br><span class="line">	<span class="string">&quot;os/signal&quot;</span></span><br><span class="line">	<span class="string">&quot;sync&quot;</span></span><br><span class="line">	<span class="string">&quot;syscall&quot;</span></span><br><span class="line">	<span class="string">&quot;time&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> workerPoolSize = <span class="number">4</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// 创建消费者</span></span><br><span class="line">	consumer := Consumer&#123;</span><br><span class="line">		ingestChan: <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, <span class="number">1</span>),</span><br><span class="line">		jobsChan:   <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, workerPoolSize),</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 模拟外部库：每秒发送 10 个事件</span></span><br><span class="line">	producer := Producer&#123;callbackFunc: consumer.callbackFunc&#125;</span><br><span class="line">	<span class="keyword">go</span> producer.start()</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 设置取消 context 和 waitgroup</span></span><br><span class="line">	ctx, cancelFunc := context.WithCancel(context.Background())</span><br><span class="line">	wg := &amp;sync.WaitGroup&#123;&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 传递取消 context 以启动消费者</span></span><br><span class="line">	<span class="keyword">go</span> consumer.startConsumer(ctx)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 启动 worker，并添加 [workerPoolSize] 到 WaitGroup</span></span><br><span class="line">	wg.Add(workerPoolSize)</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; workerPoolSize; i++ &#123;</span><br><span class="line">		<span class="keyword">go</span> consumer.workerFunc(wg, i)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 处理终止信号，并等待 termChan 信号</span></span><br><span class="line">	termChan := <span class="built_in">make</span>(<span class="keyword">chan</span> os.Signal)</span><br><span class="line">	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)</span><br><span class="line">	</span><br><span class="line">	&lt;-termChan         <span class="comment">// 这里阻塞直到接收到信号</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 处理关闭</span></span><br><span class="line">	fmt.Println(<span class="string">&quot;*********************************\nShutdown signal received\n*********************************&quot;</span>)</span><br><span class="line">	cancelFunc()       <span class="comment">// 向 context.Context 发送取消信号</span></span><br><span class="line">	wg.Wait()          <span class="comment">// 这里阻塞直至所有 worker 完成</span></span><br><span class="line">	</span><br><span class="line">	fmt.Println(<span class="string">&quot;All workers done, shutting down!&quot;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>消费者结构： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// -- 从这里起，下面是 Consumer！</span></span><br><span class="line"><span class="keyword">type</span> Consumer <span class="keyword">struct</span> &#123;</span><br><span class="line">	ingestChan <span class="keyword">chan</span> <span class="keyword">int</span></span><br><span class="line">	jobsChan   <span class="keyword">chan</span> <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 每当外部库传递一个事件给我们，就会调用 callbackFunc。</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c Consumer)</span> <span class="title">callbackFunc</span><span class="params">(event <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	c.ingestChan &lt;- event</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// workerFunc 启动一个 worker 函数，它会遍历 jobsChan，直到该 channel 关闭。</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c Consumer)</span> <span class="title">workerFunc</span><span class="params">(wg *sync.WaitGroup, index <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="keyword">defer</span> wg.Done()</span><br><span class="line"></span><br><span class="line">	fmt.Printf(<span class="string">&quot;Worker %d starting\n&quot;</span>, index)</span><br><span class="line">	<span class="keyword">for</span> eventIndex := <span class="keyword">range</span> c.jobsChan &#123;</span><br><span class="line">		<span class="comment">// 模拟工作执行 1 ~ 3 秒</span></span><br><span class="line">		fmt.Printf(<span class="string">&quot;Worker %d started job %d\n&quot;</span>, index, eventIndex)</span><br><span class="line">		time.Sleep(time.Millisecond * time.Duration(<span class="number">1000</span>+rand.Intn(<span class="number">2000</span>)))</span><br><span class="line">		fmt.Printf(<span class="string">&quot;Worker %d finished processing job %d\n&quot;</span>, index, eventIndex)</span><br><span class="line">	&#125;</span><br><span class="line">	fmt.Printf(<span class="string">&quot;Worker %d interrupted\n&quot;</span>, index)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// startConsumer 作为 ingestChan 和 jobsChan 之间的代理，使用 select 语句以支持优雅关闭。</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c Consumer)</span> <span class="title">startConsumer</span><span class="params">(ctx context.Context)</span></span> &#123;</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="keyword">select</span> &#123;</span><br><span class="line">		<span class="keyword">case</span> job := &lt;-c.ingestChan:</span><br><span class="line">			c.jobsChan &lt;- job</span><br><span class="line">		<span class="keyword">case</span> &lt;-ctx.Done():</span><br><span class="line">			fmt.Println(<span class="string">&quot;Consumer received cancellation signal, closing jobsChan!&quot;</span>)</span><br><span class="line">			<span class="built_in">close</span>(c.jobsChan)</span><br><span class="line">			fmt.Println(<span class="string">&quot;Consumer closed jobsChan&quot;</span>)</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure> 最后，模拟外部库的生产者结构： <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// -- Producer 模拟一个外部库，每 100ms 有新数据时simulates an external library that invokes the </span></span><br><span class="line"><span class="comment">// 它会调用注册的回调函数。</span></span><br><span class="line"><span class="keyword">type</span> Producer <span class="keyword">struct</span> &#123;</span><br><span class="line">    callbackFunc <span class="function"><span class="keyword">func</span><span class="params">(event <span class="keyword">int</span>)</span></span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p Producer)</span> <span class="title">start</span><span class="params">()</span></span> &#123;</span><br><span class="line">    eventIndex := <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> &#123;</span><br><span class="line">        p.callbackFunc(eventIndex)</span><br><span class="line">        eventIndex++</span><br><span class="line">        time.Sleep(time.Millisecond * <span class="number">100</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure> # 总结</p>
+<p>我希望这篇小博文提供了一个简单的例子，说明了基于 goroutine 的 worker 池，以及如何使用基于 context 的取消、WaitGroup 和生产端 channel 关闭，来优雅关闭这些 goroutine。</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Golang/" rel="tag"># Golang</a>
+              <a href="/tags/%E6%B2%A1%E4%BA%8B%E7%BF%BB%E7%9D%80%E7%8E%A9/" rel="tag"># 没事翻着玩</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/05/15/golang-json-custom-marshal-unmarshal/" rel="prev" title="Golang/JSON | DisallowUnknownFields 和自定义结构的序列化方法">
+      <i class="fa fa-chevron-left"></i> Golang/JSON | DisallowUnknownFields 和自定义结构的序列化方法
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/10/21/trans-go1-13-errors/" rel="next" title="译 | 在 Go 1.13 处理错误">
+      译 | 在 Go 1.13 处理错误 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#worker-%E6%B1%A0%E5%92%8C%E7%BB%88%E6%AD%A2%E4%BF%A1%E5%8F%B7%E5%A4%84%E7%90%86"><span class="nav-number">1.1.</span> <span class="nav-text">worker 池和终止信号处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9C%A8%E7%94%9F%E4%BA%A7%E8%80%85%E7%AB%AF%E8%BF%9B%E8%A1%8C%E5%85%B3%E9%97%AD"><span class="nav-number">1.2.</span> <span class="nav-text">在生产者端进行关闭</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%91%E5%87%BA%E5%8F%96%E6%B6%88%E4%BF%A1%E5%8F%B7"><span class="nav-number">1.3.</span> <span class="nav-text">发出取消信号</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-waitgroup"><span class="nav-number">1.4.</span> <span class="nav-text">使用 WaitGroup</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C"><span class="nav-number">1.4.1.</span> <span class="nav-text">运行</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%8C%E6%95%B4%E7%9A%84%E7%A8%8B%E5%BA%8F"><span class="nav-number">2.</span> <span class="nav-text">完整的程序</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2019/10/19/trans-go-worker-cancellation/";
+    this.page.identifier = "2019/10/19/trans-go-worker-cancellation/";
+    this.page.title = "译 | 如何优雅地关闭 Go 中的工作 goroutine";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="原文：HTTP&#x2F;3: From root to tip     HTTP 是为 Web 提供支持的应用层协议。它始于 1991 年所谓的 HTTP&#x2F;0.9 协议，到 1999 年已经演化为 HTTP&#x2F;1.1，并为 IETF（Internet Engineering Task Force，互联网工程任务组）所标准化。在很长一段时间里，HTTP&#x2F;1.1 已经足够好了，但是，Web 不断变化的需求使得我">
+<meta property="og:type" content="article">
+<meta property="og:title" content="译|HTTP&#x2F;3：从起源到建议">
+<meta property="og:url" content="http://ictar.github.io/2019/01/31/trans-http-3-from-root-to-tip/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="原文：HTTP&#x2F;3: From root to tip     HTTP 是为 Web 提供支持的应用层协议。它始于 1991 年所谓的 HTTP&#x2F;0.9 协议，到 1999 年已经演化为 HTTP&#x2F;1.1，并为 IETF（Internet Engineering Task Force，互联网工程任务组）所标准化。在很长一段时间里，HTTP&#x2F;1.1 已经足够好了，但是，Web 不断变化的需求使得我">
+<meta property="og:locale">
+<meta property="og:image" content="https://blog.cloudflare.com/content/images/2019/01/http3-stack.png">
+<meta property="og:image" content="https://blog.cloudflare.com/content/images/2019/01/RFC-1945-datatracker.png">
+<meta property="og:image" content="https://blog.cloudflare.com/content/images/2019/01/http11-standardisation.png">
+<meta property="og:image" content="https://blog.cloudflare.com/content/images/2019/01/ssl-tls-standardisation.png">
+<meta property="og:image" content="https://blog.cloudflare.com/content/images/2019/01/cf-events.png">
+<meta property="og:image" content="https://blog.cloudflare.com/content/images/2019/01/http11-refactor.png">
+<meta property="og:image" content="https://blog.cloudflare.com/content/images/2019/01/http2-standardisation.png">
+<meta property="og:image" content="https://blog.cloudflare.com/content/images/2019/01/gquic-stack.png">
+<meta property="og:image" content="https://blog.cloudflare.com/content/images/2019/01/quic-standardisation.png">
+<meta property="og:image" content="https://blog.cloudflare.com/content/images/2019/01/cf-secure-web-timeline-1.png">
+<meta property="article:published_time" content="2019-01-31T15:12:15.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.986Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="没事翻着玩">
+<meta property="article:tag" content="http">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.cloudflare.com/content/images/2019/01/http3-stack.png">
+
+<link rel="canonical" href="http://ictar.github.io/2019/01/31/trans-http-3-from-root-to-tip/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>译|HTTP/3：从起源到建议 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2019/01/31/trans-http-3-from-root-to-tip/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          译|HTTP/3：从起源到建议
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-01-31 23:12:15" itemprop="dateCreated datePublished" datetime="2019-01-31T23:12:15+08:00">2019-01-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/web/" itemprop="url" rel="index"><span itemprop="name">web</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2019/01/31/trans-http-3-from-root-to-tip/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/01/31/trans-http-3-from-root-to-tip/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>原文：<a target="_blank" rel="noopener" href="https://blog.cloudflare.com/http-3-from-root-to-tip/">HTTP/3: From root to tip</a></p>
+<hr />
+<p>HTTP 是为 Web 提供支持的应用层协议。它始于 1991 年所谓的 HTTP/0.9 协议，到 1999 年已经演化为 HTTP/1.1，并为 IETF（Internet Engineering Task Force，互联网工程任务组）所标准化。在很长一段时间里，HTTP/1.1 已经足够好了，但是，Web 不断变化的需求使得我们需要一个更好更合适的协议，因此，在 2015 年，HTTP/2 出现了。最近，据说 IETF 打算提供新的版本 —— HTTP/3。对于一些人而言，这是个惊喜，并由此引发了一些混乱。如果你并没有密切跟踪 IETF 的工作，那么，HTTP/3 看起来似乎是凭空出现的。然而，我们可以通过一系列实验和 Web 协议（特别是 QUIC 传输协议）的演变来追溯它的起源。</p>
+<p>如果你不熟悉 QUIC，那么，我的同事在关于它的不同方面已经做了相当不错的工作。John 的<a target="_blank" rel="noopener" href="https://blog.cloudflare.com/the-quicening/">博客</a>描述了当今的 HTTP 的一些现实烦恼，Alessandro 的 <a target="_blank" rel="noopener" href="https://blog.cloudflare.com/the-road-to-quic/">博客</a> 处理了详细的传输层细节，而 Nick 的 <a target="_blank" rel="noopener" href="https://blog.cloudflare.com/head-start-with-quic/">博客</a> 介绍了如何开展一些测试。我们已经在 <a target="_blank" rel="noopener" href="https://cloudflare-quic.com" class="uri">https://cloudflare-quic.com</a> 上收集了这些以及其他更多信息。如果这正中你的下怀，那么，请一定要看看 <a target="_blank" rel="noopener" href="https://blog.cloudflare.com/enjoy-a-slice-of-quic-and-rust/">quiche</a>，这是我们自己用 Rust 写的 QUIC 协议的开源实现。</p>
+<p>HTTP/3 是映射到 QUIC 传输层的 HTTP 应用。该名称在最近的草案版本 17（<a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-ietf-quic-http-17">draft-ietf-quic-http-17</a>）中正式被提出，该草案于 2018 年 10 月底提出，并在 11 月份曼谷举行的 IETF 103 会议期间进行了讨论且形成了粗略的共识。HTTP/3 之前被称为基于 QUIC 的 HTTP，其自身之前被称为基于 QUIC 的 HTTP/2。在此之前，我们有基于 gQUIC 的 HTTP/2，而很久以前，我们还有基于 gQUIC 的 SPDY。然而，事实是，HTTP/3 只是一种运行在 IETF QUIC 之上的新的 HTTP 语法，一种基于 UDP的多路复用和安全传输。</p>
+<p>在这篇博文中，我们将探讨 HTTP/3 之前的一些名称背后的历史，并介绍最近更名背后的动机。我们将回到 HTTP 的早期阶段，触及在此过程中发生的所有好工作。如果你希望全面了解，那么可以跳到文章末尾或打开这个<a target="_blank" rel="noopener" href="https://blog.cloudflare.com/content/images/2019/01/web_timeline_large1.svg">非常详细的 SVG 版本</a>。</p>
+<figure>
+<img src="https://blog.cloudflare.com/content/images/2019/01/http3-stack.png" alt="一个 HTTP/3 层蛋糕" /><figcaption aria-hidden="true">一个 HTTP/3 层蛋糕</figcaption>
+</figure>
+<h2 id="设置场景">设置场景</h2>
+<p>在我们专注 HTTP 之前，值得提醒自己的是，有两种协议共享名称 QUIC。正如我们<a target="_blank" rel="noopener" href="https://blog.cloudflare.com/the-road-to-quic/">前面</a>解释的那样，gQUIC 通常用于标识谷歌的（原始协议），而 QUIC 通常用于表示与 gQUIC 不同的 IETF 的标准进行中的版本。</p>
+<p>从 90 年代初期开始，网络的需求就发生了变化。我们已经有了新版本的 HTTP，并以传输层安全（Transport Layer Security，TLS）的形式增加了用户安全性。本文中我们将只涉及 TLS，如果你想更详细地探索该领域，那么我们其他的<a target="_blank" rel="noopener" href="https://blog.cloudflare.com/tag/tls/">博客文章</a>是一个很棒的来源。</p>
+<p>为了帮助解释 HTTP 和 TLS 的历史，我开始整理协议规范和日期的细节。此信息通常以文本的形式呈现，例如按照日期排序的说明文档标题的符号点列表。但是，存在分支标准，每个标准都在时间上重叠，而简单的列表无法表达关系的真实复杂性。在 HTTP 中，已经存在了重构核心协议定义以便于使用、扩展协议以用于新用途以及重新定义协议通过互联网交换数据的方式以提高性能的并行工作。当你尝试着在不同分支工作流中整理近 30 年的互联网历史时，你会需要可视化。所以我做了一张 —— Cloudflare Secure Web Timeline. （注意：技术上讲，它是一张<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Cladogram">分段图</a>，但是时间轴这一术语更广为人知些）。</p>
+<p>我在创建它的时候使用了一些艺术许可，并且选择专注于 IETF 空间中的成功分支。一些未显示的内容包括 W3 Consortium <a target="_blank" rel="noopener" href="https://www.w3.org/Protocols/HTTP-NG/">HTTP-NG</a> 工作组的努力，以及他们的作者热衷于解释如何发音的一些奇特的想法：<a target="_blank" rel="noopener" href="https://blog.jgc.org/2012/12/speeding-up-http-with-minimal-protocol.html">HMURR （发音为 'hammer'）</a> 以及 <a target="_blank" rel="noopener" href="https://github.com/HTTPWorkshop/workshop2017/blob/master/talks/waka.pdf">WAKA （发音为 “wah-kah”）</a>。</p>
+<p>在接下来的几节中，我将按照这张时间表来解释 HTTP 历史中的关键章节。要享受这篇文章的内容，理解为什么标准化是有益的，以及 IETF 是如何着手处理的是很有帮助的。因此，在回到时间轴之前，我们将首先简要介绍该主题。如果你已经熟悉 IETF，那么请随意跳过下一部分。</p>
+<h2 id="互联网标准的类型">互联网标准的类型</h2>
+<p>通常，标准定义了公共的参考术语、范围、约束、适用性和其他考虑因素。标准存在许多规格，并且可以是非正式的（也就是事实上的）或者正式的（由诸如 IETF、ISO 或者 MPEG 这样的标准定义组织统一或者发布）。标准被用于许多领域，甚至有正式的英国制茶标准 —— BS 6008。</p>
+<p>早期 Web 使用的是 IETF 外部发布的 HTTP 和 SSL 协议定义，这些定义在安全 Web 时间线上被标记为<strong>红线</strong>。客户端和服务器对这些协议的采用使得它们成为了事实上的标准。</p>
+<p>在某些时候会决定将这些协议正式化（后面的部分会描述一些动机原因）。互联网标准通常在 IETF 中定义，遵循“粗略共识和运行代码”的非正式原则。这是基于在互联网上开发和部署内容的经验。与尝试在真空中开发完美方案的“净室”形成对比。</p>
+<p>IETF 互联网标准通常称为 RFC。这是一个解释起来很复杂的领域，所以我建议你阅读由 QUIC 工作组联合主席 Mark Nottingham 撰写的博客文章“<a target="_blank" rel="noopener" href="https://www.ietf.org/blog/how-read-rfc/">如何阅读 RFC</a>”。工作组（或者称为 WG）或多或少只是一个邮件列表。</p>
+<p>每年，IETF 举行三次会议，为所有的工作组提供时间和设施以亲自见面（如果他们愿意的话）。这几周的议程可能变得非常拥挤，只有有限的时间可以深入讨论高度技术性的领域。为了解决这个问题，一些工作组选择在 IETF 一般会议之间的几个月内举行临时会议。这有助于保持规范开发的势头。自 2017 年以来，QUIC 工作组已经举行了几次临时会议，在他们的<a target="_blank" rel="noopener" href="https://datatracker.ietf.org/wg/quic/meetings/">会议页面</a>上，你可以看到完整的清单。</p>
+<p>这些 IETF 会议还为其他与 IETF 相关的人群（例如 <a target="_blank" rel="noopener" href="https://www.iab.org/">互联网架构委员会（Internet Architecture Board）</a> 或者 <a target="_blank" rel="noopener" href="https://irtf.org/">互联网研究工作组（Internet Research Task Force）</a>）提供了见面的机会。近年来，<a target="_blank" rel="noopener" href="https://www.ietf.org/how/runningcode/hackathons/">IETF 黑客马拉松</a>会在 IETF 会议之前的周末举行。这为社区提供了开发运行代码的机会，更重要的是，与他人在同一个房间内进行互操作性测试。这有助于查找可在接下来几天中讨论的规范中的问题。</p>
+<p>而出于此文的目的，需要理解的重要事项是，RFC 并不会刚好存在。相反，它们会经历一个通常以 IETF 互联网草案（I-D）格式（该格式是为了考虑采用而提交的）开始的流程。在已经存在发布规范的情况下，一份 I-D 的准备可能只是一次简单的重新格式化练习。I-D 们自发布日起有六个月的有效期。而要让它们保持活跃，则需要发布新的版本。实践中，让一份 I-D 就这么过去并不会有太大的后果，并且这种事时有发生。这些文件会继续托管在 <a target="_blank" rel="noopener" href="https://datatracker.ietf.org/doc/recent">IETF 文档网站</a>上，供任何想要阅读它们的人查阅。</p>
+<p>I-D 在安全 Web 时间线上表示为 <strong>紫色线条</strong>。每一个都有一个唯一的名称，格式为 <em>draft-{作者名}-{工作组}-{主题}-{版本}</em>。工作组字段是可选的，它可能预示处理该文件的 IETF 工作组，并且有时这会发生变化。如果 IETF 采用了一份 I-D，或者如果 I-D 是直接在 IETF 内启动的，那么名称格式则为 <em>draft-ietf-{工作组}-{主题}-{版本}</em>。I-D 可能会出现分支、合并或消亡。版本从 00 开始，每次发布新草稿时加一。例如，一份 I-D 的第四稿版本为 03。一旦 I-D 改名，那么它的版本将重置为 00。</p>
+<p>值得注意的是，任何人都可以向 IETF 提交 I-D；所以你不应该将这些视为标准。但是，如果一份 I-D 的 IETF 标准化过程确实达成了共识，并且最终文档通过了审核，那么，我们最终就获得了一份 RFC。在此阶段，它的名称会再次发生变化。每一份 RFC 都哟一个唯一编号，例如 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc7230">RFC 7230</a>。这些在安全 Web 时间线上表示为<em>蓝线</em>**。</p>
+<p>RFC 是不可变文档。这意味着，对 RFC 的更改需要一个全新的编号。可能会对其进行更改以便合并勘误表（已发现和报告的编辑或技术错误），或者仅仅是重构规范以改进布局。RFC 可能会<strong>淘汰</strong>旧版本（完全替代），或者只是<strong>更新</strong>它们（实质性更改）。</p>
+<p>所有的 IETF 文档均可在 <a target="_blank" rel="noopener" href="http://tools.ietf.org" class="uri">http://tools.ietf.org</a> 上公开获得。就个人而言，我发现 <a target="_blank" rel="noopener" href="https://datatracker.ietf.org">IETF Datatracker</a> 更加有友好些，因为它提供了从 I-D 到 RFC 的文档进度可视化。</p>
+<p>下面是一个显示 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc1945">RFC 1945</a> - HTTP/1.0 开发的示例，它是安全 Web 时间线的明确灵感来源。</p>
+<figure>
+<img src="https://blog.cloudflare.com/content/images/2019/01/RFC-1945-datatracker.png" alt="RFC 1945 的 IETF Datatracker 视图" /><figcaption aria-hidden="true">RFC 1945 的 IETF Datatracker 视图</figcaption>
+</figure>
+<p>有趣的是，在工作过程中，我发现上面的可视化是不正确的。由于某些原因，它缺少 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-ietf-http-v10-spec-05">draft-ietf-http-v10-spec-05</a>。由于 I-D 的有效期为六个月，因此，在它成为 RFC 之前似乎存在缺口，而实际上，草案 05 在 1996 年 8 月份之前仍然有效。</p>
+<h2 id="探索安全-web-时间线">探索安全 Web 时间线</h2>
+<p>稍微理解了一下互联网标准文档是如何实现的，我们可以开始聊聊安全 Web 时间线了。在这个章节中，会有显示时间轴的重要部分的一些摘录图。每个点代表文档或者功能可用的日期。对于 IETF 文档，为了清晰起见，我们省略了草稿编号。但是，如果你想查看所有细节，那么请看<a target="_blank" rel="noopener" href="https://blog.cloudflare.com/content/images/2019/01/web_timeline_large1.svg">完整的时间线</a>。</p>
+<p>HTTP 开始于 1991 年所谓的 HTTP/0.9，然后在 1994 年发布了I-D <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-fielding-http-spec-00">draft-fielding-http-spec-00</a>。这很快就被 IETF 所采用，导致其名称更改为 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-ietf-http-v10-spec-00">draft-ietf-http-v10-spec-00</a>。该 I-D 在 1996 年作为 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc1945">RFC 1945</a> - HTTP/1.0 发布之前经历了六个草案版本。</p>
+<p><img src="https://blog.cloudflare.com/content/images/2019/01/http11-standardisation.png" /></p>
+<p>然而，在 HTTP/1.0 的相关工作完成之前，就已经有了在 HTTP/1.1 上启动的单独活动了。I-D <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-ietf-http-v11-spec-00">draft-ietf-http-v11-spec-00</a> 于 1995 年 11 月发布，并于 1997 年正式发布为 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc2068">RFC 2068</a>。仔细一看你会发现，安全 Web 时间线并未完全捕获该事件序列，这是用来生成该可视化的工具的不幸的副作用。我会努力尽可能减少此类问题的。</p>
+<p>1997 年中期以 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-ietf-http-v11-spec-rev-00">draft-ietf-http-v11-spec-rev-00</a> 的形式开始了 HTTP/1.1 的修订工作。1999 年 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc2616">RFC 2616</a> 的出版标志着这项工作的完成。直到 2007 年，IETF HTTP 世界都很安静。我们很快会回到这点。</p>
+<h2 id="ssl-和-tls-的历史">SSL 和 TLS 的历史</h2>
+<p><img src="https://blog.cloudflare.com/content/images/2019/01/ssl-tls-standardisation.png" /></p>
+<p>将注意力放在 SSL 上。我们看到，SSL 2.0 规范是在 1995 年左右发布的，而 SSL 3.0 是在 1996 年 11 月发布的。有趣的是，SSL 3.0 是在 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc6101">RFC 6101</a> 中描述的，该 RFC 于 2011 年 8 月发布。它位于<strong>历史</strong>类别中，该类别“通常是被考虑和被丢弃的文档想法，或者是在决定记录它们时已经具有历史意义的协议”（根据 <a target="_blank" rel="noopener" href="https://www.ietf.org/blog/iesg-statement-designating-rfcs-historic/?primary_topic=7&amp;">IETF</a>）。在这种情况下，有一个描述 SSL 3.0 的 IETF 文档是有利的，因为在其他地方，它可以被用作规范参考。</p>
+<p>我们更感兴趣的是，SSL 是如何激发 TLS 的发展的，后者在 1996 年 11 月以 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-ietf-tls-protocol-00">draft-ietf-tls-protocol-00</a> 宣告开始。它经历了六个草案版本，并于 1999 年初作为 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc2246">RFC 2246</a> - TLS 1.0 发布。</p>
+<p>在 1995 和 1999 年间，SSL 和 TLS 协议用于保护互联网上的 HTTP 通信。这作为事实上的标准运行良好。直到 1998 年 1 月，随着 I-D <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-ietf-tls-https-00">draft-ietf-tls-https-00</a> 的发布，HTTPS 的正式标准化过程才开始。该工作于 2000 年 5 月以 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc2616">RFC 2616</a> - HTTP 上的 TLS 的发布结束。</p>
+<p>TLS 在 2000 到 2007 年间继续发展，标准化为 TLS 1.1 和 1.2。直至七年后，TLS 的下一个版本开始进行，该版本在 2014 年四月被采纳为 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-ietf-tls-tls13-00">draft-ietf-tls-tls13-00</a>，并在 28 份草稿后，于 2018 年八月出了完成版本 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc8446">RFC 8446</a> - TLS 1.3。</p>
+<h2 id="互联网标准化进程">互联网标准化进程</h2>
+<p>在看了一下该时间线后，我希望你能够了解 IETF 的工作原理。 对于互联网标准形成方式的一个概括就是，研究人员或者工程师涉及适合其特定用途的实验协议。他们以不同规模，或公开或私人地试验这些协议。数据有助于识别改进或者问题。可能会发布这些工作来解释试验，用以收集更广泛的意见，或者帮助找到其他实现者。其他人对这项早期工作的接受可能会让其成为事实上的标准；最终，可能会有足够的动力使得正式标准化成为可能。</p>
+<p>对于可能在考虑实现、部署或以某种方式使用一个协议的的组织，其状态可能是一个重要的考虑因素。正式的标准化过程可以使事实上的标准更具吸引力，因为这倾向于提供稳定性。诸如 IETF 这样的组织提供管理和指导，反映了更广泛的经验。但是，值得强调的是，并非所有正式标准都能成功。</p>
+<p>创建最终标准的过程几乎与标准本身一样重要。有一个最初的想法，然后邀请具有更广泛知识、经验和用例的人们贡献，有助于产生对更广泛的人群更有用的东西。然而，标准化过程并不总是那么容易。存在缺陷和障碍。有时，该过程太漫长，以至于输出不再相关。</p>
+<p>每一个标准定义组织都倾向于拥有自己的围绕所属领域和参与者的流程。解释 IETF 的工作方式的所有细节远远超出本博客的范围。IETF 的“<a target="_blank" rel="noopener" href="https://www.ietf.org/how/">我们是如何工作的</a>” 页面是一个很好的起点，涵盖了许多方面。像往常一样，形成理解的最佳方式是亲自参与。这可以像加入电子邮件列表，或者到相关 GitHub 存储库上参与讨论一样简单。</p>
+<h2 id="cloudflare-的运行代码">Cloudflare 的运行代码</h2>
+<p>Cloudflare 很自豪能够成为新的和不断发展的协议的早期采用者。我们有早早采用新标准的长长的记录，例如 <a target="_blank" rel="noopener" href="https://blog.cloudflare.com/introducing-http2/">HTTP/2</a>。我们还测试了实验性或者尚未定案的协议，例如 <a target="_blank" rel="noopener" href="https://blog.cloudflare.com/introducing-tls-1-3/">TLS 1.3</a> 和 <a target="_blank" rel="noopener" href="https://blog.cloudflare.com/introducing-spdy/">SPDY</a>。</p>
+<p>关于 IETF 标准化过程，在各种网站的真实网络中部署此运行代码有助于我们了解协议在实践中的运行情况。我们将现有的专业知识和实验信息相结合，以帮助改善运行代码，并在有意义的情况下，向正在标准化协议的工作组反馈问题和改进。</p>
+<p>测试新事物并非唯一的优先事项。创新者需要是知道什么时候该向前推进，并将老点的东西放在“后视镜”中。有时，有时，这涉及到面向安全的协议，例如，因为 POODLE 漏洞，Cloudflare <a target="_blank" rel="noopener" href="https://blog.cloudflare.com/sslv3-support-disabled-by-default-due-to-vulnerability/">默认禁用了 SSLv3</a>。在其他情况下，协议会被技术更先进的协议所取代；Cloudflare <a target="_blank" rel="noopener" href="https://blog.cloudflare.com/deprecating-spdy/">弃用了 SPDY</a> 支持以支撑 HTTP/2。</p>
+<p>相关协议的引进了弃用在安全 Web 时间线上表示为<strong>橙色线</strong>。虚垂直线有助于将 Cloudflare 事件与相关的 IETF 文档相关联。例如，Cloudflare 在 2016 年九月份引入了 TLS 1.3 支持，而其最终文档 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc8446">RFC 8446</a> 在几乎两年后（2018 年八月份）才发布。</p>
+<p><img src="https://blog.cloudflare.com/content/images/2019/01/cf-events.png" /></p>
+<h2 id="httpbis-的重构">HTTPbis 的重构</h2>
+<p>HTTP/1.1 是一个非常成功的协议，而时间线现实，1999 年之后，IETF 并没有太多的活动。然而，真相是，多年的积极使用提供了实施经验揭露了 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc2616">RFC 2616</a> 的潜在问题，会导致一些互操作性问题。此外，其他 RFC（例如 2817 和 2818）扩展了该协议。2007 年决定启动一项新活动来改进 HTTP 协议规范。这就是所谓的 HTTPbis（其中，“bis”源于拉丁文，语义是“两个”、“两次”或者“重复”）,并且它采用了新工作组的形式。原始<a target="_blank" rel="noopener" href="https://tools.ietf.org/wg/httpbis/charters?item=charter-httpbis-2007-10-23.txt">章程</a>很好地描述了试图解决的问题。</p>
+<p>简而言之，HTTPbis 决定重构 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc2616">RFC 2616</a>。它将包含勘误修复，并引入在此期间发布的其他规范的某些方面。并决定将文档分成几部分。这导致了 2007 年 12 月发布了六份 I-D：</p>
+<ul>
+<li>draft-ietf-httpbis-p1-messaging</li>
+<li>draft-ietf-httpbis-p2-semantics</li>
+<li>draft-ietf-httpbis-p4-conditional</li>
+<li>draft-ietf-httpbis-p5-range</li>
+<li>draft-ietf-httpbis-p6-cache</li>
+<li>draft-ietf-httpbis-p7-auth</li>
+</ul>
+<p><img src="https://blog.cloudflare.com/content/images/2019/01/http11-refactor.png" /></p>
+<p>该图显示了这项工作是如何历经长达七年的起草过程，并在最终标准化之前发布了 27 个草案版本。2014 年六月，发布了所谓的 RFC 723x 系列（其中，x 的范围从 0 到 5）。HTTPbis WG 的主席通过“<a target="_blank" rel="noopener" href="https://www.mnot.net/blog/2014/06/07/rfc2616_is_dead">RFC2616 已死</a>” 来庆祝这一成就。也就是说，这些新文档将废弃旧的 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc2616">RFC 2616</a>。</p>
+<h2 id="这与http-3有什么关系">这与HTTP / 3有什么关系？</h2>
+<p>虽然 IETF 正忙着研究 RFC 723x 系列，但是世界并未停止运转。人们继续在互联网上增强、扩展和实验 HTTP。其中就有谷歌，他们已经开始尝试一种名为 SPDY（发音为 speedy）的协议。该协议被吹捧为能够提高 web 浏览的性能，而这是 HTTP 的一种主要用例。在 2009 年末，SPDY v1 发布，随后在 2010 年很快就推出了 SPDY v2。</p>
+<p>我想要避免深入 SPDY 的技术细节。这些择日再谈。重要的是，要了解 SPDY 采用了 HTTP 的核心范例，并且稍微修改了交换格式以获取改进。我们可以看到，HTTP 明确地划分了语义和语法。语义描述了请求和响应交换的概念，包括：方法、状态码、头部字段（元数据）和消息体（有效负载）。语法描述了如何将语义映射到线路上的字节。</p>
+<p>HTTP/0.9、1.0 和 1.1 共享了许多语义。它们还以通过 TCP 连接发送字符串的形式共享了语法。 SPDY 采用了 HTTP/1.1 语义，但是将语法从字符串更改为二进制。这是一个非常有趣的话题，但是今天我们并不会深入挖掘。</p>
+<p>谷歌对 SPDY 的实验表明，改变 HTTP 语法是有前景的，并且保留现有的 HTTP 语义也是有价值的。例如，保持使用 http:// 的 URL 格式可以避免许多可能影响采用的问题。</p>
+<p>看到一些积极的结果后，IETF 决定是时候考虑 HTTP/2.0 了。2012 年三月 IETF 83 期间举行的 HTTPbis 会议的 <a target="_blank" rel="noopener" href="https://github.com/httpwg/wg-materials/blob/gh-pages/ietf83/HTTP2.pdf">幻灯片</a> 显示了成功的要求、目标和衡量标准。它还明确指出，“HTTP/2.0 只表示其传输格式与 HTTP/1.x 不兼容”。</p>
+<p><img src="https://blog.cloudflare.com/content/images/2019/01/http2-standardisation.png" /></p>
+<p>在那次会议期间，社区被邀请分享提案。提交审议的 I-D 包括 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-mbelshe-httpbis-spdy-00">draft-mbelshe-httpbis-spdy-00</a>、<a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-montenegro-httpbis-speed-mobility-00">draft-montenegro-httpbis-speed-mobility-00</a> 和 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-tarreau-httpbis-network-friendly-00">draft-tarreau-httpbis-network-friendly-00</a>。最终，通过了 SPDY 草案，并于 2012 年十一月开始 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-ietf-httpbis-http2-00">draft-ietf-httpbis-http2-00</a>。在经历两年多的时间的 18 份草案，<a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc7540">RFC 7540</a> - HTTP/2 于 2015 年发布。在此规范期间，HTTP/2 的精确语法偏移到刚好使得 HTTP/2 与 SPDY 不兼容。</p>
+<p>这些年是 IETF 关于 HTTP 工作的一个非常繁忙的时期，HTTP/1.1 重构和 HTTP/2 标准化并行。这与 21 世纪初多年的静寂形成了鲜明的对比。请务必看完完整的时间线，以真正了解所发生的工作。</p>
+<p>虽然 HTTP/2 正处于标准化过程，但是使用和试验 SPDY 仍然有好处。Cloudflare 在 2012 年八月份<a target="_blank" rel="noopener" href="https://blog.cloudflare.com/spdy-now-one-click-simple-for-any-website/">引入了对 SPDY 的支持</a>，并在 2018 年二月份我们的统计显示不到 4% 的 Web 客户继续想要 SPDY 的时候才弃用了它。同时，我们在 2015 年十二月份<a target="_blank" rel="noopener" href="https://blog.cloudflare.com/introducing-http2/">推出了对 HTTP/2 的支持</a>，也就是在 RFC 发布后不久，那个时候，我们的分析表明，有意义的一部分 Web 客户端可以利用它。</p>
+<p>Web 客户端对 SPDY 和 HTTP/2 协议的支持首选使用 TLS 的安全选项。2014 年九月份<a target="_blank" rel="noopener" href="https://blog.cloudflare.com/introducing-universal-ssl/">通用 SSL</a> 的引入有助于确保所有注册到 Cloudflare 的网站都能够在我们引入这些新协议时利用它们。</p>
+<h3 id="gquic">gQUIC</h3>
+<p>谷歌在 2012 到 2015 年间继续进行实验，并且发布了 SPDY v3 和 v3.1。他们还开始研究 gQUIC（当时发音为 quick），并在 2012 年初推出了最初的公开规范。</p>
+<p>gQUIC 的早期版本利用了 SPDY v3 形式的 HTTP 语法。这一选择很有意义，因为 HTTP/2 尚未完成。SPDY 二进制语法被打包成可以在 UDP 数据报中发送的 QUIC 包。这与 HTTP 传统上依赖的 TCP 传输有所不同。将这些都堆叠在一起后，看起来像：</p>
+<figure>
+<img src="https://blog.cloudflare.com/content/images/2019/01/gquic-stack.png" alt="SPDY 位于 gQUIC 层之上的蛋糕" /><figcaption aria-hidden="true">SPDY 位于 gQUIC 层之上的蛋糕</figcaption>
+</figure>
+<p>gQUIC 使用了巧妙之计来实现性能。其中之一就是打破应用和传输之间的明确分层。这在实践中意味着 gQUIC 只支持 HTTP。甚至于当时被称为“QUIC”的 gQUIC 与作为 HTTP 的下一个候选版本同义。尽管在过去几年中 QUIC 不断发生变化（这个我们将暂时触及），但是，时至今日，人们还是将 QUIC 这个术语理解为最初的仅限 HTTP 的变体。不幸的是，这是在讨论该协议的时候经常引起混乱的源头。</p>
+<p>gQUIC 继续进行实验，并最终切换到更接近于 HTTP/2 的语法。事实如此接近，以致于大多数人都将其简称为“基于 QUIC 的 HTTP/2”。然而，由于技术限制，它们还是存在一些非常微妙的差异的。其中一个例子就是涉及如何序列化和交换 HTTP 头部。这是一个微小差异，但实际上意味着基于 gQUIC 的 HTTP/2 与 IETF 的 HTTP/2 并不兼容。</p>
+<p>最后但同样重要的是，我们始终需要考虑互联网协议的安全性。gQUIC 选择不使用 TLS 来提供安全性。相反，谷歌开发了一种不同方法，称为 QUIC Crypto。其中一个有趣的方面是用以加速安全握手的新方法。一个之前已经与服务端建立了安全会话的客户端可以重用信息来进行“零往返时间”（0-RTT）握手。 0-RTT 后来被纳入 TLS 1.3。</p>
+<h2 id="那么到了你可以告诉我什么是-http3-的时候了吗">那么到了你可以告诉我什么是 HTTP/3 的时候了吗？</h2>
+<p>差不多了。</p>
+<p>到目前为止，你应该熟悉了标准化的工作原理，以及 gQUIC 并没有太大的不同。人们对谷歌规范以 I-D 的格式编写表示出了足够的兴趣。2015 年六月份，提交了题为“QUIC：基于 UDP 的 HTTP/2 安全可靠的传输”的<a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-tsvwg-quic-protocol-00">draft-tsvwg-quic-protocol-00</a>。请记住我之前的声明，它的语法几乎是与 HTTP/2 相同。</p>
+<p>谷歌<a target="_blank" rel="noopener" href="https://groups.google.com/a/chromium.org/forum/#!topic/proto-quic/otGKB4ytAyc">宣布</a>将在布达拉宫的 IETF 93 举行 Bar BoF。对于那些对“Bar BoF”是什么感到好奇的人，请查阅 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc6771">RFC 6771</a>。提示：BoF 代表一丘之貉。</p>
+<p><img src="https://blog.cloudflare.com/content/images/2019/01/quic-standardisation.png" /></p>
+<p>简而言之，与 IETF 合作的结果是，QUIC 似乎提供了许多传输层方面的优势，因此应该与 HTTP 分离。应该重新引入层与层之间的明确分离。此外，有人倾向于回到基于 TLS 的握手（由于在此阶段 TLS 1.3 正在进行，并且正与 0-RTT 握手进行整合，因此并没有那么糟糕）。</p>
+<p>大约一年后，在 2016 年，提交了一套新的 I-D：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-hamilton-quic-transport-protocol-00">draft-hamilton-quic-transport-protocol-00</a></li>
+<li><a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-thomson-quic-tls-00">draft-thomson-quic-tls-00</a></li>
+<li><a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-iyengar-quic-loss-recovery-00">draft-iyengar-quic-loss-recovery-00</a></li>
+<li><a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-shade-quic-http2-mapping-00">draft-shade-quic-http2-mapping-00</a></li>
+</ul>
+<p>这是关于 HTTP 和 QUIC 之间的混乱的另一个源头。<a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-shade-quic-http2-mapping-00">draft-shade-quic-http2-mapping-00</a> 的标题是“使用 QUIC 传输协议的 HTTP/2 语义”，它将自己描述为“QUIC 之上的 HTTP/2 语义映射”。然而，这里用词不当。HTTP/2 在保持语义的同时对语法进行了更改。此外，由于我之前所概述的原因，“基于 gQUIC 的 HTTP/2” 也从来不是对语法的精确描述。请坚持这个想法。</p>
+<p>QUIC 的这个 IETF 版本将是一个全新的传输协议。这是一项艰巨的任务，而在先投入这些承诺之前，IETF 喜欢衡量其成员的实际利益。为此，2016 年在柏林举行的 IETF 96 上举行了正式的 <a target="_blank" rel="noopener" href="https://www.ietf.org/how/bofs/">BoF</a> 会议。我很荣幸能够亲自参与会议，但是，<a target="_blank" rel="noopener" href="https://datatracker.ietf.org/meeting/96/materials/slides-96-quic-0">幻灯片</a> 并不公正。如 Adam Roach 的<a target="_blank" rel="noopener" href="https://www.flickr.com/photos/adam-roach/28343796722/in/photostream/">照片</a> 所示，数百人参加了会议。会议结束时达成了共识；IETF 将会采用 QUIC 并对其进行标准化。</p>
+<p>第一份将 HTTP 映射到 QUIC 的 IETF QUIC I-D <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/draft-ietf-quic-http-00">draft-ietf-quic-http-00</a>，采用了 Ronseal 的方法，并将其名简化为“基于 QUIC 的 HTTP”。不幸的是，工作并未完全完成，整个机构中还是存在许多 HTTP/2 术语的其他名称。Mike Bishop，也就是该 I-D 新的编辑，发现了这一点，并开始修复 HTTP/2 的误称。在 01 草案中，描述修改为“基于 QUIC 的 HTTP 语义映射”。</p>
+<p>随着时间和版本的逐渐增加，术语“HTTP/2”的使用减少了，而实例成了对 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc7540">RFC 7540</a> 部分的单纯应用。向前推进两年直至 2018 年十月，现在，I-D 是版本 16 了。虽然基于 QUIC 的 HTTP 与 HTTP/2 相似，但它最终是一个独立的非向后兼容的 HTTP 语法。然而，对于那些并不密切跟踪 IETF 发展的人（占了地球人口相当巨大的一部分），文档名称并没有显示这种差异。标准化的其中一个要点是帮助沟通和互操作。然而，像命名这样简单的的事情却是导致社区混乱的主要原因。</p>
+<p>回响一下我们在 2012 年所说的，“HTTP/2.0 仅表示传输格式与 HTTP/1.x 的格式不兼容”。IETF 遵循了这一项现有提示。在经过 IETF 103 之前和期间的深思熟虑后，达成了将“基于 QUIC 的 HTTP”更名为 HTTP/3 的共识。现在，世界更加美好，我们可以接着进行更重要的讨论了。</p>
+<h2 id="但是-rfc-7230-和-7231-并不同意你对语义和语法的定义">但是 RFC 7230 和 7231 并不同意你对语义和语法的定义！</h2>
+<p>有时，文档标题可能会让人感到困惑。目前描述语法和语义的 HTTP 文档是：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc7230">RFC 7230</a> - 超文本传输协议（HTTP/1.1）：消息语法和路由</li>
+<li><a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc7231">RFC 7231</a> - 超文本传输协议（HTTP/1.1）：语义和内容</li>
+</ul>
+<p>有可能过度解读这些名字，然后认为基本的 HTTP 语义特定于 HTTP 版本，例如 HTTP/1.1。但是，这是 HTTP 系列树的意外副作用。好消息是，HTTPbis 工作组正试图解决这个问题。一些勇敢的成员正进行另一轮的文档修订，正如 Fielding 所说，“再来一次！”。这项工作正在进行中，并且被称为 HTTP 核心活动（你可能也在标记为 HTTPtre 或者 HTTPter 下听说过这个；命名是件难事）。这将把六个草案缩减为三个：</p>
+<ul>
+<li>HTTP 语义 (draft-ietf-httpbis-semantics)</li>
+<li>HTTP 缓存 (draft-ietf-httpbis-caching)</li>
+<li>HTTP/1.1 消息语法和路由 (draft-ietf-httpbis-messaging)</li>
+</ul>
+<p>在此新结构下，HTTP/2 和 HTTP/3 是常见的 HTTP 语义的语法定义变得更加明显。这并不意味着除了语法以外，它们没有自己的特性，但这应该有助于框架讨论。</p>
+<h2 id="总结一下">总结一下</h2>
+<p>本文简要介绍了在过去三十年，IETF 对 HTTP 的标准化过程。在不触及许多技术细节的情况下，我试图解释如今怎么会有 HTTP/3 的。如果你跳过了中间部分，并且在寻找一句话总结，那么这里就是：HTTP/3 只是一种运行在 IETF QUIC 上的新的 HTTP 语法，一种基于 UDP 的多路复用和安全传输。还有许多有趣的技术领域有待进一步的探索，但这已经是后面的事情了。</p>
+<p>在这篇文章中，我们探讨了 HTTP 和 TLS 开发中的重要章节，这些章节是相互独立的。最后，我们将其全部整合到下面提供的完整的安全 Web 时间线中。你可以自行使用它来调查详细的历史记录。对于那些“超级侦探”，请务必查看<a target="_blank" rel="noopener" href="https://blog.cloudflare.com/content/images/2019/01/web_timeline_large1.svg">包含草稿编号的完整版本</a>。</p>
+<p><img src="https://blog.cloudflare.com/content/images/2019/01/cf-secure-web-timeline-1.png" /></p>
+<p>（Ele 注：一开始翻这篇文章的时候以为是讲 HTTP/3 的细节的，翻译的过程中才发现原来是讲历史呀。但是无论如何，了解下互联网协议的生成更新过程以及历史，也是挺有意思的(*^__^*)）</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%B2%A1%E4%BA%8B%E7%BF%BB%E7%9D%80%E7%8E%A9/" rel="tag"># 没事翻着玩</a>
+              <a href="/tags/http/" rel="tag"># http</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/01/14/how_to_generate_annual_read_report_part2/" rel="prev" title="我的年度读书报告生成攻略：第二部分">
+      <i class="fa fa-chevron-left"></i> 我的年度读书报告生成攻略：第二部分
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/02/25/trans-a-visual-guide-to-golang-memory-allocator-from-ground-up/" rel="next" title="译|从零开始的 Go 内存分配器可视化指南（golang）">
+      译|从零开始的 Go 内存分配器可视化指南（golang） <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%BE%E7%BD%AE%E5%9C%BA%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">设置场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%92%E8%81%94%E7%BD%91%E6%A0%87%E5%87%86%E7%9A%84%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text">互联网标准的类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8E%A2%E7%B4%A2%E5%AE%89%E5%85%A8-web-%E6%97%B6%E9%97%B4%E7%BA%BF"><span class="nav-number">3.</span> <span class="nav-text">探索安全 Web 时间线</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ssl-%E5%92%8C-tls-%E7%9A%84%E5%8E%86%E5%8F%B2"><span class="nav-number">4.</span> <span class="nav-text">SSL 和 TLS 的历史</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%92%E8%81%94%E7%BD%91%E6%A0%87%E5%87%86%E5%8C%96%E8%BF%9B%E7%A8%8B"><span class="nav-number">5.</span> <span class="nav-text">互联网标准化进程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cloudflare-%E7%9A%84%E8%BF%90%E8%A1%8C%E4%BB%A3%E7%A0%81"><span class="nav-number">6.</span> <span class="nav-text">Cloudflare 的运行代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#httpbis-%E7%9A%84%E9%87%8D%E6%9E%84"><span class="nav-number">7.</span> <span class="nav-text">HTTPbis 的重构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%99%E4%B8%8Ehttp-3%E6%9C%89%E4%BB%80%E4%B9%88%E5%85%B3%E7%B3%BB"><span class="nav-number">8.</span> <span class="nav-text">这与HTTP &#x2F; 3有什么关系？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#gquic"><span class="nav-number">8.1.</span> <span class="nav-text">gQUIC</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%82%A3%E4%B9%88%E5%88%B0%E4%BA%86%E4%BD%A0%E5%8F%AF%E4%BB%A5%E5%91%8A%E8%AF%89%E6%88%91%E4%BB%80%E4%B9%88%E6%98%AF-http3-%E7%9A%84%E6%97%B6%E5%80%99%E4%BA%86%E5%90%97"><span class="nav-number">9.</span> <span class="nav-text">那么到了你可以告诉我什么是 HTTP&#x2F;3 的时候了吗？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%86%E6%98%AF-rfc-7230-%E5%92%8C-7231-%E5%B9%B6%E4%B8%8D%E5%90%8C%E6%84%8F%E4%BD%A0%E5%AF%B9%E8%AF%AD%E4%B9%89%E5%92%8C%E8%AF%AD%E6%B3%95%E7%9A%84%E5%AE%9A%E4%B9%89"><span class="nav-number">10.</span> <span class="nav-text">但是 RFC 7230 和 7231 并不同意你对语义和语法的定义！</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93%E4%B8%80%E4%B8%8B"><span class="nav-number">11.</span> <span class="nav-text">总结一下</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2019/01/31/trans-http-3-from-root-to-tip/";
+    this.page.identifier = "2019/01/31/trans-http-3-from-root-to-tip/";
+    this.page.title = "译|HTTP/3：从起源到建议";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>

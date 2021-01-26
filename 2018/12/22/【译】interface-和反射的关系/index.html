@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <link rel="manifest" href="/images/manifest.json">
+  <meta name="msapplication-config" content="/images/browserconfig.xml">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ictar.github.io","root":"/","scheme":"Mist","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="原文：The Relationship Between Interfaces and Reflection     interface 是 Go 中抽象的基本工具之一。在给 interface 赋值时，interface 会存储类型信息。反射（reflection）是一种在运行时检查类型和值信息的方法。  Go 通过 reflect 包实现了反射，该包提供了检查 interface 结构元素甚至是">
+<meta property="og:type" content="article">
+<meta property="og:title" content="译|interface 和反射的关系">
+<meta property="og:url" content="http://ictar.github.io/2018/12/22/%E3%80%90%E8%AF%91%E3%80%91interface-%E5%92%8C%E5%8F%8D%E5%B0%84%E7%9A%84%E5%85%B3%E7%B3%BB/index.html">
+<meta property="og:site_name" content="∞">
+<meta property="og:description" content="原文：The Relationship Between Interfaces and Reflection     interface 是 Go 中抽象的基本工具之一。在给 interface 赋值时，interface 会存储类型信息。反射（reflection）是一种在运行时检查类型和值信息的方法。  Go 通过 reflect 包实现了反射，该包提供了检查 interface 结构元素甚至是">
+<meta property="og:locale">
+<meta property="og:image" content="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/interface.svg">
+<meta property="og:image" content="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/reflect-type.svg">
+<meta property="og:image" content="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/reflect-method.svg">
+<meta property="og:image" content="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/reflect-value.svg">
+<meta property="article:published_time" content="2018-12-22T09:36:16.000Z">
+<meta property="article:modified_time" content="2020-12-25T08:20:40.974Z">
+<meta property="article:author" content="Ele">
+<meta property="article:tag" content="Golang">
+<meta property="article:tag" content="没事翻着玩">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/interface.svg">
+
+<link rel="canonical" href="http://ictar.github.io/2018/12/22/%E3%80%90%E8%AF%91%E3%80%91interface-%E5%92%8C%E5%8F%8D%E5%B0%84%E7%9A%84%E5%85%B3%E7%B3%BB/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-Hans'
+  };
+</script>
+
+  <title>译|interface 和反射的关系 | ∞</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="∞" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">∞</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">好好学习，天天向上</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-commonweal">
+
+    <a href="/404/" rel="section"><i class="fa fa-heartbeat fa-fw"></i>Commonweal 404</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+    <link itemprop="mainEntityOfPage" href="http://ictar.github.io/2018/12/22/%E3%80%90%E8%AF%91%E3%80%91interface-%E5%92%8C%E5%8F%8D%E5%B0%84%E7%9A%84%E5%85%B3%E7%B3%BB/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Ele">
+      <meta itemprop="description" content="Share life, share idea, share code.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="∞">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          译|interface 和反射的关系
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2018-12-22 17:36:16" itemprop="dateCreated datePublished" datetime="2018-12-22T17:36:16+08:00">2018-12-22</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-12-25 16:20:40" itemprop="dateModified" datetime="2020-12-25T16:20:40+08:00">2020-12-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2018/12/22/%E3%80%90%E8%AF%91%E3%80%91interface-%E5%92%8C%E5%8F%8D%E5%B0%84%E7%9A%84%E5%85%B3%E7%B3%BB/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/12/22/【译】interface-和反射的关系/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>原文：<a target="_blank" rel="noopener" href="https://blog.gopheracademy.com/advent-2018/interfaces-and-reflect/">The Relationship Between Interfaces and Reflection</a></p>
+<hr />
+<p>interface 是 Go 中抽象的基本工具之一。在给 interface 赋值时，interface 会存储类型信息。反射（reflection）是一种在运行时检查类型和值信息的方法。</p>
+<p>Go 通过 <code>reflect</code> 包实现了反射，该包提供了检查 interface 结构元素甚至是运行时修改值的类型和方法。</p>
+<p>在这篇文章中，我希望说明 interface 结构的各个部分与 reflect API 的关系，并最终让 reflect 包的使用更方便！</p>
+<h1 id="为-interface-赋值">为 interface 赋值</h1>
+<p>interface 编码了三个东西：值、方法集和所存储值的类型。</p>
+<p>interface 的结构如下所示：</p>
+<figure>
+<img src="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/interface.svg" alt="interface-diagram" /><figcaption aria-hidden="true">interface-diagram</figcaption>
+</figure>
+<p>在该图中，我们可以清楚地看到 interface 的三个部分：<code>_type</code> 是类型信息，<code>*data</code> 是一个指向实际值的指针，而 <code>itab</code> 对方法集进行了编码。</p>
+<p>当一个函数有一个 interface 参数时，将值传递给该函数会将值、方法集和类型打包到 interface 中。</p>
+<h1 id="利用-reflect-包在运行时检查-interface-数据">利用 reflect 包，在运行时检查 interface 数据</h1>
+<p>一旦一个值被存储在 interface 中，就可以使用 <code>reflect</code> 包来检查其各个部分。我们无法直接检查 interface 结构；而 reflect 包维护了让我们有权访问的 interface 结构的副本。</p>
+<p>虽然我们可以通过 reflect 对象访问 interface，但是它与底层的 interface 有直接关联。</p>
+<p><code>reflect.Type</code> 和 <code>reflect.Value</code> 类型提供了访问 interface 组成部分的方法。</p>
+<p><code>reflect.Type</code> 侧重于公开与类型相关的数据，因此它仅限于 interface 结构的 <code>_type</code> 部分；而 <code>reflect.Value</code> 必须将类型信息与值相结合，以允许程序员检查和操作值，因此该类型必须查看 <code>_type</code> 以及 <code>data</code>。</p>
+<h2 id="reflect.type---检查类型">reflect.Type - 检查类型</h2>
+<p><code>reflect.TypeOf()</code> 函数用于提取一个值的类型信息。由于它唯一的参数是一个空的 interface，因此传递给该函数的值将被赋给一个 interface，故而可以拿到类型、方法集和值。</p>
+<p><code>reflect.TypeOf()</code> 返回一个 <code>reflect.Type</code>，它提供了让你检查值类型的方法。</p>
+<p>下面是一些可用的 <code>Type</code> 方法，以及和它们的返回相对应的 interface 结构信息。</p>
+<figure>
+<img src="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/reflect-type.svg" alt="reflect-type-diagram" /><figcaption aria-hidden="true">reflect-type-diagram</figcaption>
+</figure>
+<h3 id="reflect.type-使用示例"><code>reflect.Type</code> 使用示例</h3>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line">    </span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	<span class="string">&quot;reflect&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Gift <span class="keyword">struct</span> &#123;</span><br><span class="line">	Sender    <span class="keyword">string</span></span><br><span class="line">	Recipient <span class="keyword">string</span></span><br><span class="line">	Number    <span class="keyword">uint</span></span><br><span class="line">	Contents  <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	g := Gift&#123;</span><br><span class="line">		Sender:    <span class="string">&quot;Hank&quot;</span>,</span><br><span class="line">		Recipient: <span class="string">&quot;Sue&quot;</span>,</span><br><span class="line">		Number:    <span class="number">1</span>,</span><br><span class="line">		Contents:  <span class="string">&quot;Scarf&quot;</span>,</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	t := reflect.TypeOf(g)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> kind := t.Kind(); kind != reflect.Struct &#123;</span><br><span class="line">		log.Fatalf(<span class="string">&quot;This program expects to work on a struct; we got a %v instead.&quot;</span>, kind)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; t.NumField(); i++ &#123;</span><br><span class="line">		f := t.Field(i)</span><br><span class="line">		log.Printf(<span class="string">&quot;Field %03d: %-10.10s %v&quot;</span>, i, f.Name, f.Type.Kind())</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该程序的目的是打印 <code>Gift</code> 结构中的字段。当把 <code>g</code> 值传递给 <code>reflect.TypeOf()</code> 时，<code>g</code> 被赋给一个 interface，此时编译器会使用类型和方法集信息来填充它。这使得我们可以遍历该 interface 结构的类型部分的 <code>[]fields</code> 字段，得到以下输出：</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> Field <span class="number">000</span>: Sender     string</span><br><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> Field <span class="number">001</span>: Recipient  string</span><br><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> Field <span class="number">002</span>: Number     uint</span><br><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> Field <span class="number">003</span>: Contents   string</span><br></pre></td></tr></table></figure>
+<h2 id="reflect.method---检查-itab-方法集">reflect.Method - 检查 itab / 方法集</h2>
+<p><code>reflect.Type</code> 类型还允许你访问 <code>itab</code> 的组成部分，提取 interface 的方法信息。</p>
+<figure>
+<img src="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/reflect-method.svg" alt="reflect-method-diagram" /><figcaption aria-hidden="true">reflect-method-diagram</figcaption>
+</figure>
+<h3 id="使用-reflect-检查方法">使用 reflect 检查方法</h3>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line">    </span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	<span class="string">&quot;reflect&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Reindeer <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r Reindeer)</span> <span class="title">TakeOff</span><span class="params">()</span></span> &#123;</span><br><span class="line">	log.Printf(<span class="string">&quot;%q lifts off.&quot;</span>, r)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r Reindeer)</span> <span class="title">Land</span><span class="params">()</span></span> &#123;</span><br><span class="line">	log.Printf(<span class="string">&quot;%q gently lands.&quot;</span>, r)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r Reindeer)</span> <span class="title">ToggleNose</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> r != <span class="string">&quot;rudolph&quot;</span> &#123;</span><br><span class="line">		<span class="built_in">panic</span>(<span class="string">&quot;invalid reindeer operation&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	log.Printf(<span class="string">&quot;%q nose changes state.&quot;</span>, r)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	r := Reindeer(<span class="string">&quot;rudolph&quot;</span>)</span><br><span class="line"></span><br><span class="line">	t := reflect.TypeOf(r)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; t.NumMethod(); i++ &#123;</span><br><span class="line">		m := t.Method(i)</span><br><span class="line">		log.Printf(<span class="string">&quot;%s&quot;</span>, m.Name)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该代码遍历了存储在 <code>itab</code> 中的所有函数数据，然后展示每个方法的名字： <figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> Land</span><br><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> TakeOff</span><br><span class="line"><span class="attribute">2018</span>/<span class="number">12</span>/<span class="number">16</span> <span class="number">12</span>:<span class="number">00</span>:<span class="number">00</span> ToggleNose</span><br></pre></td></tr></table></figure> ## reflect.Value - 检查值</p>
+<p>目前为止，我们只讨论了类型信息 —— 字段、方法等等。而 <code>reflect.Value</code> 为我们提供了 interface 中所存储的实际值的信息。</p>
+<p>与 <code>reflect.Value</code> 相关联的方法必须结合类型信息和实际值。例如，为了从结构中提取字段，reflect 包必须结合结构布局信息（特别是存储在 <code>_type</code> 中的字段和字段偏移量），以及 interface 的 <code>*data</code> 部分指向的实际值，以实现正确的结构解码。</p>
+<figure>
+<img src="https://blog.gopheracademy.com/postimages/advent-2018/interfaces-and-reflect/reflect-value.svg" alt="reflect-value-diagram" /><figcaption aria-hidden="true">reflect-value-diagram</figcaption>
+</figure>
+<h3 id="示例查看修改值">示例：查看修改值</h3>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">&quot;log&quot;</span></span><br><span class="line">	<span class="string">&quot;reflect&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Child <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name  <span class="keyword">string</span></span><br><span class="line">	Grade <span class="keyword">int</span></span><br><span class="line">	Nice  <span class="keyword">bool</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Adult <span class="keyword">struct</span> &#123;</span><br><span class="line">	Name       <span class="keyword">string</span></span><br><span class="line">	Occupation <span class="keyword">string</span></span><br><span class="line">	Nice       <span class="keyword">bool</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// search a slice of structs for Name field that is &quot;Hank&quot; and set its Nice</span></span><br><span class="line"><span class="comment">// field to true.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">nice</span><span class="params">(i <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="comment">// retrieve the underlying value of i.  we know that i is an</span></span><br><span class="line">	<span class="comment">// interface.</span></span><br><span class="line">	v := reflect.ValueOf(i)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// we&#x27;re only interested in slices to let&#x27;s check what kind of value v is. if</span></span><br><span class="line">	<span class="comment">// it isn&#x27;t a slice, return immediately.</span></span><br><span class="line">	<span class="keyword">if</span> v.Kind() != reflect.Slice &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// v is a slice.  now let&#x27;s ensure that it is a slice of structs.  if not,</span></span><br><span class="line">	<span class="comment">// return immediately.</span></span><br><span class="line">	<span class="keyword">if</span> e := v.Type().Elem(); e.Kind() != reflect.Struct &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// determine if our struct has a Name field of type string and a Nice field</span></span><br><span class="line">	<span class="comment">// of type bool</span></span><br><span class="line">	st := v.Type().Elem()</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> nameField, found := st.FieldByName(<span class="string">&quot;Name&quot;</span>); found == <span class="literal">false</span> || nameField.Type.Kind() != reflect.String &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> niceField, found := st.FieldByName(<span class="string">&quot;Nice&quot;</span>); found == <span class="literal">false</span> || niceField.Type.Kind() != reflect.Bool &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Set any Nice fields to true where the Name is &quot;Hank&quot;</span></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; v.Len(); i++ &#123;</span><br><span class="line">		e := v.Index(i)</span><br><span class="line">		name := e.FieldByName(<span class="string">&quot;Name&quot;</span>)</span><br><span class="line">		nice := e.FieldByName(<span class="string">&quot;Nice&quot;</span>)</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> name.String() == <span class="string">&quot;Hank&quot;</span> &#123;</span><br><span class="line">			nice.SetBool(<span class="literal">true</span>)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	children := []Child&#123;</span><br><span class="line">		&#123;Name: <span class="string">&quot;Sue&quot;</span>, Grade: <span class="number">1</span>, Nice: <span class="literal">true</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Ava&quot;</span>, Grade: <span class="number">3</span>, Nice: <span class="literal">true</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Hank&quot;</span>, Grade: <span class="number">6</span>, Nice: <span class="literal">false</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Nancy&quot;</span>, Grade: <span class="number">5</span>, Nice: <span class="literal">true</span>&#125;,</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	adults := []Adult&#123;</span><br><span class="line">		&#123;Name: <span class="string">&quot;Bob&quot;</span>, Occupation: <span class="string">&quot;Carpenter&quot;</span>, Nice: <span class="literal">true</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Steve&quot;</span>, Occupation: <span class="string">&quot;Clerk&quot;</span>, Nice: <span class="literal">true</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Nikki&quot;</span>, Occupation: <span class="string">&quot;Rad Tech&quot;</span>, Nice: <span class="literal">false</span>&#125;,</span><br><span class="line">		&#123;Name: <span class="string">&quot;Hank&quot;</span>, Occupation: <span class="string">&quot;Go Programmer&quot;</span>, Nice: <span class="literal">false</span>&#125;,</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	log.Printf(<span class="string">&quot;adults before nice: %v&quot;</span>, adults)</span><br><span class="line">	nice(adults)</span><br><span class="line">	log.Printf(<span class="string">&quot;adults after nice: %v&quot;</span>, adults)</span><br><span class="line"></span><br><span class="line">	log.Printf(<span class="string">&quot;children before nice: %v&quot;</span>, children)</span><br><span class="line">	nice(children)</span><br><span class="line">	log.Printf(<span class="string">&quot;children after nice: %v&quot;</span>, children)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">2018/12/16 12:00:00 adults before nice:</span> [&#123;<span class="string">Bob</span> <span class="string">Carpenter</span> <span class="literal">true</span>&#125; &#123;<span class="string">Steve</span> <span class="string">Clerk</span> <span class="literal">true</span>&#125; &#123;<span class="string">Nikki</span> <span class="string">Rad</span> <span class="string">Tech</span> <span class="literal">false</span>&#125; &#123;<span class="string">Hank</span> <span class="string">Go</span> <span class="string">Programmer</span> <span class="literal">false</span>&#125;]</span><br><span class="line"><span class="attr">2018/12/16 12:00:00 adults after nice:</span> [&#123;<span class="string">Bob</span> <span class="string">Carpenter</span> <span class="literal">true</span>&#125; &#123;<span class="string">Steve</span> <span class="string">Clerk</span> <span class="literal">true</span>&#125; &#123;<span class="string">Nikki</span> <span class="string">Rad</span> <span class="string">Tech</span> <span class="literal">false</span>&#125; &#123;<span class="string">Hank</span> <span class="string">Go</span> <span class="string">Programmer</span> <span class="literal">true</span>&#125;]</span><br><span class="line"><span class="attr">2018/12/16 12:00:00 children before nice:</span> [&#123;<span class="string">Sue</span> <span class="number">1</span> <span class="literal">true</span>&#125; &#123;<span class="string">Ava</span> <span class="number">3</span> <span class="literal">true</span>&#125; &#123;<span class="string">Hank</span> <span class="number">6</span> <span class="literal">false</span>&#125; &#123;<span class="string">Nancy</span> <span class="number">5</span> <span class="literal">true</span>&#125;]</span><br><span class="line"><span class="attr">2018/12/16 12:00:00 children after nice:</span> [&#123;<span class="string">Sue</span> <span class="number">1</span> <span class="literal">true</span>&#125; &#123;<span class="string">Ava</span> <span class="number">3</span> <span class="literal">true</span>&#125; &#123;<span class="string">Hank</span> <span class="number">6</span> <span class="literal">true</span>&#125; &#123;<span class="string">Nancy</span> <span class="number">5</span> <span class="literal">true</span>&#125;]</span><br></pre></td></tr></table></figure>
+<p>在这最后一个例子中，我们将前面学到的东西结合起来，通过 <code>reflect.Value</code> 来实际修改一个值。在这个场景下，有人（可能是 Hank）写了一个 <code>nice()</code> 函数，对于切片中的任意结构项，如果名字是“Hank”的话，它会将其从淘气（naughty）切换成友好（nice）。</p>
+<p>注意：<code>nice()</code> 能够修改你传给它的任意切片的值，实际上，该函数接收到的参数类型是无关紧要的 —— 只要它是一个由结构组成的切片，并且该结构拥有 <code>Name</code> 和 <code>Nice</code> 字段。</p>
+<h1 id="总结">总结</h1>
+<p>Go 中的反射是使用 interface 和 <code>reflect</code> 包实现的。它并没有什么神奇之处：当你使用反射时，你可以直接访问一个 interface 中的各个部分以及所存储的值。</p>
+<p>通过这种方式，interface 几乎就像是镜像，允许程序进行自检。</p>
+<p>虽然 Go 是一种静态类型语言，但是反射和 interface 相结合，提供了通常是动态语言独有的非常强大的技术。</p>
+<p>有关 Go 中反射的更多信息，请务必阅读包文档，以及该主题的许多其他精彩的博客文章。</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>请言小午吃个甜筒~~</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    Donate
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="/images/wechatpay.jpg" alt="Ele WeChat Pay">
+        <p>WeChat Pay</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="/images/alipay.jpg" alt="Ele Alipay">
+        <p>Alipay</p>
+      </div>
+
+  </div>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Golang/" rel="tag"># Golang</a>
+              <a href="/tags/%E6%B2%A1%E4%BA%8B%E7%BF%BB%E7%9D%80%E7%8E%A9/" rel="tag"># 没事翻着玩</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/11/15/%E8%AF%91-Goroutine-%E6%B3%84%E6%BC%8F%EF%BC%9A%E8%A2%AB%E9%81%97%E5%BF%98%E7%9A%84%E5%8F%91%E9%80%81%E8%80%85/" rel="prev" title="译|Goroutine 泄漏：被遗忘的发送者">
+      <i class="fa fa-chevron-left"></i> 译|Goroutine 泄漏：被遗忘的发送者
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/12/26/how_to_generate_annual_read_report_part1/" rel="next" title="我的年度读书报告生成攻略：第一部分">
+      我的年度读书报告生成攻略：第一部分 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%BA-interface-%E8%B5%8B%E5%80%BC"><span class="nav-number">1.</span> <span class="nav-text">为 interface 赋值</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%A9%E7%94%A8-reflect-%E5%8C%85%E5%9C%A8%E8%BF%90%E8%A1%8C%E6%97%B6%E6%A3%80%E6%9F%A5-interface-%E6%95%B0%E6%8D%AE"><span class="nav-number">2.</span> <span class="nav-text">利用 reflect 包，在运行时检查 interface 数据</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#reflect.type---%E6%A3%80%E6%9F%A5%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.1.</span> <span class="nav-text">reflect.Type - 检查类型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#reflect.type-%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B"><span class="nav-number">2.1.1.</span> <span class="nav-text">reflect.Type 使用示例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#reflect.method---%E6%A3%80%E6%9F%A5-itab-%E6%96%B9%E6%B3%95%E9%9B%86"><span class="nav-number">2.2.</span> <span class="nav-text">reflect.Method - 检查 itab &#x2F; 方法集</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-reflect-%E6%A3%80%E6%9F%A5%E6%96%B9%E6%B3%95"><span class="nav-number">2.2.1.</span> <span class="nav-text">使用 reflect 检查方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%E6%9F%A5%E7%9C%8B%E4%BF%AE%E6%94%B9%E5%80%BC"><span class="nav-number">2.2.2.</span> <span class="nav-text">示例：查看修改值</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ele</p>
+  <div class="site-description" itemprop="description">Share life, share idea, share code.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">40</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/ictar" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;ictar" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:ele.qiong@gmail.com" title="E-Mail → mailto:ele.qiong@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/u/5842594146" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;u&#x2F;5842594146" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2015 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Ele</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://ictargithub.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "http://ictar.github.io/2018/12/22/%E3%80%90%E8%AF%91%E3%80%91interface-%E5%92%8C%E5%8F%8D%E5%B0%84%E7%9A%84%E5%85%B3%E7%B3%BB/";
+    this.page.identifier = "2018/12/22/【译】interface-和反射的关系/";
+    this.page.title = "译|interface 和反射的关系";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://ictargithub.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
+</html>
